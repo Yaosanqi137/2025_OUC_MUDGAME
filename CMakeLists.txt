@@ -14,3 +14,12 @@ cmake_minimum_required(VERSION 3.20)
 # Add tasks subprojects
 include(cmake/utils.cmake)
 add_subprojects(${CMAKE_SOURCE_DIR})
+
+include(FetchContent)
+FetchContent_Declare(
+        tomlplusplus
+        GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+        GIT_TAG        v3.4.0
+)
+FetchContent_MakeAvailable(tomlplusplus)
+# Example add library: target_link_libraries(MyApp tomlplusplus::tomlplusplus)
