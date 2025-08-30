@@ -24,9 +24,6 @@ private:
     // 消息存储
     std::deque<std::string> messages;
     const size_t maxMessages = 10;
-
-    // 玩家
-    std::shared_ptr<Player> player;
 };
 
 #endif // NORMAL_SCENE_H
