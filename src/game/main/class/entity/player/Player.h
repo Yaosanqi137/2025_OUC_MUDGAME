@@ -1,14 +1,24 @@
-//
-// Created by Administrator on 2025/8/26.
-//
+#ifndef PLAYER_H
+#define PLAYER_H
 
-#ifndef INC_2025_OUC_MUDGAME_PLAYER_H
-#define INC_2025_OUC_MUDGAME_PLAYER_H
-
+#include <iostream>
 
 class Player {
+public:
+    Player();
 
+    const std::string& getName();
+    void setName(std::string name);
+
+    int getX() const;
+    int getY() const;
+    void setPos(int x, int y);
+    void move(int dx, int dy);
+private:
+    std::string name;
+    int x;
+    int y;
 };
 
 
-#endif //INC_2025_OUC_MUDGAME_PLAYER_H
+#endif // PLAYER_H
