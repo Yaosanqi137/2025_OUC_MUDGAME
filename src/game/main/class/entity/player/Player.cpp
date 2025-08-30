@@ -25,6 +25,6 @@ void Player::setPos(int x, int y) {
 }
 
 void Player::move(int dx, int dy) {
-    this->x += x;
-    this->y += y;
+    this->x += dx;
+    this->y += dy;
 }

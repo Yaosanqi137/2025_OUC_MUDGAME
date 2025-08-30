@@ -14,7 +14,7 @@ void NormalScene::processInput(const std::string& input) {
 }
 
 void NormalScene::processImmediateKey(char key) {
-    Player player = PlayerService::getInstance().getPlayer();
+    Player& player = PlayerService::getInstance().getPlayer();
 
     // TODO: solve input process
     system("pause>NUL");
