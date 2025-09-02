@@ -19,8 +19,6 @@ public:
     void exitGame();
 
 private:
-    void init();
-
     bool running = false;
     PlayerService& playerService = PlayerService::getInstance();
 

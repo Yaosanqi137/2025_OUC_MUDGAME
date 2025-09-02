@@ -5,23 +5,16 @@
 #include <string>
 
 Game::Game() {
-    init();
     view_ = std::make_unique<View>(*this);
 }
 
-Game::~Game() {
-    playerService.shutdown();
-}
+Game::~Game() = default;
 
 void Game::run() {
     running = true;
     if (view_) {
         view_->ShowMainMenu();
     }
-}
-
-void Game::init() {
-    playerService.initialize();
 }
 
 void Game::startNewGame() {

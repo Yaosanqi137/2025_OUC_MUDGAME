@@ -12,12 +12,6 @@ public:
     // 单例访问
     static PlayerService& getInstance();
 
-    // 初始化 PlayerService
-    void initialize();
-    
-    // 关闭 PlayerService
-    void shutdown();
-    
     // 玩家注册
     void registerPlayer(const std::string& name);
 
