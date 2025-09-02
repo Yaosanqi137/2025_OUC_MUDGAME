@@ -11,6 +11,8 @@ public:
     Game();
     ~Game();
 
+    void yao37();
+
     void run();
     void startNewGame();
     void loadGame();
