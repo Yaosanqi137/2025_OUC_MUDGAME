@@ -25,7 +25,7 @@ inline std::string trim(std::string s) {
 }
 
 // 计算含中文字符串的长度 :(
-[[deprecated]] inline int getLength(std::string s) {
+inline int getLength(std::string s) {
     int count = 0;
     for (int i = 0; s[i]; i++)
     {

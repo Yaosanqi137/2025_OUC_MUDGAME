@@ -43,7 +43,7 @@ namespace Chapter1 {
         ExecuteAction{
             [](Game& game) {
                 game.getDialog().clearHistory();
-                game.getPlayer().setLocation("拳击馆");
+                game.getPlayer().setLocation("拳击馆外");
             }
         }
     });
@@ -58,6 +58,11 @@ namespace Chapter1 {
     );
 
     inline DialogNode _00000006(6, "", "我从小有一个梦想，就是当上拳王", {}, 0, {
+        ExecuteAction{
+            [](Game& game) {
+                game.setGameState(GameState::InStory);
+            }
+        },
         SpeakAction{"", "我呆呆的看着拳击馆里不断挥拳的几个正在训练的拳击手，心中羡慕不已"},
         SpeakAction{"<UNKNOWN>", "嘿，小伙子，你看什么呢"},
         SpeakAction{"<PLAYER_NAME>", "我...我也想练拳...只可惜我的财力不足，不足以支撑我学这个..."},
@@ -69,9 +74,16 @@ namespace Chapter1 {
         SpeakAction{"<PLAYER_NAME>", "可...我并没有钱呀"},
         SpeakAction{"弗兰克", "那有什么，这点小钱，我帮你垫了，这是我的名片，以后随时联系"},
         SpeakAction{"", "他从兜里掏出一张名片，居然是金色的，同时，他又掏出了一张卡片"},
-        SpeakAction{"弗兰克", "这是这家拳击馆的通行证，明天记得带上，不然你进不去"},
+        SpeakAction{"弗兰克", "这是这家拳击馆的通行证，明天早上记得带上，不然你进不去"},
         SpeakAction{"", "说完，他便以有事为由，搭上一辆计程车走了，留下我一个人在原地"},
-        SpeakAction{"<PLAYER_NAME>", "嗯..."},
+        SpeakAction{"<PLAYER_NAME>", "嗯...我应该相信他吗？"},
+        SpeakAction{},
+
+        ExecuteAction{
+            [](Game& game) {
+                game.setGameState(GameState::InGame);
+            }
+        },
     });
 
     /**
