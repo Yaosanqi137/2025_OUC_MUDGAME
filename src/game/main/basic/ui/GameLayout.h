@@ -41,10 +41,15 @@ private:
     // --- UI状态和数据成员 ---
     std::string commandInputStr_;                                 ///< 存储默认指令输入框的文本。
     std::string textInputStr_;                                    ///< 存储通用文本输入框的文本。
-    int selectedInputMode_ = 0;                                   ///< 控制输入区域Tab的当前激活项 (0: InGame, 1: TextInput, 2: Choice)。
+    int selectedInputMode_ = 0;                                   ///< 控制输入区域Tab的当前激活项 (0: InGame, 1: TextInput, 2: Choice, -1: Disable)。
     int scrollIndex_ = 0;                                         ///< 对话历史的滚动偏移量。
     size_t currentMessageIndex_ = 0;                              ///< 用于打字机效果的当前消息索引。
     std::chrono::steady_clock::time_point animationStartTime_;    ///< 用于打字机效果的动画开始时间。
+
+    // --- 控制UI部分的活动状态 ---
+    bool showSidePanels_ = true;
+    bool showPlayerStatus_ = true;
+    bool showFooter_ = true;
 
     // --- 子组件成员 ---
     ftxui::Component interactiveMainView_;            ///< 可交互的对话历史显示区。

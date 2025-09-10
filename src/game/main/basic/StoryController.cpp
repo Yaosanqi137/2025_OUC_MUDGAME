@@ -3,14 +3,14 @@
 #include "StoryController.h"
 #include "../GameStory/DialogRegistry.h"
 #include "../GameStory/Story.h"
-#include <string>
+#include "FTXUI/screen/string.hpp"
 
 StoryController::StoryController(Game& game) : game_(game) {
     registerDialogs();
 }
 
 void StoryController::registerDialogs() {
-    DialogRegistry::runAll(dialog_database_);
+    DialogRegistry::runAll(dialogDatabase_);
 }
 
 void StoryController::startStory(unsigned int dialogNodeID) {
@@ -21,8 +21,8 @@ void StoryController::processNodeByID(unsigned int dialogNodeID) {
     // ID为0通常被视为剧情流的结束标志
     if (dialogNodeID == 0) return;
 
-    auto it = dialog_database_.find(dialogNodeID);
-    if (it != dialog_database_.end()) {
+    auto it = dialogDatabase_.find(dialogNodeID);
+    if (it != dialogDatabase_.end()) {
         processNode(it->second);
     } else {
         // 在此可以添加日志记录，表示未找到指定的对话ID
@@ -71,7 +71,7 @@ void StoryController::processNode(const DialogNode* node) {
         if (!node->sequence.empty()) {
             active_sequence_ = node->sequence;      // 将节点的序列复制到活动队列
             sequence_step_ = 0;                     // 从第一步开始
-            wait_until_ = {};                       // 清理上一个等待计时器
+            waitUntil_ = {};                       // 清理上一个等待计时器
         } else {
             // 如果没有序列，立即尝试跳转
             update();
@@ -81,7 +81,7 @@ void StoryController::processNode(const DialogNode* node) {
 
 void StoryController::update() {
     // 检查是否正在等待
-    if (std::chrono::steady_clock::now() < wait_until_) {
+    if (std::chrono::steady_clock::now() < waitUntil_) {
         return; // 等待时间未到，直接返回
     }
 
@@ -98,16 +98,27 @@ void StoryController::update() {
     // 循环处理，直到遇到一个需要等待的步骤
     while (sequence_step_ < active_sequence_.size()) {
         const auto& step = active_sequence_[sequence_step_];
-        bool should_wait = false;
+        bool shouldWait = false;
 
         std::visit([&](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
+
             if constexpr (std::is_same_v<T, SpeakAction>) {
                 game_.getDialog().addMessage(arg.who, arg.content);
+
+                // 在发出一条对话后，计算其在UI上的动画时间，并让StoryController等待。
+                // 这个计算逻辑必须与 GameLayout::Render() 中的动画逻辑完全一致。
+                auto contentSize = ftxui::Utf8ToGlyphs(arg.content).size();
+                auto typingDuration = std::chrono::milliseconds(contentSize * 20);
+                auto postDelay = std::chrono::milliseconds(500);
+
+                // 设置等待时间，就像这是一个 WaitAction 一样
+                waitUntil_ = std::chrono::steady_clock::now() + typingDuration + postDelay;
+                shouldWait = true; // 告诉 update 循环，处理完这一步后需要暂停
             }
             else if constexpr (std::is_same_v<T, WaitAction>) {
-                wait_until_ = std::chrono::steady_clock::now() + arg.duration;
-                should_wait = true;
+                waitUntil_ = std::chrono::steady_clock::now() + arg.duration;
+                shouldWait = true;
             }
             else if constexpr (std::is_same_v<T, ExecuteAction>) {
                 if (arg.function) {
@@ -118,12 +129,12 @@ void StoryController::update() {
 
         sequence_step_++; // 移动到下一步
 
-        if (should_wait) {
-            return; // 如果是等待步骤，则退出update循环，等待下一帧
+        if (shouldWait) {
+            return; // 如果是等待步骤或刚说完话，则退出update循环，等待下一帧
         }
     }
 
-    // 如果循环自然结束
+    // 如果循环自然结束（即序列中最后一个动作是不需要等待的 ExecuteAction）
     if (sequence_step_ >= active_sequence_.size()) {
         active_sequence_.clear();
         // 再次检查跳转，确保序列最后一步执行完后能立即跳转

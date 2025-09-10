@@ -194,17 +194,16 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
         &selectedInputMode_
     );
 
-    // --- [修改开始] ---
     // 将所有主界面组件组合到一个单独的容器中
-    auto main_game_container = Container::Vertical({
+    auto mainGameContainer = Container::Vertical({
         interactiveMainView_,
-        navigationContainer_,
-        inputArea_,
+        Maybe(navigationContainer_, &showSidePanels_),
+        Maybe(inputArea_, &showFooter_),
     });
 
     // 使用 Container::Stacked 来管理主界面和背包层，确保背包也能接收事件
     auto topLevelContainer = Container::Stacked({
-        main_game_container,
+        mainGameContainer,
         bagLayout_,
         phoneLayout_,
         mapLayout_,
@@ -220,11 +219,25 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
  * @details 负责根据当前游戏状态同步UI，并组合所有子组件来构建最终的界面布局。
  */
 Element GameLayout::Render() {
+    // 在每一帧的开始，首先检查是否有任何叠加层处于活动状态。
+    // 如果有，则立即渲染该层并返回，从而跳过主界面的所有逻辑和渲染。
+    BagLayout* bagPtr = static_cast<BagLayout*>(bagLayout_.get());
+    if (bagPtr && bagPtr->isShowing()) {
+        return bagLayout_->Render();
+    }
+    PhoneLayout* phonePtr = static_cast<PhoneLayout*>(phoneLayout_.get());
+    if (phonePtr && phonePtr->isShowing()) {
+        return phoneLayout_->Render();
+    }
+    MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
+    if (mapPtr && mapPtr->isShowing()) {
+        return mapLayout_->Render();
+    }
 
-    // -- 在每一帧的开始处，更新StoryController以驱动异步队列 --
+    // 如果代码执行到这里，说明没有活动的叠加层，可以更新和渲染主界面
     game_logic_.getStoryController().update();
 
-    // -- 状态同步：根据Game状态切换Tab的显示，并动态更新内容 --
+    // 状态同步：根据Game状态切换Tab的显示，并动态更新内容
     GameState state = game_logic_.getCurrentState();
     auto requestOpt = game_logic_.getCurrentInputRequest();
     std::string inputPrompt = " 指令 ";
@@ -251,12 +264,18 @@ Element GameLayout::Render() {
                 }
             }
             break;
+        case GameState::InStory:
+            selectedInputMode_ = -1;
+            inputPrompt = "正在播放剧情...";
+            break;
         default: // GameState::InGame 或其他
             selectedInputMode_ = 0;
             break;
     }
 
-    bool showSidePanels = (state == GameState::InGame);
+    showSidePanels_ = (state == GameState::InGame);
+    showPlayerStatus_ = (state == GameState::InGame);
+    showFooter_ = (state != GameState::InStory);
 
     // -- 布局组装 --
     auto header = hbox({
@@ -267,7 +286,7 @@ Element GameLayout::Render() {
 
     Elements leftChildren;
     leftChildren.push_back(interactiveMainView_->Render() | vscroll_indicator | yframe | flex);
-    if (showSidePanels) {
+    if (showPlayerStatus_) {
         leftChildren.push_back(
             window(text(" 玩家状态 "),
                    hbox({
@@ -282,36 +301,20 @@ Element GameLayout::Render() {
     auto leftPanel = vbox(leftChildren) | flex;
 
     Element rightPanel = emptyElement();
-    if (showSidePanels) {
+    if (showSidePanels_) {
         rightPanel = window(text(" 功能菜单 "), navigationContainer_->Render()) | size(WIDTH, EQUAL, 22);
     }
 
     auto mainContent = hbox({ leftPanel, rightPanel });
-    Element footer = window(text(inputPrompt), inputArea_->Render());
+    Element mainLayout;
 
-    Element mainLayout = vbox({ header, mainContent | flex, footer });
-
-    BagLayout* bagPtr = static_cast<BagLayout*>(bagLayout_.get());
-    // 如果背包正在显示，使用 dbox 将背包界面叠加在主界面上。
-    if (bagPtr && bagPtr->isShowing()) {
-        return dbox({
-            bagLayout_->Render()
-        });
-    }
-
-    // 同理背包
-    PhoneLayout* phonePtr = static_cast<PhoneLayout*>(phoneLayout_.get());
-    if (phonePtr && phonePtr->isShowing()) {
-        return dbox({
-            phoneLayout_->Render()
-        });
-    }
-
-    MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
-    if (mapPtr && mapPtr->isShowing()) {
-        return dbox({
-            mapLayout_->Render()
-        });
+    if (state == GameState::InStory) {
+        // 在故事模式下，我们构建一个不包含底部输入栏 (footer) 的布局。
+        mainLayout = vbox({ header, mainContent | flex });
+    } else {
+        // 在其他模式下，正常创建并包含 footer。
+        Element footer = window(text(inputPrompt), inputArea_->Render());
+        mainLayout = vbox({ header, mainContent | flex, footer });
     }
 
     return mainLayout;

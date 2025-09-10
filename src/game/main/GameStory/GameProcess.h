@@ -41,19 +41,19 @@ public:
                 }
             },
             // 参数3: on_submit_default - 默认动作 (当所有规则都不匹配时执行)
-            [](Game& g, std::string_view input) {
+            [](Game& game_logic_, std::string_view input) {
                 std::string name = trim(std::string(input));
                 // 进行名字有效性验证
-                if (name.empty() || name.length() > 10 || name.length() < 2) {
-                    g.getDialog().addMessage("<UNKNOWN>", "名字不合适，请重新输入一个2-10个字的名字。");
-                    newStart(g);
+                if (name.empty() || getLength(name) > 10 || getLength(name) < 2) {
+                    game_logic_.getDialog().addMessage("<UNKNOWN>", "名字不合适，请重新输入一个2-10个字的名字。");
+                    newStart(game_logic_);
                     return;
                 }
                 
-                g.getPlayer().setName(name);
+                game_logic_.getPlayer().setName(name);
                 
                 // 名字输入成功后，继续剧情
-                g.getStoryController().startStory(2);
+                game_logic_.getStoryController().startStory(2);
             }
         );
         

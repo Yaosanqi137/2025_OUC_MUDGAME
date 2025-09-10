@@ -25,6 +25,7 @@ enum class GameState {
     MainMenu,           ///< 游戏在主菜单界面。
     Loading,            ///< 正在加载。
     InGame,             ///< 正常游戏进行中，等待玩家输入指令。
+    InStory,             ///< 正在走剧情，禁止输入，禁止按侧边按钮
     AwaitingTextInput,  ///< 等待玩家进行自由文本输入。
     AwaitingChoice,     ///< 等待玩家从选项中做出选择。
 };
@@ -36,9 +37,9 @@ enum class GameState {
 struct InputRequest {
     std::string prompt;                                             ///< 对玩家的输入提示语。
     std::vector<std::string> choices;                               ///< (用于选项) 选项的文本列表。
-    std::function<void(int, const std::string&)> onChoiceSelect;  ///< (用于选项) 选中后的回调。
+    std::function<void(int, const std::string&)> onChoiceSelect;    ///< (用于选项) 选中后的回调。
     std::vector<InputRule> rules;                                   ///< (用于文本) 输入规则列表。
-    TextInputAction onTextSubmitDefault;                         ///< (用于文本) 无规则匹配时的默认动作。
+    TextInputAction onTextSubmitDefault;                            ///< (用于文本) 无规则匹配时的默认动作。
 };
 
 /**
@@ -64,7 +65,7 @@ public:
     [[nodiscard]] View& getView() const;
 
     // --- 状态管理 ---
-    void setGameState(GameState new_state);
+    void setGameState(GameState newState);
     [[nodiscard]] GameState getCurrentState() const;
     void clearInputRequest();
     [[nodiscard]] const std::optional<InputRequest>& getCurrentInputRequest() const;

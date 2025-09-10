@@ -86,8 +86,8 @@ View& Game::getView() const {
 }
 
 // --- 状态管理实现 ---
-void Game::setGameState(GameState new_state) {
-    currentState_ = new_state;
+void Game::setGameState(GameState newState) {
+    currentState_ = newState;
 }
 
 GameState Game::getCurrentState() const {
@@ -102,6 +102,7 @@ void Game::clearInputRequest() {
     inputRequest_.reset();
     setGameState(GameState::InGame);
 }
+
 
 // --- 输入请求接口实现 ---
 void Game::requestTextInput(const std::string& prompt, 
