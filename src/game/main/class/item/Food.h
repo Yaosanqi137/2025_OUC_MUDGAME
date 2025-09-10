@@ -39,6 +39,11 @@ public:
     // 检查是否是健身房专属食物
     static bool isGymExclusive(FoodType type);
 
+    // get方法实现, 主要用于EatEvent的效果显示
+    [[nodiscard]] double getHealthEffect() const;   // 健康值
+    [[nodiscard]] double getHungerEffect() const;   // 饱食度
+    [[nodiscard]] double getEnergyEffect() const;   // 体力值
+
 private:
     FoodType type_;
     double price_;

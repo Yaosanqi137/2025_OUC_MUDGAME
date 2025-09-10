@@ -54,7 +54,6 @@ void Food::use(Player& user) {
         user.addHealthiness(healthEffect_ / user.getHealth());  // 恢复的是血量槽百分比
     }
 
-    // 该函数目前有争议，不确定饱食度是不是百分比形式
     if (hungerEffect_ != 0) {
         user.addHunger(hungerEffect_ / user.getHunger());       // 恢复的是饱食度百分比
     }
@@ -103,3 +102,16 @@ bool Food::isStoreExclusive(FoodType type) {
 bool Food::isGymExclusive(FoodType type) {
     return type == FoodType::CHOCOLATE_BAR || type == FoodType::PROTEIN_BAR;
 }
+
+
+// get方法实现, 主要用于EatEvent的效果显示
+double Food::getHealthEffect() const {
+    return healthEffect_;
+}
+
+double Food::getHungerEffect() const {
+    return hungerEffect_;
+}
+
+double Food::getEnergyEffect() const {
+    return energyEffect_;
