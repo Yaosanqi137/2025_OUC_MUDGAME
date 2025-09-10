@@ -53,6 +53,10 @@ public:
     void setMinStamina(double value);                   // 最低耐力 
     void setMinAgility(double value);                   // 最低敏捷
 
+    // 销毁Item函数(Food; Medicine)
+    template<typename T>
+    bool removeItemFromInventory(const std::shared_ptr<T>& item);
+
 protected:
     Game& game_logic_;
 
