@@ -136,6 +136,7 @@ double Player::getMinAgility() const {
 
 
 // 销毁Item(Food; Medicine)函数
+/*
 template<typename T>
 bool Player::removeItemFromInventory(const std::shared_ptr<T>& item) {
     // 这里需要根据你的背包实现来编写具体的移除逻辑
@@ -149,6 +150,8 @@ bool Player::removeItemFromInventory(const std::shared_ptr<T>& item) {
     }
     return false;
 }
+    
+*/
 
 // 显式实例化模板 编译错误
 /*

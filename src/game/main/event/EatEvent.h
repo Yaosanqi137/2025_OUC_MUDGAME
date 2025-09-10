@@ -54,7 +54,14 @@ private:
     
     // 执行食用逻辑的辅助方法
     void executeFood();
+
+    /*
+
+
     void executeMedicine();
+
+    
+    */
     
     // 生成属性变化信息
     std::string generateEffectMessage(double healthEffect, double hungerEffect, double energyEffect) const;

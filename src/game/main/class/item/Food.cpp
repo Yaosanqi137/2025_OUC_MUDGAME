@@ -115,3 +115,4 @@ double Food::getHungerEffect() const {
 
 double Food::getEnergyEffect() const {
     return energyEffect_;
+}

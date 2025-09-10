@@ -31,7 +31,7 @@ void EatEvent::execute() {
         if (food_) {
             executeFood();
         } else if (medicine_) {
-            executeMedicine();
+            // executeMedicine();
         } else {
             game_.getDialog().addMessage("系统", "食用失败：无效的物品");
         }
@@ -72,7 +72,7 @@ void EatEvent::executeFood() {
     removeItemFromInventory暂时没有正确实现，需要背包系统接入
     
     */
-    if (player_->removeItemFromInventory(food_)) {
+    if (/* player_->removeItemFromInventory(food_) */ true) {
         // 第一行：食用成功信息
         game_.getDialog().addMessage("系统", playerName + " 食用了 " + foodName);
         
