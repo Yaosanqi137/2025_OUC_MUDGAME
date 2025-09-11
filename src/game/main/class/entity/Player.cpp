@@ -135,6 +135,30 @@ double Player::getMinAgility() const {
 }
 
 
+std::vector<std::shared_ptr<AbstractItem>>& Player::getInventory() {
+    return inventory_;
+}
+
+bool Player::removeItemFromInventory(const std::shared_ptr<AbstractItem>& item) {
+    for (auto it = inventory_.begin(); it != inventory_.end(); ++it) {
+        if (*it == item) {
+            inventory_.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+std::shared_ptr<AbstractItem> Player::findItemByName(const std::string& name) {
+    for (auto& item : inventory_) {
+        if (item->getName() == name) {
+            return item;
+        }
+    }
+    return nullptr;
+}
+
+
 // 销毁Item(Food; Medicine)函数
 /*
 template<typename T>

@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include "../../basic/Game.h"
-
+#include "../item/AbstractItem.h"
 class Game;
 
 class Player {
@@ -53,6 +53,15 @@ public:
     void setMinStamina(double value);                   // 最低耐力 
     void setMinAgility(double value);                   // 最低敏捷
 
+
+
+    // 背包相关操作
+    std::vector<std::shared_ptr<AbstractItem>>& getInventory();
+    bool removeItemFromInventory(const std::shared_ptr<AbstractItem>& item);
+    
+    // 基于名称查找物品
+    std::shared_ptr<AbstractItem> findItemByName(const std::string& name);
+
     // 销毁Item函数(Food; Medicine)
     /*
 
@@ -85,6 +94,8 @@ private:
 
     double money;           // 积蓄
     double skillPoints;     // 技能点
+
+    std::vector<std::shared_ptr<AbstractItem>> inventory_;  // 背包
 };
 
 #endif // PLAYER_H

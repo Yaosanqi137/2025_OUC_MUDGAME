@@ -63,18 +63,16 @@ void EatEvent::executeFood() {
     double hungerEffect = food_->getHungerEffect();
     double energyEffect = food_->getEnergyEffect();
     
-    // 使用食物
-    food_->use(*player_);
+
+    Food food__ = *food_;
+
     
-    // 从背包中移除食物
-    /*
-    
-    removeItemFromInventory暂时没有正确实现，需要背包系统接入
-    
-    */
-    if (/* player_->removeItemFromInventory(food_) */ true) {
+    if (player_->removeItemFromInventory(food_)) {
         // 第一行：食用成功信息
         game_.getDialog().addMessage("系统", playerName + " 食用了 " + foodName);
+        
+        // 正式食用并增加属性(避免没找到物品且没成功销毁，导致玩家属性凭空增加)
+        food__.use(*player_);
         
         // 第二行：属性变化信息
         std::string effectMsg = generateEffectMessage(healthEffect, hungerEffect, energyEffect);
