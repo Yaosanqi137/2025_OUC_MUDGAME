@@ -1,8 +1,17 @@
+/*
+
+Last changed on 9-11 1:00 by Anyeling
+Bug to fix: removeItemFromInventory模板函数无法链接 不能显式声明
+Bug to fix: not link to BagLayout(ui) yet
+
+*/
+
+
 #include "Player.h"
 
 Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET"), healthiness(80), strength(1),
                    stamina(1), agility(1), hunger(80), fatigue(80), money(1000), location("???"),
-                   minStrength(1), minStamina(1), minAgility(1), skillPoints(0) {
+                   minStrength(0), minStamina(0), minAgility(0), skillPoints(0) {
 }
 
 // TODO: 保存数据
@@ -66,6 +75,8 @@ double Player::getEnergy() const {
 
 void Player::addHealthiness(const double value) {
     healthiness += value;
+    healthiness = std::max(0.0,healthiness);    // 确保不低于0
+    healthiness = std::min(1.0,healthiness);    // 确保不高于1
 }
 
 void Player::addStrength(const double value) {
@@ -85,10 +96,14 @@ void Player::addAgility(const double value) {
 
 void Player::addHunger(const double value) {
     hunger += value;
+    hunger = std::max(0.0, hunger);     // 确保不低于0
+    hunger = std::min(1.0, hunger);     // 确保不高于1
 }
 
 void Player::addFatigue(const double value) {
     fatigue += value;
+    fatigue = std::max(0.0, fatigue);   // 确保不低于0
+    fatigue = std::min(1.0, fatigue);   // 确保不高于1
 }
 
 void Player::addSavings(const double value) {
@@ -118,3 +133,52 @@ double Player::getMinStamina() const {
 double Player::getMinAgility() const {
     return minAgility;
 }
+
+
+std::vector<std::shared_ptr<AbstractItem>>& Player::getInventory() {
+    return inventory_;
+}
+
+bool Player::removeItemFromInventory(const std::shared_ptr<AbstractItem>& item) {
+    for (auto it = inventory_.begin(); it != inventory_.end(); ++it) {
+        if (*it == item) {
+            inventory_.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+
+std::shared_ptr<AbstractItem> Player::findItemByName(const std::string& name) {
+    for (auto& item : inventory_) {
+        if (item->getName() == name) {
+            return item;
+        }
+    }
+    return nullptr;
+}
+
+
+// 销毁Item(Food; Medicine)函数
+/*
+template<typename T>
+bool Player::removeItemFromInventory(const std::shared_ptr<T>& item) {
+    // 这里需要根据你的背包实现来编写具体的移除逻辑
+    // 示例：遍历背包找到并移除对应物品
+    auto& inventory = getInventory(); // 假设有 getInventory() 方法
+    for (auto it = inventory.begin(); it != inventory.end(); ++it) {
+        if (*it == item) {
+            inventory.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
+    
+*/
+
+// 显式实例化模板 编译错误
+/*
+template bool Player::removeItemFromInventory<Food>(const std::shared_ptr<Food>& item);
+template bool Player::removeItemFromInventory<Medicine>(const std::shared_ptr<Medicine>& item);
+*/
