@@ -4,6 +4,9 @@
 #include <iostream>
 #include "../../basic/Game.h"
 #include "../item/AbstractItem.h"
+#include "../skill/Skill.h"
+#include "../skill/SkillFactory.h"
+
 class Game;
 
 class Player {
@@ -90,8 +93,25 @@ public:
     // 使用物品
     bool useItem(const std::string& itemName);
 
+    // 技能点操作
+    double getSkillPoints() const;
+    void addSkillPoints(double value);
+
+    // 技能操作
+    std::vector<std::shared_ptr<Skill>>& getSkills();
+    void addSkill(std::shared_ptr<Skill> skill);
+    bool learnSkill(const std::string& skillName);
+
     // 初始化背包（添加所有物品的单例，数量为0）
     void initializeInventory();
+
+
+    // 敌人解锁相关
+    bool isEnemyUnlocked(int enemyId) const;
+    void unlockEnemy(int enemyId);
+    void unlockNextEnemy(int currentEnemyId);
+    int getHighestUnlockedEnemy() const;
+
 
 
 protected:
@@ -123,7 +143,11 @@ private:
     double money;           // 积蓄
     double skillPoints;     // 技能点
 
+    std::vector<std::shared_ptr<Skill>> skills_;    // 已解锁的技能列表
+
     std::vector<std::shared_ptr<AbstractItem>> inventory_;  // 背包
+
+    std::vector<bool> unlockedEnemies_; // 解锁的敌人列表
 };
 
 #endif // PLAYER_H

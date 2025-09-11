@@ -1,9 +1,11 @@
 #ifndef SKILLFACTORY_H
 #define SKILLFACTORY_H
 
-#include "Skill.h"
+#include <vector>
 #include <memory>
 #include <string>
+
+class Skill;
 
 class SkillFactory {
 public:
@@ -25,6 +27,8 @@ public:
     static std::shared_ptr<Skill> createKarateChop();
     static std::shared_ptr<Skill> createQuickStrike();
     static std::shared_ptr<Skill> createCloseCombat();
+
+    static std::shared_ptr<Skill> createLongPunch();    // 第一个人机对手专属 玩家不可学习
 
     // 属性增益技能
     static std::shared_ptr<Skill> createStandFirm1();

@@ -354,3 +354,53 @@ void Player::initializeInventory() {
     gymPass->setAmount(0);
     inventory_.push_back(gymPass);
 }
+
+
+// ==================== 敌人解锁进度管理 ====================
+bool Player::isEnemyUnlocked(int enemyId) const {
+    if (enemyId < 1 || enemyId >= unlockedEnemies_.size()) {
+        return false;
+    }
+    return unlockedEnemies_[enemyId];
+}
+
+void Player::unlockEnemy(int enemyId) {
+    if (enemyId > 0 && enemyId < unlockedEnemies_.size()) {
+        unlockedEnemies_[enemyId] = true;
+    }
+}
+
+void Player::unlockNextEnemy(int currentEnemyId) {
+    int nextEnemyId = currentEnemyId + 1;
+    if (nextEnemyId > 0 && nextEnemyId < unlockedEnemies_.size()) {
+        unlockedEnemies_[nextEnemyId] = true;
+    }
+}
+
+
+double Player::getSkillPoints() const {
+    return skillPoints;
+}
+
+void Player::addSkillPoints(double value) {
+    skillPoints += value;
+}
+
+std::vector<std::shared_ptr<Skill>>& Player::getSkills() {
+    return skills_;
+}
+
+void Player::addSkill(std::shared_ptr<Skill> skill) {
+    skills_.push_back(skill);
+}
+
+bool Player::learnSkill(const std::string& skillName) {
+    auto skill = SkillFactory::createSkillByName(skillName);
+    if (skill && skillPoints >= skill->getUnlockCost()) {
+        skill->unlock();
+        skills_.push_back(skill);
+        skillPoints -= skill->getUnlockCost();
+        return true;
+    }
+    return false;
+}
