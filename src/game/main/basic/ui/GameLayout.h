@@ -65,6 +65,9 @@ private:
     ftxui::Component bagLayout_;                      ///< 背包界面组件。
     ftxui::Component phoneLayout_;                    ///< 手机界面组件
     ftxui::Component mapLayout_;                      ///< 地图界面组件
+    ftxui::Component shopLayout_;                     ///< 网购界面组件
+    ftxui::Component infoLayout_;                     ///< 个人信息组件
+    ftxui::Component topLevelContainer_;              ///< 添加一个顶层容器
 };
 
 #endif // GAMELAYOUT_H

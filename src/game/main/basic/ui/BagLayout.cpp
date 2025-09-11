@@ -1,15 +1,19 @@
 #include "BagLayout.h"
 #include "../Game.h"
+#include "../../class/entity/Player.h"
+#include "../../class/item/AbstractItem.h"
+#include "../../class/item/Food.h"
+#include "../../class/item/UsefulItem.h"
 #include "FTXUI/component/screen_interactive.hpp"
 #include "FTXUI/dom/elements.hpp"
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <memory>
 
 using namespace ftxui;
 
-BagLayout::BagLayout(Game& game_logic) : game_logic_(game_logic) {
-    initializeItems();
+BagLayout::BagLayout(Game& game_logic) : game_logic_(game_logic), player_(game_logic.getPlayer()) {
 
     // --- 在构造函数中创建所有持久化组件 ---
     
@@ -20,7 +24,7 @@ BagLayout::BagLayout(Game& game_logic) : game_logic_(game_logic) {
     for (int i = 0; i < itemsPerPage_; ++i) {
         auto on_click = [this, i] {
             int globalIndex = i + currentPage_ * itemsPerPage_;
-            if (globalIndex < static_cast<int>(items_.size())) {
+            if (globalIndex < static_cast<int>(displayableItems_.size())) {
                 selectedItemIndex_ = globalIndex;
             }
         };
@@ -28,15 +32,15 @@ BagLayout::BagLayout(Game& game_logic) : game_logic_(game_logic) {
         auto option = ButtonOption();
         option.transform = [this, i](const EntryState& s) {
             int globalIndex = i + currentPage_ * itemsPerPage_;
-            if (globalIndex >= static_cast<int>(items_.size())) {
+            if (globalIndex >= static_cast<int>(displayableItems_.size())) {
                 return filler();
             }
 
-            const auto& item = items_[globalIndex];
+            const auto& item = displayableItems_[globalIndex];
             auto element = vbox({
-                text(item->icon) | center | bold,
-                text(item->name) | center | size(WIDTH, LESS_THAN, 10),
-                text("x" + std::to_string(item->amount)) | center | color(Color::Green)
+                text("📦") | center | bold, // 使用通用图标
+                text(item->getName()) | center | size(WIDTH, LESS_THAN, 10),
+                text("x" + std::to_string(item->getAmount())) | center | color(Color::Green)
             });
 
             if (s.active) {
@@ -64,9 +68,23 @@ BagLayout::BagLayout(Game& game_logic) : game_logic_(game_logic) {
         }
     });
 
+    // 3. 使用物品按钮
+    useButton_ = Button(" [ 使用物品 ] ", [this] {
+        if (selectedItemIndex_ >= 0 && selectedItemIndex_ < static_cast<int>(displayableItems_.size())) {
+            const auto& selectedItem = displayableItems_[selectedItemIndex_];
+            player_.useItem(selectedItem->getName());
+            refreshItems(); // 使用后刷新物品列表
+            // 如果物品用完了，重置选择
+            if (selectedItemIndex_ >= static_cast<int>(displayableItems_.size())) {
+                selectedItemIndex_ = -1;
+            }
+        }
+    });
+
     interactive_components.push_back(exitButton_);
     interactive_components.push_back(pagePrevButton_);
     interactive_components.push_back(pageNextButton_);
+    interactive_components.push_back(useButton_);
 
     mainContainer_ = Container::Vertical(interactive_components);
 
@@ -74,15 +92,25 @@ BagLayout::BagLayout(Game& game_logic) : game_logic_(game_logic) {
     Add(mainContainer_);
 }
 
-void BagLayout::initializeItems() {
-    // 示例物品
-    items_ = {};
-        // TODO: 考虑放些初始物品
+void BagLayout::refreshItems() {
+    // 从Player获取可显示的物品（数量大于0的物品）
+    displayableItems_ = player_.getDisplayableItems();
 }
 
 int BagLayout::getTotalPages() const {
-    if (items_.empty()) return 1;
-    return (items_.size() + itemsPerPage_ - 1) / itemsPerPage_;
+    if (displayableItems_.empty()) return 1;
+    return (displayableItems_.size() + itemsPerPage_ - 1) / itemsPerPage_;
+}
+
+std::string BagLayout::getItemTypeString(const std::shared_ptr<AbstractItem>& item) const {
+    // 通过动态转换确定物品类型
+    if (std::dynamic_pointer_cast<Food>(item)) {
+        return "食物";
+    } else if (std::dynamic_pointer_cast<UsefulItem>(item)) {
+        return "道具";
+    } else {
+        return "物品";
+    }
 }
 
 Element BagLayout::Render() {
@@ -90,7 +118,10 @@ Element BagLayout::Render() {
         return text("");
     }
 
-    if (items_.empty()) {
+    // 每次渲染前刷新物品列表
+    refreshItems();
+
+    if (displayableItems_.empty()) {
         auto empty_bag_view = vbox({
             filler(),
             text("背包中空空如也") | bold | hcenter,
@@ -101,7 +132,7 @@ Element BagLayout::Render() {
         return window(text(" 背包 ") | bold, empty_bag_view) | clear_under;
     }
 
-    // Render函数只负责“布局”，不负责“创建”组件
+    // Render函数只负责"布局"，不负责"创建"组件
 
     Elements grid_rows;
     for (int r = 0; r < 5; ++r) {
@@ -115,7 +146,7 @@ Element BagLayout::Render() {
                             size(HEIGHT, EQUAL, 6) |
                             border;
 
-            if (global_index >= static_cast<int>(items_.size())) {
+            if (global_index >= static_cast<int>(displayableItems_.size())) {
                 item_box |= color(Color::GrayDark);
             } else if (global_index == selectedItemIndex_) {
                 item_box |= color(Color::GreenLight);
@@ -130,13 +161,17 @@ Element BagLayout::Render() {
     std::string itemDetailDesc;
     std::string itemDetailAmount;
     std::string itemDetailClass;
-    if (selectedItemIndex_ >= 0 && selectedItemIndex_ < static_cast<int>(items_.size())) {
-        const auto& item = items_[selectedItemIndex_];
-        itemDetailName = "名称: " + item->name;
-        itemDetailDesc = "描述: " + item->description;
-        itemDetailAmount = "数量: " + std::to_string(item->amount);
-        itemDetailClass = "类型: " + std::string(item->type == 0 ? "普通物品" : (item->type == 1 ? "食物" : "药品"));
+    bool canUseItem = false;
+
+    if (selectedItemIndex_ >= 0 && selectedItemIndex_ < static_cast<int>(displayableItems_.size())) {
+        const auto& item = displayableItems_[selectedItemIndex_];
+        itemDetailName = "名称: " + item->getName();
+        itemDetailDesc = "描述: " + item->getIntro();
+        itemDetailAmount = "数量: " + std::to_string(item->getAmount());
+        itemDetailClass = "类型: " + getItemTypeString(item);
+        canUseItem = item->getAmount() > 0;
     }
+
     auto detailPanel = vbox({
         text("物品详情") | bold | center,
         separator(),
@@ -144,6 +179,8 @@ Element BagLayout::Render() {
         paragraph(itemDetailDesc) | vscroll_indicator | frame | flex,
         paragraph(itemDetailAmount) | vscroll_indicator | frame | flex,
         paragraph(itemDetailClass) | vscroll_indicator | frame | flex,
+        separator(),
+        (canUseItem ? useButton_->Render() : text("无法使用") | color(Color::GrayDark)) | center
     }) | border;
 
     int totalPages = getTotalPages();
@@ -171,6 +208,7 @@ void BagLayout::show() {
     isShowing_ = true;
     selectedItemIndex_ = -1;
     currentPage_ = 0;
+    refreshItems(); // 显示时刷新物品列表
 }
 
 void BagLayout::hide() {
@@ -179,18 +217,4 @@ void BagLayout::hide() {
 
 bool BagLayout::isShowing() const {
     return isShowing_;
-}
-
-void BagLayout::setItemAmount(const int amount, Item* item) {
-    auto index = std::ranges::find(items_.begin(), items_.end(), item);
-    if (index == items_.end()) {
-        items_.push_back(item);
-        index = items_.end() - 1;
-    }
-        (*index)->amount = amount;
-        if ((*index)->amount > 7) {
-            (*index)->amount = 7;
-        } else if ((*index)->amount < 0) {
-            (*index)->amount = 0;
-        }
 }
