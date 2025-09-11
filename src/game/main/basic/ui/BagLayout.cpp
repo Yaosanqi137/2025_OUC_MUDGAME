@@ -1,5 +1,5 @@
 #include "BagLayout.h"
-#include "../Game.h" // 假设 Game.h 的路径
+#include "../Game.h"
 #include "FTXUI/component/screen_interactive.hpp"
 #include "FTXUI/dom/elements.hpp"
 #include <algorithm>

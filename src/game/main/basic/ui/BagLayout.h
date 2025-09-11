@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BAGLAYOUT_H
+#define BAGLAYOUT_H
 
 #include "ftxui/component/component.hpp"
 #include <vector>
@@ -51,3 +52,5 @@ private:
     // 这是确保所有按钮都能接收事件的关键
     ftxui::Component mainContainer_;
 };
+
+#endif // BAGLAYOUT_H
