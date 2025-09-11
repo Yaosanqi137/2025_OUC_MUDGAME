@@ -77,13 +77,29 @@ namespace Chapter1 {
         SpeakAction{"弗兰克", "这是这家拳击馆的通行证，明天早上记得带上，不然你进不去"},
         SpeakAction{"", "说完，他便以有事为由，搭上一辆计程车走了，留下我一个人在原地"},
         SpeakAction{"<PLAYER_NAME>", "嗯...我应该相信他吗？"},
-        SpeakAction{},
+        SpeakAction{"", "看着这闪闪发光的通行证，我不由的咽下口水"},
+        SpeakAction{"<PLAYER_NAME>", "看起来不像假的，反正去了也没关系"},
+        SpeakAction{"", "秉持着我绝对不亏的原则，我将名片和通行证揣进了兜里，压制着心里的兴奋回家了"},
+        SpeakAction{"", ""},
+        SpeakAction{"", "第一章：初来乍到"},
 
         ExecuteAction{
             [](Game& game) {
-                game.setGameState(GameState::InGame);
+                game.getPlayer().setLocation("家");
             }
         },
+        WaitAction{std::chrono::milliseconds(500)},
+        ExecuteAction{
+            [](Game& game) {
+                game.setGameState(GameState::InGame);
+            },
+        },
+
+        SpeakAction{"<SYSTEM>", "提示，先来熟悉一下界面吧"},
+        SpeakAction{"<SYSTEM>", "这个小镇可没有卖拳套的地方，尝试尝试网购吧"},
+        SpeakAction{"<SYSTEM>", "点击侧栏\"我的手机\"，然后点击\"网购平台\""},
+        SpeakAction{"<SYSTEM>", "你的兜里初始有1000元，如果不够的话，可以去工地打工"},
+        SpeakAction{"<SYSTEM>", "打开手机里的地图，可以快捷的前往某个地点"},
     });
 
     /**
