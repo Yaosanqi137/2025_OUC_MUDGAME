@@ -4,6 +4,8 @@
 #include "AbstractItem.h"
 #include <string>
 
+class Player;
+
 class Food : public AbstractItem {
 public:
     // 枚举食物类型

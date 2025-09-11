@@ -2,7 +2,8 @@
 #define ABSTRACTITEM_H
 
 #include <string>
-#include "../entity/Player.h"
+
+class Player;
 
 class AbstractItem {
 public:

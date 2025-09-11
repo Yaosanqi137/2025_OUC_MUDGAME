@@ -1,4 +1,5 @@
 #include "Food.h"
+#include "../entity/Player.h"  // 在这里包含 Player.h
 #include <stdexcept>
 
 // 私有构造函数
