@@ -26,13 +26,16 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
 
     MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
     phoneLayout_ = Make<PhoneLayout>(game_logic_, [this, mapPtr] {
-    // 当点击地图按钮时：先隐藏手机，再显示地图
+        // 当点击地图按钮时：先隐藏手机，再显示地图
         static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
         mapPtr->show();
     });
 
     // -- 对话历史渲染器 --
     auto mainViewRenderer = Renderer([this] {
+        // 获取打字动画效果速度
+        const int typewriter_speed_ms = game_logic_.getConfig().getTypewriterSpeed();
+
         const auto& messages = game_logic_.getDialog().getHistory();
 
         // -- 动画状态重置逻辑 --
@@ -55,7 +58,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
             auto contentSize = Utf8ToGlyphs(currentMsg.content).size();
 
             // 计算完成当前消息动画所需的总时间（打字时间 + 结束后延迟）
-            auto typingDuration = std::chrono::milliseconds(contentSize * 20);
+            auto typingDuration = std::chrono::milliseconds(contentSize * typewriter_speed_ms);
             auto postDelay = std::chrono::milliseconds(500);
             auto totalAnimationTime = typingDuration + postDelay;
 
@@ -99,7 +102,12 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
                 auto elapsedMS = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::steady_clock::now() - animationStartTime_
                 ).count();
-                shownChars = std::min(contentSize, static_cast<size_t>(elapsedMS / 20));
+                // 使用配置的速度值。增加一个保护，防止速度为0时除零错误。
+                if (typewriter_speed_ms > 0) {
+                    shownChars = std::min(contentSize, static_cast<size_t>(elapsedMS / typewriter_speed_ms));
+                } else {
+                    shownChars = contentSize; // 速度为0或负数时立即显示
+                }
             }
             // (i > current_message_index_) 的未来消息，shownChars 保持为0，不显示
 
@@ -141,8 +149,8 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     });
 
     // -- 右侧功能菜单 --
-    BagLayout* bagPtr = static_cast<BagLayout*>(bagLayout_.get());
-    PhoneLayout* phonePtr = static_cast<PhoneLayout*>(phoneLayout_.get());
+    auto* bagPtr = dynamic_cast<BagLayout*>(bagLayout_.get());
+    auto* phonePtr = dynamic_cast<PhoneLayout*>(phoneLayout_.get());
 
     auto buttonPhone = Button(" 我的手机 ", [phonePtr] { phonePtr->show(); }, ButtonOption::Animated());
     auto buttonSettings = Button(" 游戏设置 ", [&] { game_logic_.showGameSettings(); }, ButtonOption::Animated());
@@ -213,7 +221,6 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     Add(topLevelContainer);
 }
 
-
 /**
  * @brief 渲染函数，FTXUI每一帧都会调用。
  * @details 负责根据当前游戏状态同步UI，并组合所有子组件来构建最终的界面布局。
@@ -221,15 +228,15 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
 Element GameLayout::Render() {
     // 在每一帧的开始，首先检查是否有任何叠加层处于活动状态。
     // 如果有，则立即渲染该层并返回，从而跳过主界面的所有逻辑和渲染。
-    BagLayout* bagPtr = static_cast<BagLayout*>(bagLayout_.get());
+    auto* bagPtr = dynamic_cast<BagLayout*>(bagLayout_.get());
     if (bagPtr && bagPtr->isShowing()) {
         return bagLayout_->Render();
     }
-    PhoneLayout* phonePtr = static_cast<PhoneLayout*>(phoneLayout_.get());
+    auto* phonePtr = dynamic_cast<PhoneLayout*>(phoneLayout_.get());
     if (phonePtr && phonePtr->isShowing()) {
         return phoneLayout_->Render();
     }
-    MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
+    auto* mapPtr = dynamic_cast<MapLayout*>(mapLayout_.get());
     if (mapPtr && mapPtr->isShowing()) {
         return mapLayout_->Render();
     }

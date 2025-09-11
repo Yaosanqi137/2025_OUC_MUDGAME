@@ -1,0 +1,4 @@
+#ifndef SETTINGSLAYOUT_H
+#define SETTINGSLAYOUT_H
+
+#endif // SETTINGSLAYOUT_H

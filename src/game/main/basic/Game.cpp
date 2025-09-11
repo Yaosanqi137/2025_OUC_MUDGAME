@@ -1,20 +1,20 @@
-#include "Dialog.h"
 #include "Game.h"
+#include "Dialog.h"
 #include "StoryController.h"
 #include "View.h"
 #include "../class/entity/Player.h"
 #include "../GameStory/GameProcess.h"
-#include "GameTime.h"
 
 #include <iostream>
 
 Game::Game() : currentState_(GameState::MainMenu)  {
-    view_ = std::make_unique<View>(*this);
+    config_ = Configuration::getInstance();
+
     dialog_ = std::make_unique<Dialog>(*this);
     player_ = std::make_unique<Player>(*this);
     storyController_ = std::make_unique<StoryController>(*this);
 
-    GameTime(); // 初始化游戏时间
+    view_ = std::make_unique<View>(*this);
 }
 
 Game::~Game() {
@@ -83,6 +83,10 @@ StoryController& Game::getStoryController() const {
 
 View& Game::getView() const {
     return *view_;
+}
+
+Configuration& Game::getConfig() const {
+    return *config_;
 }
 
 // --- 状态管理实现 ---
