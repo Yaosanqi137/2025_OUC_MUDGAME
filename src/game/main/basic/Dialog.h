@@ -1,5 +1,5 @@
 #ifndef DIALOG_H
-#define DIALOG_G
+#define DIALOG_H
 
 #include <chrono>
 #include <string>
@@ -45,4 +45,4 @@ private:
     static constexpr size_t MAX_HISTORY_SIZE = 64; // 限制历史记录最大长度
 };
 
-#endif // DIALOG_G
+#endif // DIALOG_H
