@@ -21,7 +21,7 @@ EatEvent::EatEvent(std::shared_ptr<Medicine> medicine, std::shared_ptr<Player> p
     
 void EatEvent::execute() {
     if (!player_) {
-        game_.getDialog().addMessage("系统", "食用失败：无效的玩家引用");
+        game_.getDialog().addMessage("<SYSTEM>", "食用失败：无效的玩家引用");
         return;
     }
 
@@ -33,7 +33,7 @@ void EatEvent::execute() {
         } else if (medicine_) {
             // executeMedicine();
         } else {
-            game_.getDialog().addMessage("系统", "食用失败：无效的物品");
+            game_.getDialog().addMessage("<SYSTEM>", "食用失败：无效的物品");
         }
 
     } catch (const std::exception& e) {

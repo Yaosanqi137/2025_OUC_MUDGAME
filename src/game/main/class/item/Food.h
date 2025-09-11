@@ -18,16 +18,15 @@ public:
         PROTEIN_BAR     // 蛋白质棒
     };
 
-    Food(FoodType type);
+    explicit Food(FoodType type);
     ~Food() override = default;
 
     // 实现抽象接口
-    const std::string& getName() const override;
-    int getPrice() const override;
+    [[nodiscard]] int getPrice() const override;
     void use(Player& user) override;
 
     // 获取食物类型
-    FoodType getFoodType() const;
+    [[nodiscard]] FoodType getFoodType() const;
 
     // 静态方法：创建商店食物
     static Food createStoreFood(FoodType type);
@@ -51,12 +50,12 @@ private:
     double price_;
 
     // 这三个属性均不是百分比形式，use时注意除以对应的属性上限，如健康值恢复是 healthEffect_ / user.getHealth()
-    double healthEffect_;    // 健康度影响
+    double healthEffect_;    // 生命值影响
     double hungerEffect_;    // 饱食度影响
     double energyEffect_;    // 体力影响
 
     // 私有构造函数，用于静态工厂方法
-    Food(FoodType type, double price, double healthEffect, double hungerEffect, double energyEffect);
+    Food(FoodType type, double price, const std::string& name, const std::string& intro, double healthEffect, double hungerEffect, double energyEffect);
 };
 
 #endif // FOOD_H

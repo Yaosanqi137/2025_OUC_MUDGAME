@@ -1,5 +1,7 @@
 #include "GameLayout.h"
 #include "BagLayout.h"
+#include "ShopLayout.h"
+#include "UserInfoLayout.h"
 #include "PhoneLayout.h"
 #include "MapLayout.h"
 #include "../Game.h"
@@ -23,13 +25,28 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     // 初始化背包组件
     bagLayout_ = Make<BagLayout>(game_logic_);
     mapLayout_ =  Make<MapLayout>(game_logic_);
+    shopLayout_ = Make<ShopLayout>(game_logic_);
+    infoLayout_ = Make<UserInfoLayout>(game_logic_);
 
     MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
-    phoneLayout_ = Make<PhoneLayout>(game_logic_, [this, mapPtr] {
-    // 当点击地图按钮时：先隐藏手机，再显示地图
-        static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
-        mapPtr->show();
-    });
+    ShopLayout* shopPtr = static_cast<ShopLayout*>(shopLayout_.get());
+    UserInfoLayout* infoPtr = static_cast<UserInfoLayout*>(infoLayout_.get());
+
+    phoneLayout_ = Make<PhoneLayout>(
+        game_logic_,
+        [this, mapPtr] {  // onMapClick
+            static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
+            mapPtr->show();
+        },
+        [this, shopPtr] { // onShopClick
+            static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
+            shopPtr->show();
+        },
+        [this, infoPtr] { // onInfoClick
+            static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
+            infoPtr->show();
+        }
+    );
 
     // -- 对话历史渲染器 --
     auto mainViewRenderer = Renderer([this] {
@@ -207,6 +224,8 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
         bagLayout_,
         phoneLayout_,
         mapLayout_,
+        shopLayout_,
+        infoLayout_
     });
 
     // 将这个顶层容器作为 GameLayout 的子组件
@@ -232,6 +251,14 @@ Element GameLayout::Render() {
     MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
     if (mapPtr && mapPtr->isShowing()) {
         return mapLayout_->Render();
+    }
+    ShopLayout* shopPtr = static_cast<ShopLayout*>(shopLayout_.get());
+    if (shopPtr && shopPtr->isShowing()) {
+        return shopLayout_->Render();
+    }
+    UserInfoLayout* infoPtr = static_cast<UserInfoLayout*>(infoLayout_.get());
+    if (infoPtr && infoPtr->isShowing()) {
+        return infoLayout_->Render();
     }
 
     // 如果代码执行到这里，说明没有活动的叠加层，可以更新和渲染主界面
@@ -292,7 +319,7 @@ Element GameLayout::Render() {
                    hbox({
                        text("生命值: " + std::to_string(game_logic_.getPlayer().getHealth())) | color(Color::Green) | flex,
                        separator(),
-                       text("疲劳值: " + std::to_string(game_logic_.getPlayer().getFatigue())) | color(Color::Yellow) | flex,
+                       text("体力: " + std::to_string(game_logic_.getPlayer().getFatigue())) | color(Color::Yellow) | flex,
                        separator(),
                        text("饥饿值: " + std::to_string(game_logic_.getPlayer().getHunger())) | color(Color::RedLight) | flex
                    }))
@@ -321,3 +348,4 @@ Element GameLayout::Render() {
 }
 
 GameLayout::~GameLayout() = default;
+

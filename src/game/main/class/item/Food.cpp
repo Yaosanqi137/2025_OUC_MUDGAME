@@ -1,10 +1,10 @@
 #include "Food.h"
-#include "../entity/Player.h"  // 在这里包含 Player.h
+#include "../entity/Player.h"
 #include <stdexcept>
 
 // 私有构造函数
-Food::Food(FoodType type, double price, double healthEffect, double hungerEffect, double energyEffect)
-    : type_(type), price_(price), healthEffect_(healthEffect), 
+Food::Food(FoodType type, double price, const std::string& name, const std::string& intro, double healthEffect, double hungerEffect, double energyEffect)
+    : AbstractItem(name, intro), type_(type), price_(price), healthEffect_(healthEffect),
       hungerEffect_(hungerEffect), energyEffect_(energyEffect) {}
 
 // 公共构造函数
@@ -33,18 +33,6 @@ Food::Food(FoodType type) {
     }
 }
 
-const std::string& Food::getName() const {
-    static const std::string names[] = {
-        "肉",
-        "苏打水", 
-        "能量饮料",
-        "冷冻披萨",
-        "巧克力棒",
-        "蛋白质棒"
-    };
-    return names[static_cast<int>(type_)];
-}
-
 int Food::getPrice() const {
     return price_;
 }
@@ -52,15 +40,19 @@ int Food::getPrice() const {
 void Food::use(Player& user) {
 
     if (healthEffect_ != 0) {
-        user.addHealthiness(healthEffect_ / user.getHealth());  // 恢复的是血量槽百分比
+        user.addHealth(healthEffect_);  // 恢复血量
     }
 
     if (hungerEffect_ != 0) {
-        user.addHunger(hungerEffect_ / user.getHunger());       // 恢复的是饱食度百分比
+        user.addHunger(hungerEffect_);       // 恢复饱食度
     }
     
     if (energyEffect_ != 0) {
-        user.addFatigue(energyEffect_ / user.getEnergy());     // 恢复的是体力槽百分比
+        user.addFatigue(energyEffect_);     // 恢复的体力
+    }
+
+    if (amount_ > 0) {
+        amount_--;
     }
 }
 
@@ -71,13 +63,13 @@ Food::FoodType Food::getFoodType() const {
 Food Food::createStoreFood(FoodType type) {
     switch (type) {
         case FoodType::MEAT:
-            return Food(type, 20.0, 10.0, 40.0, 0.0);
+            return {type, 20.0, "烤肉", "一块多汁的烤肉，能有效恢复饱食度。", 10.0, 40.0, 0.0};
         case FoodType::SODA:
-            return Food(type, 6.0, 0.0, 9.0, 0.0);
+            return {type, 6.0, "苏打水", "一罐甜得发腻的苏打水。", 0.0, 9.0, 0.0};
         case FoodType::ENERGY_DRINK:
-            return Food(type, 14.0, 0.0, 5.0, 10.0);
+            return {type, 14.0, "能量饮料", "功能性饮料，能快速补充体力。", 0.0, 5.0, 10.0};
         case FoodType::FROZEN_PIZZA:
-            return Food(type, 9.0, 10.0, 17.0, 0.0);
+            return {type, 9.0, "冷冻披萨", "方便快捷的冷冻披萨，稍微恢复健康和饱食度。", 10.0, 17.0, 0.0};
         default:
             throw std::invalid_argument("Not a store food type");
     }
@@ -86,11 +78,12 @@ Food Food::createStoreFood(FoodType type) {
 Food Food::createGymFood(FoodType type) {
     switch (type) {
         case FoodType::ENERGY_DRINK:
-            return Food(type, 18.0, 0.0, 5.0, 10.0);
+            // 注意：健身房的能量饮料可以有不同的价格或描述
+            return {type, 18.0, "能量饮料", "健身房特供能量饮料，效果更佳。", 0.0, 5.0, 10.0};
         case FoodType::CHOCOLATE_BAR:
-            return Food(type, 12.0, 0.0, 5.0, 5.0);
+            return {type, 12.0, "巧克力棒", "高热量巧克力棒，迅速补充能量。", 0.0, 5.0, 5.0};
         case FoodType::PROTEIN_BAR:
-            return Food(type, 18.0, 0.0, 15.0, 0.0);
+            return {type, 18.0, "蛋白质棒", "富含蛋白质的能量棒，健身人士首选。", 0.0, 15.0, 0.0};
         default:
             throw std::invalid_argument("Not a gym food type");
     }
