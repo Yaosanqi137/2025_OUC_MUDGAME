@@ -57,7 +57,7 @@ public:
     void startNewGame();
     void loadGame() const;
     void showGameIntro() const;
-    static void showGameSettings();
+    // static void showGameSettings(); -> 逻辑在View.cpp中实现
     void exitGame();
 
     // --- 服务访问器 ---

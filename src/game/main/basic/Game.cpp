@@ -57,12 +57,6 @@ void Game::showGameIntro() const {
     }
 }
 
-void Game::showGameSettings() {
-    std::cout << "游戏设置..." << std::endl;
-    // TODO
-    // ... 显示设置的具体逻辑 ...
-}
-
 void Game::exitGame() {
     std::cout << "退出游戏..." << std::endl;
     requestExit();

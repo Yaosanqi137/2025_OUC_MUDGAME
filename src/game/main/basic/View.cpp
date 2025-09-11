@@ -2,12 +2,11 @@
 #include "Game.h"
 #include "View.h"
 #include "ui/GameLayout.h"
-#include "../class/entity/Player.h"
+#include "ui/SettingsLayout.h"
 
 #include "FTXUI/component/component.hpp"
 #include "FTXUI/component/screen_interactive.hpp"
 #include "FTXUI/dom/elements.hpp"
-#include "FTXUI/screen/string.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -22,22 +21,33 @@ void View::showMainMenu() {
 
     auto screen = ScreenInteractive::Fullscreen();
 
+    // --- 定义交互组件和状态 ---
+    bool show_settings  = false;
+    auto on_settings_exit = [&] { show_settings  = false; };
+    auto settings_layout = Make<SettingsLayout>(game_logic_, on_settings_exit);
+
     std::vector<std::string> menuItems = {
         "开始新游戏", "读取存档", "游戏介绍", "游戏设置", "退出游戏"
     };
 
     // 按钮的回调函数现在通过 game_logic_ 引用来调用 Game 类的方法
-    auto menu = Container::Vertical({
+    auto menu= Container::Vertical({
         Button(menuItems[0], [&] { game_logic_.startNewGame(); }, ButtonOption::Animated()),
         Button(menuItems[1], [&] { game_logic_.loadGame(); }, ButtonOption::Animated()),
         Button(menuItems[2], [&] { game_logic_.showGameIntro(); }, ButtonOption::Animated()),
-        Button(menuItems[3], [&] { game_logic_.showGameSettings(); }, ButtonOption::Animated()),
+        Button(menuItems[3], [&] { settings_layout->loadSettings(); show_settings = true; }, ButtonOption::Animated()),
         Button(menuItems[4], [&] { game_logic_.exitGame(); screen.ExitLoopClosure()(); }, ButtonOption::Animated())
     });
 
-    auto component = Renderer(menu, [&] {
-        return vbox({
-            vbox({
+    // --- 应用 Modal 装饰器 ---
+    // Modal() 返回一个装饰器, 这个装饰器会捕获 settings_layout 和 show_settings
+    auto root_component = menu | Modal(settings_layout, &show_settings);
+
+    // --- 创建渲染器 ---
+    auto renderer = Renderer(root_component , [&] {
+        // 绘制主菜单背景
+        Element background = vbox({
+             vbox({
                 text("    :=   #%-  :.                                 :%*           .::.::.   -%*      ") | color(Color::Red),
                 text("    -@+ -@%  *@+      *@@@@@@@@@@@@@@@#           #@%.         *@##*@@.  %@%###*. ") | color(Color::Red),
                 text("  @@@@@@@@@@@@@@@#           +@%           ********@#*****-    *@:  @@.:@@+::#@#  ") | color(Color::Red),
@@ -56,9 +66,19 @@ void View::showMainMenu() {
             hbox(text("使用方向键上下移动，Enter键选择") | color(Color::Blue) | center) | flex,
             hbox(text("游戏中请尽量不要命令行界面大小, 全屏游玩体验最佳") | color(Color::Blue) | center) | flex,
         }) | border | flex;
+
+        // 只有当 show_settings 为 true 时，才将设置UI渲染在背景之上
+        if (show_settings) {
+            return dbox({
+                background,
+                settings_layout->Render(),
+            });
+        }
+        // 否则，只渲染背景
+        return background;
     });
 
-    screen.Loop(component);
+    screen.Loop(renderer);
 }
 
 void View::showGameIntroScreen() {
