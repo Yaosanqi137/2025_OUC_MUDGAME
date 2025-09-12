@@ -13,10 +13,8 @@
 
 using namespace ftxui;
 
-BagLayout::BagLayout(Game& game_logic, bool& isShowingFlag)
-    : game_logic_(game_logic), player_(game_logic.getPlayer()), isShowingFlag_(isShowingFlag) {
-
-    // --- 在构造函数中创建所有持久化组件 ---
+BagLayout::BagLayout(Game& game_logic, bool& isShowingFlag, std::vector<std::shared_ptr<AbstractItem>>& displayableItems)
+    : game_logic_(game_logic), player_(game_logic.getPlayer()), isShowingFlag_(isShowingFlag), displayableItems_(displayableItems) {
     
     // 创建一个临时列表，用于收集所有需要交互的组件
     std::vector<Component> interactive_components;

@@ -13,7 +13,7 @@ class AbstractItem;
 
 class BagLayout : public ftxui::ComponentBase {
 public:
-    explicit BagLayout(Game& game_logic, bool& isShowingFlag);
+    explicit BagLayout(Game& game_logic, bool& isShowingFlag, std::vector<std::shared_ptr<AbstractItem>>& displayableItems);
 
     ftxui::Element Render() override;
 
@@ -27,7 +27,7 @@ private:
     bool& isShowingFlag_;
 
     // --- 物品数据 ---
-    std::vector<std::shared_ptr<AbstractItem>> displayableItems_; // 从Player获取的可显示物品
+    std::vector<std::shared_ptr<AbstractItem>>& displayableItems_; // 从Player获取的可显示物品
     int selectedItemIndex_ = -1;
     int currentPage_ = 0;
 

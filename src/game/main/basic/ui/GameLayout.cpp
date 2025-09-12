@@ -24,7 +24,7 @@ using namespace ftxui;
 GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
                                            animationStartTime_(std::chrono::steady_clock::now()) {
     // --- 初始化所有 Layout，并传入对应的可见性标志 ---
-    bagLayout_ = Make<BagLayout>(game_logic_, showBag_);
+    bagLayout_ = Make<BagLayout>(game_logic_, showBag_, game_logic_.getPlayer().getInventory());
     mapLayout_ =  Make<MapLayout>(game_logic_, showMap_);
     shopLayout_ = Make<ShopLayout>(game_logic_, showShop_);
     infoLayout_ = Make<UserInfoLayout>(game_logic_, showInfo_);
