@@ -11,10 +11,11 @@ Bug to fix: not link to BagLayout(ui) yet
 #include "../item/Food.h"
 #include "../item/UsefulItem.h"
 
-Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET"), healthiness(80), strength(1),
+Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
                    stamina(1), agility(1), hunger(80), fatigue(80), money(1000), location("???"), health(100),
                    minStrength(0), minStamina(0), minAgility(0), skillPoints(0),
-                   maxHunger(80), maxFatigue(80), maxHealth(100) {
+                   maxHunger(80), maxFatigue(80), maxHealth(100),
+                   exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0) {
     // 在构造函数中初始化背包
     initializeInventory();
 }
@@ -36,10 +37,6 @@ const std::string& Player::getLocation() const {
 
 void Player::setLocation(const std::string &location) {
     this->location = location;
-}
-
-double Player::getHealthiness() const {
-    return healthiness;
 }
 
 double Player::getStrength() const {
@@ -67,22 +64,13 @@ double Player::getSavings() const {
 }
 
 double Player::getSpeed() const {
-    return 1.1 * agility;
+    return agility;
 }
 
 double Player::getHealth() const {
     return health;
 }
 
-double Player::getEnergy() const {
-    return 100 + 5 * (stamina - 1);
-}
-
-void Player::addHealthiness(const double value) {
-    healthiness += value;
-    healthiness = std::max(0.0,healthiness);    // 确保不低于0
-    healthiness = std::min(100.0,healthiness);    // 确保不高于100
-}
 
 void Player::addStrength(const double value) {
     strength += value;
@@ -102,19 +90,19 @@ void Player::addAgility(const double value) {
 void Player::addHunger(const double value) {
     hunger += value;
     hunger = std::max(0.0, hunger);
-    hunger = std::min(maxHunger, hunger);
+    hunger = std::min(maxHunger + exMaxHunger, hunger);
 }
 
 void Player::addFatigue(const double value) {
     fatigue += value;
     fatigue = std::max(0.0, fatigue);
-    fatigue = std::min(maxFatigue, fatigue);
+    fatigue = std::min(maxFatigue + exMaxFatigue, fatigue);
 }
 
 void Player::addHealth(double value) {
     health += value;
     health = std::max(0.0, health);
-    health = std::max(health, maxHealth);
+    health = std::max(health + exMaxHealth, maxHealth);
 }
 
 

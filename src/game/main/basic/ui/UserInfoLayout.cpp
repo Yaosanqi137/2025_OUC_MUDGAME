@@ -41,7 +41,7 @@ std::string UserInfoLayout::formatGameTime() const {
 std::string UserInfoLayout::formatPlayerStats() const {
     std::stringstream ss;
     ss << "玩家姓名: " << player_.getName() << "\n"
-       << "健康度: " << std::fixed << std::setprecision(1) << (player_.getHealthiness() * 100) << "%\n"
+       << "健康度: " << std::fixed << std::setprecision(1) << (player_.getHealth()) << "%\n"
        << "饥饿度: " << std::fixed << std::setprecision(1) << (player_.getHunger() * 100) << "%\n"
        << "所在位置: " << player_.getLocation();
     return ss.str();

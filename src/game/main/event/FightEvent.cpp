@@ -104,7 +104,11 @@ void FightEvent::startBattle() {
     double playerSpeed = player_->getSpeed();
     double enemySpeed = enemy_->getSpeed();
     
-    playerTurn_ = (playerSpeed >= enemySpeed);
+    playerTurn_ = (playerSpeed > enemySpeed);
+    if(playerSpeed == enemySpeed) {
+        int roll = std::rand() % 2;
+        playerTurn_ = (roll == 0);
+    }
     
     // 开始第一回合
     currentRound_ = 1;
@@ -116,14 +120,14 @@ void FightEvent::endBattle() {
     // 确定胜利者
     if (player_->getHealth() <= 0) {
         playerWon_ = false;
-    } else if (enemy_->getCurrentHealth() <= 0) {
+    } else if (enemy_->getHealth() <= 0) {
         playerWon_ = true;
         applyBattleRewards();
     }
 }
 
 bool FightEvent::isBattleOver() const {
-    return battleOver_ || player_->getHealth() <= 0 || enemy_->getCurrentHealth() <= 0;
+    return battleOver_ || player_->getHealth() <= 0 || enemy_->getHealth() <= 0;
 }
 
 bool FightEvent::isPlayerWinner() const {
@@ -196,7 +200,15 @@ void FightEvent::processEnemyTurn() {
         // 随机选择一个技能
         int skillIndex = std::rand() % enemySkills.size();
         auto skill = enemySkills[skillIndex];
-        
+        if(skill -> canUse(*enemy_)) {
+            skill -> execute(*enemy_, *player_);
+            return;
+        }
+        else 
+        {
+            processEnemySkip();
+            return;
+        }
         // 计算伤害
         double damage = skill->calculateDamage(enemy_->getStrength());
         double hitRate = skill->calculateHitRate(enemy_->getAgility(), 
@@ -247,6 +259,11 @@ void FightEvent::processPlayerSkill(int skillIndex) {
     
     // 检查技能是否可用
     if (!skill->canUse(*player_)) {
+        /*
+        
+        提示技能不可用
+        
+        */
         return;
     }
     
@@ -259,9 +276,18 @@ void FightEvent::processPlayerSkill(int skillIndex) {
     if (checkHit(hitRate)) {
         applyDamageToEnemy(damage);
         
+
+
         // 检查敌人是否被击倒（耐力透支）
+        /*
+
+
+        此处有逻辑bug: 文档说击倒是耐力值小于？敌人的攻击会导致耐力值减少？而且自身的属性居然会减少吗？
+
+
+        */
         double staminaCost = skill->calculateStaminaCost(player_->getStrength());
-        if (enemy_->getCurrentFatigue() < staminaCost) {
+        if (enemy_-> getFatigue() < staminaCost) {
             processKnockdown(enemy_, 20.0); // 敌人被击倒，恢复20%体力
         }
     }
@@ -276,6 +302,8 @@ void FightEvent::processPlayerSkill(int skillIndex) {
     TODO:注意，技能效果可能是自己也可能是敌人
     
     */
+
+    
     skill->execute(*player_, *player_); 
     // skill->execute(*player_, *enemy_); 
 }

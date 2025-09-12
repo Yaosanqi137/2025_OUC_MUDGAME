@@ -19,41 +19,44 @@ public:
     double getStrength() const;
     double getStamina() const;
     double getAgility() const;
+    double getFatigue() const;            // 体力(数值)
+    double getHealth() const;             // 生命值(数值)
 
     // 战斗属性计算
-    double getHealth() const;        // 血量: 100 + 15 * (stamina - 1)
-    double getEnergy() const;        // 体力槽: 100 + 5 * (stamina - 1)
-    double getSpeed() const;         // 速度: agility
+    double getMaxHealth() const;          
+    double getMaxFatigue() const;         
+    double getSpeed() const;              
 
     // 当前状态（可修改）
-    double getCurrentHealth() const;
-    double getCurrentEnergy() const;
-    double getCurrentFatigue() const;
     bool isDefeated() const;
 
     // 修改当前状态
-    void addHealth(double value);
-    void addEnergy(double value);
+    void addStrength(double value);
+    void addStamina(double value);
+    void addAgility(double value);
     void addFatigue(double value);
+    void addHealth(double value);
 
     // 技能相关
     std::vector<std::shared_ptr<Skill>>& getSkills();
     void addSkill(std::shared_ptr<Skill> skill);
 
 private:
-    int id_;
-    std::string name_;
+    int id;
+    std::string name;
 
     // 基础属性
-    double strength_;
-    double stamina_;
-    double agility_;
+    double strength;        // 力量
+    double stamina;         // 耐力
+    double agility;         // 敏捷
+    double fatigue;         // 体力值(数值)
+    double health;          // 生命值(数值)
 
-    // 战斗状态
-    double current_health_;
-    double current_energy_;
-    double current_fatigue_;
+    //上限值
+    double maxHealth;      // 生命值上限
+    double maxFatigue;     // 体力值上限
 
+    // 技能列表
     std::vector<std::shared_ptr<Skill>> skills_;
 };
 
