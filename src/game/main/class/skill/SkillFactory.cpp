@@ -1,7 +1,9 @@
 #include "SkillFactory.h"
+#include "Skill.h"
 #include <memory>
 #include <vector>
 #include <map>
+#include <functional>
 
 // ==================== 基础攻击技能 ====================
 std::shared_ptr<Skill> SkillFactory::createPunch() {
@@ -88,6 +90,14 @@ std::shared_ptr<Skill> SkillFactory::createCloseCombat() {
     return std::make_shared<Skill>("近战缠斗", "近身缠斗", SkillEffectType::BASIC_ATTACK, 4,
         1.0, 2.5, 60.0, 20.0, 1.0, 0.7);
 }
+
+std::shared_ptr<Skill> SkillFactory::createLongPunch() {
+    return std::make_shared<Skill>(
+        "长拳", "基础长拳攻击", SkillEffectType::BASIC_ATTACK, 0, // 教学技能，无需解锁
+        2.0, 0.0, 80.0, 0.0, 3.0, 0.0 // 伤害2，体力消耗3
+    );
+}
+
 
 // ==================== 属性增益技能 ====================
 std::shared_ptr<Skill> SkillFactory::createStandFirm1() {
