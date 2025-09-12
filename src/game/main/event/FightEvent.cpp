@@ -3,6 +3,8 @@
 Changed on 9-12 2:49 by Anyeling
 太晚了，没完工
 
+原文档写击倒 耐力值？？？ 没理解
+特殊奖励未处理，技能效果未处理
 */
 
 
@@ -316,20 +318,20 @@ void FightEvent::processPlayerSkip() {
 
 void FightEvent::processEnemySkip() {
     // 敌人跳过回合恢复20%体力
-    double recoveryAmount = 20.0; // 假设敌人最大体力为100
+    double recoveryAmount = enemy_->getMaxFatigue() * 0.2; 
     enemy_->addFatigue(recoveryAmount);
 }
 
 void FightEvent::processKnockdown(std::shared_ptr<Player> target, double recoveryPercent) {
     // 玩家被击倒：损失20%血量，恢复一定百分比体力
-    target->addHealth(-target->getMaxHealth() * 0.2);
-    target->addFatigue(target->getMaxFatigue() * recoveryPercent / 100.0);
+    target->addHealth(-target->getHealth() * 0.2);
+    target->addFatigue(target->getFatigue() * 0.2);
 }
 
 void FightEvent::processKnockdown(std::shared_ptr<Enemy> target, double recoveryPercent) {
     // 敌人被击倒：损失20%血量，恢复一定百分比体力
     target->addHealth(-target->getHealth() * 0.2);
-    target->addFatigue(20.0); // 假设敌人最大体力为100
+    target->addFatigue(target->getFatigue() * 0.2); 
 }
 
 void FightEvent::applyBattleRewards() {
