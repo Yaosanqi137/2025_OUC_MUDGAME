@@ -31,19 +31,19 @@ void View::showMainMenu() {
     auto* settingsPtr = settingsLayout.get();
 
     std::vector<std::string> menuItems = {
-        "开始新游戏", "读取存档", "游戏介绍", "游戏设置", "退出游戏"
+        game_logic_.isFirstNewGame ? "开始新游戏" : "继续游戏", "读取存档", "游戏介绍", "游戏设置", "退出游戏"
     };
 
     // 按钮的回调函数现在通过 game_logic_ 引用来调用 Game 类的方法
     auto menu= Container::Vertical({
-        Button(menuItems[0], [&] { game_logic_.startNewGame(); }, ButtonOption::Animated()),
+        Button(menuItems[0], [&] { screen.ExitLoopClosure()(); game_logic_.startNewGame(); }, ButtonOption::Animated()),
         Button(menuItems[1], [&] { game_logic_.loadGame(); }, ButtonOption::Animated()),
         Button(menuItems[2], [&] { game_logic_.showGameIntro(); }, ButtonOption::Animated()),
         Button(menuItems[3], [&showSettings, settingsPtr] {
             settingsPtr->loadSettings(); // 显示前加载最新设置
             showSettings = true;
         }, ButtonOption::Animated()),
-        Button(menuItems[4], [&] { game_logic_.exitGame(); screen.ExitLoopClosure()(); }, ButtonOption::Animated())
+        Button(menuItems[4], [&] { game_logic_.exitGame(); }, ButtonOption::Animated())
     });
 
     auto mainMenuLayout = Renderer(menu, [&] {
@@ -190,17 +190,17 @@ void View::showLoadingScreen(const std::string& subtitle) {
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> distrib(2000, 5000);
-        int total_duration_ms = distrib(gen);
+        int totalDurationMs = distrib(gen);
 
-        int total_steps = 100;
-        int sleep_per_step_ms = total_duration_ms / total_steps;
+        int totalSteps = 100;
+        int sleepPerStepMs = totalDurationMs / totalSteps;
 
-        for (int i = 0; i < total_steps; ++i) {
-            float linear_time = static_cast<float>(i + 1) / total_steps;
-            progress = 1.0f - (1.0f - linear_time) * (1.0f - linear_time);
+        for (int i = 0; i < totalSteps; ++i) {
+            float linearTime = static_cast<float>(i + 1) / totalSteps;
+            progress = 1.0f - (1.0f - linearTime) * (1.0f - linearTime);
 
             screen.PostEvent(Event::Custom);
-            std::this_thread::sleep_for(std::chrono::milliseconds(sleep_per_step_ms));
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepPerStepMs));
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -216,31 +216,18 @@ void View::showGameScreen() {
 
     auto screen = ScreenInteractive::Fullscreen();
 
-    game_logic_.setScreen(&screen);
-
     // 创建我们的自定义主组件
-    auto game_layout = Make<GameLayout>(game_logic_);
+    auto gameLayout = Make<GameLayout>(game_logic_);
 
     // 每20ms打印一个字
-    std::atomic<bool> refresh_running{true};
-    std::thread refresh_thread([&] {
-        while (refresh_running) {
+    std::atomic<bool> refreshRunning{true};
+    std::thread refreshThread([&] {
+        while (refreshRunning) {
             using namespace std::chrono_literals;
             screen.PostEvent(Event::Custom);
             std::this_thread::sleep_for(20ms);
         }
     });
 
-    auto event_handler = CatchEvent(game_layout, [&](Event event) {
-        if (event == Event::Special("GAME_EXIT_REQUEST")) {
-            screen.Exit(); // 收到退出事件，执行退出
-            return true;   // 事件已处理
-        }
-        return false;      // 其他事件，交由子组件处理
-    });
-
-    screen.Loop(event_handler); // 启动包含事件处理的循环
-
-    // 循环结束后，清理 screen 指针
-    game_logic_.setScreen(nullptr);
+    screen.Loop(gameLayout); // 启动包含事件处理的循环
 }

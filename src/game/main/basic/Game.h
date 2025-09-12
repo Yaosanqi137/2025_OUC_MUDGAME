@@ -79,17 +79,9 @@ public:
                        const std::vector<std::string>& choices, 
                        std::function<void(int, const std::string&)> onSelect);
 
-    /**
-     * @brief 注册当前活动的ScreenInteractive实例。
-     * @param screen 指向当前活动屏幕的指针。
-     */
-    void setScreen(ftxui::ScreenInteractive* screen);
+    bool isFirstNewGame = true; // 标记是否是第一次开始新游戏
 
 private:
-    /**
-     * @brief 向UI线程发布一个退出请求事件。
-     */
-    void requestExit() const;
 
     GameState currentState_;
     std::optional<InputRequest> inputRequest_;
@@ -98,8 +90,6 @@ private:
     std::unique_ptr<Dialog> dialog_;
     std::unique_ptr<Player> player_;
     std::unique_ptr<StoryController> storyController_;
-
-    ftxui::ScreenInteractive* screen_ = nullptr;            ///< 存储指向当前活动屏幕的指针。
     
     Configuration* config_;
 };

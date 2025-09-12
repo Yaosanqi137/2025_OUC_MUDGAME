@@ -6,6 +6,7 @@
 #include "../GameStory/GameProcess.h"
 
 #include <iostream>
+#include <cstdlib>
 
 Game::Game() : currentState_(GameState::MainMenu)  {
     config_ = Configuration::getInstance();
@@ -28,13 +29,16 @@ void Game::run() const {
 }
 
 void Game::startNewGame() {
-    if (view_) {
-        View::showLoadingScreen("正在加载新游戏");
+    if (isFirstNewGame) {
+        isFirstNewGame = false;
+        if (view_) {
+            View::showLoadingScreen("正在加载新游戏");
+        }
+        std::cout << "开始新游戏..." << std::endl;
+        // TODO
+        // ... 此处是开始新游戏的具体逻辑 ...
+        GameProcess::newStart(*this);
     }
-    std::cout << "开始新游戏..." << std::endl;
-    // TODO
-    // ... 此处是开始新游戏的具体逻辑 ...
-    GameProcess::newStart(*this);
     if (view_) {
         view_->showGameScreen();
     }
@@ -59,7 +63,7 @@ void Game::showGameIntro() const {
 
 void Game::exitGame() const {
     std::cout << "退出游戏..." << std::endl;
-    requestExit();
+    std::exit(0);
 }
 
 // --- 服务访问器实现 ---
@@ -123,16 +127,4 @@ void Game::requestChoice(const std::string& prompt,
         .onChoiceSelect = std::move(onSelect)
     };
     setGameState(GameState::AwaitingChoice);
-}
-
-void Game::setScreen(ftxui::ScreenInteractive* screen) {
-    screen_ = screen;
-}
-
-void Game::requestExit() const {
-    if (screen_) {
-        // 发布一个自定义的特殊事件。
-        // UI线程的事件循环会在下一轮处理这个事件。
-        screen_->Post(ftxui::Event::Special("GAME_EXIT_REQUEST"));
-    }
 }

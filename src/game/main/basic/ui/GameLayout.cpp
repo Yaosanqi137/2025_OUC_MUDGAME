@@ -8,6 +8,7 @@
 #include "../Game.h"
 #include "../Dialog.h"
 #include "../StoryController.h"
+#include "../View.h"
 #include "../../class/entity/Player.h"
 
 #include "FTXUI/component/screen_interactive.hpp"
@@ -174,11 +175,19 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
         showSettings_ = true; }, ButtonOption::Animated());
     auto buttonBag = Button("   背包  ", [&] { showBag_ = true; }, ButtonOption::Animated());
     auto buttonSchedule = Button(" 我的日程 ", []{}, ButtonOption::Animated());
+    auto buttonExitToMainMenu = Button(" 回到主界面 ", [&] {
+        game_logic_.getDialog().clearHistory();
+        game_logic_.getDialog().addMessage("<SYSTEM>", "欢迎回来");
+        // TODO: 调用自动保存方法
+        game_logic_.getView().showMainMenu();
+    }, ButtonOption::Animated());
+
     navigationContainer_ = Container::Vertical({
         buttonPhone,
         buttonSettings,
         buttonBag,
         buttonSchedule,
+        buttonExitToMainMenu,
     });
 
     // -- 输入组件 --
@@ -221,7 +230,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     );
 
     // 将所有主界面组件组合到一个单独的容器中
-    auto main_layout_renderer = Renderer(
+    auto mainLayoutRenderer = Renderer(
         Container::Vertical({interactiveMainView_, Maybe(navigationContainer_, &showSidePanels_), Maybe(inputArea_, &showFooter_)}),
         [&] {
             Elements leftChildren;
@@ -260,7 +269,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     // --- 创建最终的顶层容器 ---
     topLevelContainer_ = Container::Stacked({
         // 底层：主游戏布局
-        Maybe(main_layout_renderer, &showMainUI_),
+        Maybe(mainLayoutRenderer, &showMainUI_),
         // 顶层：所有可能的弹出窗口
         Maybe(bagLayout_, &showBag_),
         Maybe(phoneLayout_, &showPhone_),
@@ -275,7 +284,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
 }
 
 /**
- * @brief 渲染函数，FTXUI每一帧都会调用。
+ * @brief 渲染函数��FTXUI每一帧都会调用。
  * @details 负责根据当前游戏状态同步UI，并组合所有子组件来构建最终的界面布局。
  */
 Element GameLayout::Render() {
@@ -285,7 +294,7 @@ Element GameLayout::Render() {
     // 更新剧情控制器
     game_logic_.getStoryController().update();
 
-    // 状态同步：根据Game状态切换Tab的显示，并动态更新内容
+    // 状态同步：根据Game状��切换Tab的显示，并动态更新内容
     GameState state = game_logic_.getCurrentState();
     auto requestOpt = game_logic_.getCurrentInputRequest();
     lastInputPrompt_ = " 指令 ";
@@ -299,7 +308,7 @@ Element GameLayout::Render() {
             selectedInputMode_ = 2;
             if (requestOpt) {
                 lastInputPrompt_ = requestOpt->prompt;
-                // 动态更新选项按钮
+                // 动态更新���项按钮
                 if (choiceContainer_->ChildCount() != requestOpt->choices.size()) {
                     choiceContainer_->DetachAllChildren();
                     for (int i = 0; i < requestOpt->choices.size(); ++i) {
@@ -335,12 +344,12 @@ Element GameLayout::Render() {
 
     Element mainContent = topLevelContainer_->Render();
 
-    Element screen_layout = vbox({
+    Element screenLayout = vbox({
         header,
         mainContent | flex,
     });
 
-    return screen_layout;
+    return screenLayout;
 }
 
 bool GameLayout::isAnyPopupActive() const {
