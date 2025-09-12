@@ -24,8 +24,6 @@ class StoryController;
  */
 enum class GameState {
     MainMenu,            ///< 游戏在主菜单界面。
-    Settings,            ///< 游戏在设置界面。
-    Loading,             ///< 正在加载。
     InGame,              ///< 正常游戏进行中，等待玩家输入指令。
     InStory,             ///< 正在走剧情，禁止输入，禁止按侧边按钮
     AwaitingTextInput,   ///< 等待玩家进行自由文本输入。
