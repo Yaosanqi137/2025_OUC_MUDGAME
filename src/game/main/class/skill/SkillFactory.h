@@ -4,8 +4,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-
-class Skill;
+#include "../skill/Skill.h"
 
 class SkillFactory {
 public:
@@ -60,6 +59,9 @@ public:
     
     // 获取所有技能名称（用于UI显示等）
     static std::vector<std::string> getAllSkillNames();
+    
+    // 获取技能ID映射
+    static std::map<std::string, int> getSkillNameToIdMap();
 };
 
 #endif // SKILLFACTORY_H
