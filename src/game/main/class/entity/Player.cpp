@@ -385,17 +385,6 @@ void Player::addSkill(std::shared_ptr<Skill> skill) {
     skills_.push_back(skill);
 }
 
-bool Player::learnSkill(const std::string& skillName) {
-    auto skill = SkillFactory::createSkillByName(skillName);
-    if (skill && skillPoints >= skill->getUnlockCost()) {
-        skill->unlock();
-        skills_.push_back(skill);
-        skillPoints -= skill->getUnlockCost();
-        return true;
-    }
-    return false;
-}
-
 
 // ========= 技能树管理器 ==========
 bool Player::learnSkill(const std::string& skillName) {
