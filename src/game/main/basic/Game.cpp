@@ -1,27 +1,27 @@
-#include "Dialog.h"
 #include "Game.h"
+#include "Dialog.h"
 #include "StoryController.h"
 #include "View.h"
 #include "../class/entity/Player.h"
 #include "../GameStory/GameProcess.h"
-#include "GameTime.h"
 
 #include <iostream>
 
 Game::Game() : currentState_(GameState::MainMenu)  {
-    view_ = std::make_unique<View>(*this);
+    config_ = Configuration::getInstance();
+
     dialog_ = std::make_unique<Dialog>(*this);
     player_ = std::make_unique<Player>(*this);
     storyController_ = std::make_unique<StoryController>(*this);
 
-    GameTime(); // 初始化游戏时间
+    view_ = std::make_unique<View>(*this);
 }
 
 Game::~Game() {
     // TODO: 游戏退出析构函数
 }
 
-void Game::run() {
+void Game::run() const {
     if (view_) {
         view_->showMainMenu();
     }
@@ -57,13 +57,7 @@ void Game::showGameIntro() const {
     }
 }
 
-void Game::showGameSettings() {
-    std::cout << "游戏设置..." << std::endl;
-    // TODO
-    // ... 显示设置的具体逻辑 ...
-}
-
-void Game::exitGame() {
+void Game::exitGame() const {
     std::cout << "退出游戏..." << std::endl;
     requestExit();
 }
@@ -83,6 +77,10 @@ StoryController& Game::getStoryController() const {
 
 View& Game::getView() const {
     return *view_;
+}
+
+Configuration& Game::getConfig() const {
+    return *config_;
 }
 
 // --- 状态管理实现 ---

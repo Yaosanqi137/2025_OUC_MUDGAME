@@ -1,16 +1,13 @@
 #include "ShopLayout.h"
 #include "../Game.h"
 #include "../../class/entity/Player.h"
-#include "../../class/item/UsefulItem.h"
 #include "ftxui/dom/elements.hpp"
 #include "ftxui/component/component.hpp"
-#include <sstream>
-#include <iomanip>
 
 using namespace ftxui;
 
-ShopLayout::ShopLayout(Game& game_logic)
-    : game_logic_(game_logic), player_(game_logic.getPlayer()) {
+ShopLayout::ShopLayout(Game& game_logic, bool& isShowingFlag)
+    : game_logic_(game_logic), player_(game_logic.getPlayer()), isShowingFlag_(isShowingFlag) {
 
     // 初始化商店物品
     initializeShopItems();
@@ -55,7 +52,9 @@ ShopLayout::ShopLayout(Game& game_logic)
 
     // 创建控制按钮
     exitButton_ = Button("返回", [this] {
-        hide();
+        selectedItemIndex_ = -1;
+        currentPage_ = 0;
+        isShowingFlag_ = false;
     });
     buyButton_ = Button("购买", [this] {
         if (selectedItemIndex_ >= 0 && selectedItemIndex_ < static_cast<int>(shopItems_.size())) {
@@ -127,10 +126,6 @@ int ShopLayout::getTotalPages() const {
 }
 
 Element ShopLayout::Render() {
-    if (!isShowing_) {
-        return text("");
-    }
-
     if (shopItems_.empty()) {
         auto empty_shop_view = vbox({
             filler(),
@@ -218,18 +213,4 @@ Element ShopLayout::Render() {
     });
 
     return window(text(" 🛒 网购平台 ") | bold, mainLayout) | clear_under;
-}
-
-void ShopLayout::show() {
-    isShowing_ = true;
-    selectedItemIndex_ = -1;
-    currentPage_ = 0;
-}
-
-void ShopLayout::hide() {
-    isShowing_ = false;
-}
-
-bool ShopLayout::isShowing() const {
-    return isShowing_;
 }

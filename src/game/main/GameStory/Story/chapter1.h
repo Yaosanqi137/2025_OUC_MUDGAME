@@ -44,6 +44,7 @@ namespace Chapter1 {
             [](Game& game) {
                 game.getDialog().clearHistory();
                 game.getPlayer().setLocation("拳击馆外");
+                game.setGameState(GameState::InStory);
             }
         }
     });
@@ -58,11 +59,6 @@ namespace Chapter1 {
     );
 
     inline DialogNode _00000006(6, "", "我从小有一个梦想，就是当上拳王", {}, 0, {
-        ExecuteAction{
-            [](Game& game) {
-                game.setGameState(GameState::InStory);
-            }
-        },
         SpeakAction{"", "我呆呆的看着拳击馆里不断挥拳的几个正在训练的拳击手，心中羡慕不已"},
         SpeakAction{"<UNKNOWN>", "嘿，小伙子，你看什么呢"},
         SpeakAction{"<PLAYER_NAME>", "我...我也想练拳...只可惜我的财力不足，不足以支撑我学这个..."},

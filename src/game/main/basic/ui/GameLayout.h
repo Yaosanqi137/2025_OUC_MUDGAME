@@ -10,15 +10,17 @@
 
 class Game;
 
+class BagLayout;
+
+class MapLayout;
+
+class SettingsLayout;
+
 /**
  * @class GameLayout
  * @brief 一个自定义FTXUI组件，封装了整个游戏主界面的布局、状态和交互逻辑。
  * @details 通过将所有子组件和UI状态作为成员变量，解决了生命周期问题，并提高了代码的封装性。
  */
-class BagLayout;
-
-class MapLayout;
-
 class GameLayout : public ftxui::ComponentBase {
 public:
     /**
@@ -27,7 +29,7 @@ public:
      */
     explicit GameLayout(Game& game_logic);
 
-    ~GameLayout();
+    ~GameLayout() override;
 
     /**
      * @brief 重写的Render方法，FTXUI每一帧都会调用此方法来绘制界面。
@@ -36,7 +38,7 @@ public:
     ftxui::Element Render() override;
 
 private:
-    Game& game_logic_; ///< 对Game核心对象的引用。
+    Game& game_logic_;
 
     // --- UI状态和数据成员 ---
     std::string commandInputStr_;                                 ///< 存储默认指令输入框的文本。
@@ -45,11 +47,22 @@ private:
     int scrollIndex_ = 0;                                         ///< 对话历史的滚动偏移量。
     size_t currentMessageIndex_ = 0;                              ///< 用于打字机效果的当前消息索引。
     std::chrono::steady_clock::time_point animationStartTime_;    ///< 用于打字机效果的动画开始时间。
+    [[nodiscard]] bool isAnyPopupActive() const;                  ///< 是否有任何弹出窗口显示。
+    std::string lastInputPrompt_;                                 ///< 输入提示词。
 
     // --- 控制UI部分的活动状态 ---
+    bool showMainUI_ = true;
     bool showSidePanels_ = true;
     bool showPlayerStatus_ = true;
     bool showFooter_ = true;
+
+    // --- 用于控制覆盖层可见性的状态标志 ---
+    bool showBag_ = false;
+    bool showPhone_ = false;
+    bool showMap_ = false;
+    bool showShop_ = false;
+    bool showInfo_ = false;
+    bool showSettings_ = false;
 
     // --- 子组件成员 ---
     ftxui::Component interactiveMainView_;            ///< 可交互的对话历史显示区。
@@ -65,6 +78,7 @@ private:
     ftxui::Component mapLayout_;                      ///< 地图界面组件
     ftxui::Component shopLayout_;                     ///< 网购界面组件
     ftxui::Component infoLayout_;                     ///< 个人信息组件
+    ftxui::Component settingsLayout_;                 ///< 设置组件
     ftxui::Component topLevelContainer_;              ///< 添加一个顶层容器
 };
 

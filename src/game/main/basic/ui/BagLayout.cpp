@@ -13,7 +13,8 @@
 
 using namespace ftxui;
 
-BagLayout::BagLayout(Game& game_logic) : game_logic_(game_logic), player_(game_logic.getPlayer()) {
+BagLayout::BagLayout(Game& game_logic, bool& isShowingFlag)
+    : game_logic_(game_logic), player_(game_logic.getPlayer()), isShowingFlag_(isShowingFlag) {
 
     // --- 在构造函数中创建所有持久化组件 ---
     
@@ -54,7 +55,7 @@ BagLayout::BagLayout(Game& game_logic) : game_logic_(game_logic), player_(game_l
     }
 
     // 2. 初始化其他控制按钮
-    exitButton_ = Button(" [ 退 出 ] ", [this] { hide(); });
+    exitButton_ = Button(" [ 退 出 ] ", [this] { isShowingFlag_ = false; selectedItemIndex_ = -1; currentPage_ = 0; });
     pagePrevButton_ = Button(" [ 向左翻页 ] ", [this] {
         if (currentPage_ > 0) {
             currentPage_--;
@@ -114,10 +115,6 @@ std::string BagLayout::getItemTypeString(const std::shared_ptr<AbstractItem>& it
 }
 
 Element BagLayout::Render() {
-    if (!isShowing_) {
-        return text("");
-    }
-
     // 每次渲染前刷新物品列表
     refreshItems();
 
@@ -202,19 +199,4 @@ Element BagLayout::Render() {
     });
 
     return window(text(" 背包 ") | bold, mainLayout) | clear_under;
-}
-
-void BagLayout::show() {
-    isShowing_ = true;
-    selectedItemIndex_ = -1;
-    currentPage_ = 0;
-    refreshItems(); // 显示时刷新物品列表
-}
-
-void BagLayout::hide() {
-    isShowing_ = false;
-}
-
-bool BagLayout::isShowing() const {
-    return isShowing_;
 }

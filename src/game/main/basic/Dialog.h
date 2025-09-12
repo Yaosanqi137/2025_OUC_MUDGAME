@@ -1,5 +1,5 @@
 #ifndef DIALOG_H
-#define DIALOG_G
+#define DIALOG_H
 
 #include <chrono>
 #include <string>
@@ -36,7 +36,7 @@ public:
      * @details 这是一个"读取后即消耗"的标志。调用此函数会返回当前状态并立即重置标志为false。
      * @return 如果历史记录被清除了，则返回true。
      */
-    [[nodiscard]] bool historyWasClearedAndConsume();
+    [[nodiscard]] bool historyWasClearedAndConsume() const;
 
 private:
     Game& game_logic_;
@@ -45,4 +45,4 @@ private:
     static constexpr size_t MAX_HISTORY_SIZE = 64; // 限制历史记录最大长度
 };
 
-#endif // DIALOG_G
+#endif // DIALOG_H

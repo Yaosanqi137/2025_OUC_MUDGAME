@@ -1,20 +1,17 @@
-#pragma once
+#ifndef USERINFOLAYOUT_H
+#define USERINFOLAYOUT_H
 
 #include "ftxui/component/component.hpp"
 #include <memory>
-#include <functional>
 
 class Game;
 class Player;
 
 class UserInfoLayout : public ftxui::ComponentBase {
 public:
-    explicit UserInfoLayout(Game& game_logic);
+    explicit UserInfoLayout(Game& game_logic, bool& isShowingFlag);
 
     ftxui::Element Render() override;
-    void show();
-    void hide();
-    [[nodiscard]] bool isShowing() const;
 
 private:
     std::string formatGameTime() const;
@@ -23,9 +20,11 @@ private:
 
     Game& game_logic_;
     Player& player_;
-    bool isShowing_ = false;
+    bool& isShowingFlag_;
 
     // UI组件
     ftxui::Component exitButton_;
     ftxui::Component mainContainer_;
 };
+
+#endif // USERINFOLAYOUT_H

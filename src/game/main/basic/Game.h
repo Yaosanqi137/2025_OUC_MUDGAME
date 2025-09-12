@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "Configuration.h"
 #include "Types.h"
 #include "../class/entity/Player.h"
 #include "FTXUI/component/screen_interactive.hpp"
@@ -22,12 +23,11 @@ class StoryController;
  * @brief 定义了游戏可能处于的几种核心状态。
  */
 enum class GameState {
-    MainMenu,           ///< 游戏在主菜单界面。
-    Loading,            ///< 正在加载。
-    InGame,             ///< 正常游戏进行中，等待玩家输入指令。
+    MainMenu,            ///< 游戏在主菜单界面。
+    InGame,              ///< 正常游戏进行中，等待玩家输入指令。
     InStory,             ///< 正在走剧情，禁止输入，禁止按侧边按钮
-    AwaitingTextInput,  ///< 等待玩家进行自由文本输入。
-    AwaitingChoice,     ///< 等待玩家从选项中做出选择。
+    AwaitingTextInput,   ///< 等待玩家进行自由文本输入。
+    AwaitingChoice,      ///< 等待玩家从选项中做出选择。
 };
 
 /**
@@ -51,18 +51,19 @@ public:
     Game();
     ~Game();
 
-    void run();
+    void run() const;
     void startNewGame();
     void loadGame() const;
     void showGameIntro() const;
-    static void showGameSettings();
-    void exitGame();
+    // static void showGameSettings(); -> 逻辑在View.cpp中实现
+    void exitGame() const;
 
     // --- 服务访问器 ---
     [[nodiscard]] Dialog& getDialog() const;
     [[nodiscard]] Player& getPlayer() const;
     [[nodiscard]] StoryController& getStoryController() const;
     [[nodiscard]] View& getView() const;
+    [[nodiscard]] Configuration& getConfig() const;
 
     // --- 状态管理 ---
     void setGameState(GameState newState);
@@ -99,6 +100,8 @@ private:
     std::unique_ptr<StoryController> storyController_;
 
     ftxui::ScreenInteractive* screen_ = nullptr;            ///< 存储指向当前活动屏幕的指针。
+    
+    Configuration* config_;
 };
 
 inline static const std::string VOICEOVER; // 旁白

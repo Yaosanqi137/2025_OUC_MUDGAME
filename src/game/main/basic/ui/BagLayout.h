@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BAGLAYOUT_H
+#define BAGLAYOUT_H
 
 #include "ftxui/component/component.hpp"
 #include <vector>
@@ -12,12 +13,9 @@ class AbstractItem;
 
 class BagLayout : public ftxui::ComponentBase {
 public:
-    explicit BagLayout(Game& game_logic);
+    explicit BagLayout(Game& game_logic, bool& isShowingFlag);
 
     ftxui::Element Render() override;
-    void show();
-    void hide();
-    [[nodiscard]] bool isShowing() const;
 
 private:
     void refreshItems(); // 从Player获取最新的物品列表
@@ -26,7 +24,7 @@ private:
 
     Game& game_logic_;
     Player& player_;
-    bool isShowing_ = false;
+    bool& isShowingFlag_;
 
     // --- 物品数据 ---
     std::vector<std::shared_ptr<AbstractItem>> displayableItems_; // 从Player获取的可显示物品
@@ -44,3 +42,5 @@ private:
     // 使用一个主容器来统一管理所有可交互的子组件
     ftxui::Component mainContainer_;
 };
+
+#endif // BAGLAYOUT_H

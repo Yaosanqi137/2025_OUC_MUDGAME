@@ -8,6 +8,41 @@
 
 using namespace ftxui;
 
+MapLayout::MapLayout(Game& game_logic, bool& isShowingFlag)
+    : game_logic_(game_logic), isShowingFlag_(isShowingFlag) {
+    initializeLocations();
+
+    buttonTaxi_ = Button("计程车 (15元)", [this] { travelBy("taxi"); });
+    buttonWalk_ = Button("步行", [this] { travelBy("walk"); });
+    buttonCancelTravel_ = Button("取消", [this] { viewMode_ = 0; });
+    buttonExit_ = Button("[ 退出地图 ]", [this] { isShowingFlag_ = false; });
+
+    dialogContainer_ = Container::Vertical({
+        buttonTaxi_,
+        buttonWalk_,
+        buttonCancelTravel_,
+    });
+
+    Add(Container::Vertical({
+        dialogContainer_,
+        buttonExit_,
+    }));
+}
+
+void MapLayout::resetState() {
+    viewMode_ = 0;
+    // 找到玩家当前位置对应的地图ID
+    const std::string& player_loc_name = game_logic_.getPlayer().getLocation();
+    std::string start_id = "home"; // 默认值
+    for (const auto& [id, loc] : locations_) {
+        if (loc.name == player_loc_name) {
+            start_id = id;
+            break;
+        }
+    }
+    selectedLocationId_ = start_id;
+}
+
 void DrawLocationNode(Canvas& canvas, const MapLocation& loc, Color color, bool isSelected, const std::string& extraText = "") {
     std::string displayName = loc.name + extraText;
     int nameWidth = string_width(displayName);
@@ -40,31 +75,7 @@ void DrawLocationNode(Canvas& canvas, const MapLocation& loc, Color color, bool 
     canvas.DrawText(startX + 2, startY + 1, displayName, color);
 }
 
-MapLayout::MapLayout(Game& game_logic) : game_logic_(game_logic) {
-    initializeLocations();
-
-    buttonTaxi_ = Button("计程车 (15元)", [this] { travelBy("taxi"); });
-    buttonWalk_ = Button("步行", [this] { travelBy("walk"); });
-    buttonCancelTravel_ = Button("取消", [this] { viewMode_ = 0; });
-    buttonExit_ = Button("[ 退出地图 ]", [this] { hide(); });
-
-    dialogContainer_ = Container::Vertical({
-        buttonTaxi_,
-        buttonWalk_,
-        buttonCancelTravel_,
-    });
-
-    Add(Container::Vertical({
-        dialogContainer_,
-        buttonExit_,
-    }));
-}
-
 bool MapLayout::OnEvent(Event event) {
-    if (!isShowing_) {
-        return false;
-    }
-
     if (viewMode_ == 1) {
         return dialogContainer_->OnEvent(event);
     }
@@ -118,14 +129,10 @@ void MapLayout::travelBy(const std::string& method) {
     }
 
     player.setLocation(destination.name);
-    hide();
+    isShowingFlag_ = false;
 }
 
 Element MapLayout::Render() {
-    if (!isShowing_) {
-        return emptyElement();
-    }
-
     auto legend = hbox({
         text("图例: "),
         text("■") | color(Color::Green) | bold, text(" 已选择  "),
@@ -141,7 +148,7 @@ Element MapLayout::Render() {
     // 先绘制所有连接线，让它们作为背景
     for (const auto& [id, loc] : locations_) {
         for (const auto& navId : {loc.nav_up, loc.nav_down, loc.nav_left, loc.nav_right}) {
-            if (!navId.empty() && locations_.count(navId)) {
+            if (!navId.empty() && locations_.contains(navId)) {
                 const auto& neighbor = locations_.at(navId);
                 // 使用更暗的颜色绘制连接线，以突出节点
                 canvas.DrawPointLine(loc.x, loc.y, neighbor.x, neighbor.y, Color::GrayDark);
@@ -204,24 +211,4 @@ Element MapLayout::Render() {
     }
 
     return mainMapWindow | clear_under;
-}
-
-void MapLayout::show() {
-    isShowing_ = true;
-    viewMode_ = 0;
-
-    std::string player_loc = game_logic_.getPlayer().getLocation();
-    if (locations_.count(player_loc) > 0) {
-        selectedLocationId_ = player_loc;
-    } else {
-        selectedLocationId_ = "home";
-    }
-}
-
-void MapLayout::hide() {
-    isShowing_ = false;
-}
-
-bool MapLayout::isShowing() const {
-    return isShowing_;
 }
