@@ -18,6 +18,9 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , st
                    exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0) {
     // 在构造函数中初始化背包
     initializeInventory();
+
+    // 初始化技能树（可以初始化已学技能，暂时留个端口）
+    // skillTreeManager_.addLearnedSkill("直拳");
 }
 
 // TODO: 保存数据
@@ -391,4 +394,42 @@ bool Player::learnSkill(const std::string& skillName) {
         return true;
     }
     return false;
+}
+
+
+// ========= 技能树管理器 ==========
+bool Player::learnSkill(const std::string& skillName) {
+    auto skill = SkillFactory::createSkillByName(skillName);
+    if (!skill) {
+        return false;
+    }
+    
+    // 使用技能树管理器检查
+    if (!skillTreeManager.tryLearnSkill(skillName, skillPoints)) {
+        return false;
+    }
+    
+    // 解锁技能并消耗技能点
+    skill->unlock();
+    skills_.push_back(skill);
+    skillPoints -= skill->getUnlockCost();
+    
+    return true;
+}
+
+bool Player::canLearnSkill(const std::string& skillName) const {
+    auto skill = SkillFactory::createSkillByName(skillName);
+    if (!skill) {
+        return false;
+    }
+    
+    return skillTreeManager.canLearnSkill(skillName) && (skillPoints >= skill->getUnlockCost());
+}
+
+std::vector<std::string> Player::getAvailableSkills() const {
+    return skillTreeManager.getAvailableSkills();
+}
+
+std::vector<std::string> Player::getLearnedSkillNames() const {
+    return skillTreeManager.getLearnedSkills();
 }

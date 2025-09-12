@@ -6,6 +6,7 @@
 #include "../item/AbstractItem.h"
 #include "../skill/Skill.h"
 #include "../skill/SkillFactory.h"
+#include "../skill/SkillTreeManager.h"
 
 class Game;
 
@@ -98,8 +99,14 @@ public:
     // 技能操作
     std::vector<std::shared_ptr<Skill>>& getSkills();
     void addSkill(std::shared_ptr<Skill> skill);
-    bool learnSkill(const std::string& skillName);
 
+    // 技能学习相关
+    bool learnSkill(const std::string& skillName);
+    bool canLearnSkill(const std::string& skillName) const;
+    std::vector<std::string> getAvailableSkills() const;
+    std::vector<std::string> getLearnedSkillNames() const;
+
+    
     // 初始化背包（添加所有物品的单例，数量为0）
     void initializeInventory();
 
@@ -147,6 +154,8 @@ private:
     double skillPoints;     // 技能点
 
     std::vector<std::shared_ptr<Skill>> skills_;    // 已解锁的技能列表
+
+    SkillTreeManager skillTreeManager; // 技能树管理器
 
     std::vector<std::shared_ptr<AbstractItem>> inventory_;  // 背包
 
