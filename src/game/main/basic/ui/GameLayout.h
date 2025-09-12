@@ -47,11 +47,22 @@ private:
     int scrollIndex_ = 0;                                         ///< 对话历史的滚动偏移量。
     size_t currentMessageIndex_ = 0;                              ///< 用于打字机效果的当前消息索引。
     std::chrono::steady_clock::time_point animationStartTime_;    ///< 用于打字机效果的动画开始时间。
+    [[nodiscard]] bool isAnyPopupActive() const;                  ///< 是否有任何弹出窗口显示。
+    std::string lastInputPrompt_;                                 ///< 输入提示词。
 
     // --- 控制UI部分的活动状态 ---
+    bool showMainUI_ = true;
     bool showSidePanels_ = true;
     bool showPlayerStatus_ = true;
     bool showFooter_ = true;
+
+    // --- 用于控制覆盖层可见性的状态标志 ---
+    bool showBag_ = false;
+    bool showPhone_ = false;
+    bool showMap_ = false;
+    bool showShop_ = false;
+    bool showInfo_ = false;
+    bool showSettings_ = false;
 
     // --- 子组件成员 ---
     ftxui::Component interactiveMainView_;            ///< 可交互的对话历史显示区。

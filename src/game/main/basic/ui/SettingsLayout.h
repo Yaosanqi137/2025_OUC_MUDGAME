@@ -3,7 +3,6 @@
 
 #include "ftxui/component/component_base.hpp"
 #include "ftxui/component/component.hpp"
-#include <functional>
 #include <vector>
 #include <string>
 
@@ -20,14 +19,11 @@ public:
     /**
      * @brief SettingsLayout的构造函数。
      * @param game_logic 对Game核心对象的引用。
+     * @param isShowingFlag 对显示标志的引用。
      */
-    explicit SettingsLayout(Game& game_logic);
+    explicit SettingsLayout(Game& game_logic, bool& isShowingFlag);
 
     ftxui::Element Render() override;
-
-    void show();
-    void hide();
-    [[nodiscard]] bool isShowing() const;
 
     void loadSettings();
 
@@ -35,11 +31,11 @@ private:
     /**
      * @brief 将临时状态中的设置应用并保存到Configuration。
      */
-    void applyAndSaveChanges();
+    void applyAndSaveChanges() const;
     void updateSpeedString(); // 辅助函数，同步字符串和整数
 
     Game& game_logic_;
-    bool isShowing_ = false;
+    bool& isShowingFlag_;
 
     // --- 临时状态和数据 ---
     int tempDifficultyIndex_ = 1; // 0:简单, 1:普通, 2:困难

@@ -28,22 +28,22 @@ struct MapLocation {
  */
 class MapLayout : public ftxui::ComponentBase {
 public:
-    explicit MapLayout(Game& game_logic);
+    explicit MapLayout(Game& game_logic, bool& isShowingFlag);
+
     ftxui::Element Render() override;
 
     // 添加 OnEvent 函数的声明，并使用 override 关键字确保正确覆盖基类方法
     bool OnEvent(ftxui::Event event) override;
 
-    void show();
-    void hide();
-    bool isShowing() const;
+    // 提供一个公共方法用于重置状态
+    void resetState();
 
 private:
     void initializeLocations();
     void travelBy(const std::string& method);
 
     Game& game_logic_;
-    bool isShowing_ = false;
+    bool& isShowingFlag_;
 
     // --- UI状态 ---
     // 0: 地图浏览模式, 1: 出行方式确认弹窗

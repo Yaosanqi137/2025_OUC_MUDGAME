@@ -21,49 +21,34 @@ void View::showMainMenu() {
 
     auto screen = ScreenInteractive::Fullscreen();
 
+    // --- 状态标志：定义所有互斥的UI层 ---
+    bool showSettings = false;
+    bool showMenu = true; // 主菜单默认显示
+
     // --- 定义交互组件和状态 ---
-    auto settingsLayout = Make<SettingsLayout>(game_logic_);
+    auto settingsLayout = Make<SettingsLayout>(game_logic_, showSettings);
+
+    auto* settingsPtr = settingsLayout.get();
 
     std::vector<std::string> menuItems = {
         "开始新游戏", "读取存档", "游戏介绍", "游戏设置", "退出游戏"
     };
-
-    auto* settingsPtr = settingsLayout.get();
 
     // 按钮的回调函数现在通过 game_logic_ 引用来调用 Game 类的方法
     auto menu= Container::Vertical({
         Button(menuItems[0], [&] { game_logic_.startNewGame(); }, ButtonOption::Animated()),
         Button(menuItems[1], [&] { game_logic_.loadGame(); }, ButtonOption::Animated()),
         Button(menuItems[2], [&] { game_logic_.showGameIntro(); }, ButtonOption::Animated()),
-        Button(menuItems[3], [settingsPtr] { settingsPtr->show(); }, ButtonOption::Animated()),
+        Button(menuItems[3], [&showSettings, settingsPtr] {
+            settingsPtr->loadSettings(); // 显示前加载最新设置
+            showSettings = true;
+        }, ButtonOption::Animated()),
         Button(menuItems[4], [&] { game_logic_.exitGame(); screen.ExitLoopClosure()(); }, ButtonOption::Animated())
     });
 
-    auto topLevelContainer = Container::Stacked({
-        menu,
-        settingsLayout
-    });
-
-    // --- 创建渲染器 ---
-    auto renderer = Renderer(topLevelContainer , [&] {
-        // a. 优先渲染覆盖层
-        if (settingsPtr->isShowing()) {
-            // 当设置显示时，让它获得焦点
-            if (!settingsLayout->Focused()) {
-                settingsLayout->TakeFocus();
-            }
-            return settingsLayout->Render();
-        }
-
-        // b. 如果没有覆盖层，则渲染主菜单
-        // 确保主菜单在需要时能重新获得焦点
-        if (!menu->Focused()) {
-            menu->TakeFocus();
-        }
-
-        // 绘制主菜单背景
-        Element background = vbox({
-             vbox({
+    auto mainMenuLayout = Renderer(menu, [&] {
+        Element layout = vbox({
+            vbox({
                 text("    :=   #%-  :.                                 :%*           .::.::.   -%*      ") | color(Color::Red),
                 text("    -@+ -@%  *@+      *@@@@@@@@@@@@@@@#           #@%.         *@##*@@.  %@%###*. ") | color(Color::Red),
                 text("  @@@@@@@@@@@@@@@#           +@%           ********@#*****-    *@:  @@.:@@+::#@#  ") | color(Color::Red),
@@ -76,18 +61,41 @@ void View::showMainMenu() {
                 text("        :@%          #@@@@@@@@@@@@@@@@@%  *@@++%@%*=====+++*+ *@@@@@#*=.@@++=+@@: ") | color(Color::Red),
                 text("      #@@@+          :::::::::::::::::::   *     -*@@@@@%@%@. .:        @@==+=@@. ") | color(Color::Red)
             }) | center | border,
-            separator(),
-            menu->Render() | flex | center,
-            separator(),
-            hbox(text("使用方向键上下移动，Enter键选择") | color(Color::Blue) | center) | flex,
-            hbox(text("游戏中请尽量不要命令行界面大小, 全屏游玩体验最佳") | color(Color::Blue) | center) | flex,
-        }) | border | flex;
 
-        // 否则，只渲染背景
-        return background;
+            menu->Render() | flex | center,
+
+            separator(),
+            hbox(text("使用方向键上下移动，Enter键选择") | color(Color::Blue) | center),
+            hbox(text("游戏中请尽量不要命令行界面大小, 全屏游玩体验最佳") | color(Color::Blue) | center)
+        });
+
+        return layout;
     });
 
-    screen.Loop(renderer);
+    auto topLevelContainer = Container::Stacked({
+        // 底层：主菜单
+        Maybe(mainMenuLayout, &showMenu),
+        // 顶层：设置菜单
+        Maybe(settingsLayout, &showSettings),
+    });
+
+    auto finalRenderer = Renderer(topLevelContainer, [&] {
+        // A. 状态同步：确保 menu 和 settings 互斥
+        //    这是连接我们两个布尔状态的关键。
+        showMenu = !showSettings;
+
+        // B. 焦点管理
+        if (showSettings) {
+            settingsLayout->TakeFocus();
+        } else {
+            menu->TakeFocus();
+        }
+
+        // C. 构建视觉布局
+        return topLevelContainer->Render() | border;
+    });
+
+    screen.Loop(finalRenderer);
 }
 
 void View::showGameIntroScreen() {

@@ -80,8 +80,8 @@ int Configuration::getTypewriterSpeed() const {
 }
 
 void Configuration::setTypewriterSpeed(int speed_ms) {
-    // 确保速度值在一个合理的范围内 -> (10, 200)
-    if (speed_ms < 10) speed_ms = 10;
+    // 确保速度值在一个合理的范围内 -> (5, 200)
+    if (speed_ms < 5) speed_ms = 5;
     if (speed_ms > 200) speed_ms = 200;
     configData["view"]["typewriter_speed_ms"] = speed_ms;
 }

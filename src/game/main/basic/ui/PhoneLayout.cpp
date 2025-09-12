@@ -39,10 +39,13 @@ Component createAppButton(const std::string& icon, const std::string& label, std
 /**
  * @brief PhoneLayout的构造函数。
  * @details 在此初始化所有UI组件，并将它们添加到容器中以处理事件。
- */
-PhoneLayout::PhoneLayout(Game& game_logic, std::function<void()> onMapClick,
-    std::function<void()> onShopClick, std::function<void()> onInfoClick)
-    : game_logic_(game_logic), onMapClick_(onMapClick), onShopClick_(onShopClick), onInfoClick_(onInfoClick) {
+*/
+PhoneLayout::PhoneLayout(Game& game_logic, bool& isShowingFlag,
+                         std::function<void()> onMapClick,
+                         std::function<void()> onShopClick,
+                         std::function<void()> onInfoClick)
+    : game_logic_(game_logic), isShowingFlag_(isShowingFlag),
+      onMapClick_(onMapClick), onShopClick_(onShopClick), onInfoClick_(onInfoClick) {
 
     // 应用按钮
     buttonMap_ = createAppButton(" 🗺 ", "地图", onMapClick_);
@@ -50,7 +53,7 @@ PhoneLayout::PhoneLayout(Game& game_logic, std::function<void()> onMapClick,
     buttonInfo_ = createAppButton("👤", "我的信息", onInfoClick_);
 
     // Home键 (退出按钮)
-    buttonHome_ = Button(" ○ ", [this] { hide(); }, ButtonOption::Ascii());
+    buttonHome_ = Button(" ○ ", [this] { isShowingFlag_ = false; }, ButtonOption::Ascii());
 
     // 将所有按钮添加到一个容器中，这是确保它们能交互的关键
     Components interactive_components;
@@ -69,11 +72,6 @@ PhoneLayout::PhoneLayout(Game& game_logic, std::function<void()> onMapClick,
  * @brief 渲染函数，负责绘制手机界面。
  */
 Element PhoneLayout::Render() {
-    // 如果不显示，则渲染一个空元素
-    if (!isShowing_) {
-        return emptyElement();
-    }
-
     // --- 模拟手机状态栏 ---
     // 获取游戏内时间
     unsigned int gameHour = GameTime::getHour();
@@ -130,16 +128,4 @@ Element PhoneLayout::Render() {
         }),
         filler(),
     }) | clear_under;
-}
-
-void PhoneLayout::show() {
-    isShowing_ = true;
-}
-
-void PhoneLayout::hide() {
-    isShowing_ = false;
-}
-
-bool PhoneLayout::isShowing() const {
-    return isShowing_;
 }

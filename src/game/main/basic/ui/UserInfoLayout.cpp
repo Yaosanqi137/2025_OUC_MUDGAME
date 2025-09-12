@@ -9,12 +9,12 @@
 
 using namespace ftxui;
 
-UserInfoLayout::UserInfoLayout(Game& game_logic)
-    : game_logic_(game_logic), player_(game_logic.getPlayer()) {
+UserInfoLayout::UserInfoLayout(Game& game_logic, bool& isShowingFlag)
+    : game_logic_(game_logic), player_(game_logic.getPlayer()), isShowingFlag_(isShowingFlag) {
 
     // 创建退出按钮
     exitButton_ = Button("返回", [this] {
-        hide();
+        isShowingFlag_ = false;
     });
 
     // 创建主容器
@@ -54,10 +54,6 @@ std::string UserInfoLayout::formatMoney() const {
 }
 
 Element UserInfoLayout::Render() {
-    if (!isShowing_) {
-        return text("");
-    }
-
     // 游戏时间区域
     auto timeSection = vbox({
         text("⏰ 当前时间") | bold | hcenter,
@@ -105,16 +101,4 @@ Element UserInfoLayout::Render() {
     });
 
     return window | clear_under;
-}
-
-void UserInfoLayout::show() {
-    isShowing_ = true;
-}
-
-void UserInfoLayout::hide() {
-    isShowing_ = false;
-}
-
-bool UserInfoLayout::isShowing() const {
-    return isShowing_;
 }

@@ -1,10 +1,10 @@
-#pragma once
+#ifndef SHOP_LAYOUT_H
+#define SHOP_LAYOUT_H
 
 #include "ftxui/component/component.hpp"
 #include <vector>
 #include <memory>
 #include <array>
-#include <functional>
 
 // Forward declaration
 class Game;
@@ -20,12 +20,9 @@ struct ShopItem {
 
 class ShopLayout : public ftxui::ComponentBase {
 public:
-    explicit ShopLayout(Game& game_logic);
+    explicit ShopLayout(Game& game_logic, bool& isShowingFlag);
 
     ftxui::Element Render() override;
-    void show();
-    void hide();
-    [[nodiscard]] bool isShowing() const;
 
 private:
     void initializeShopItems();
@@ -34,7 +31,7 @@ private:
 
     Game& game_logic_;
     Player& player_;
-    bool isShowing_ = false;
+    bool& isShowingFlag_;
 
     // 商店物品数据
     std::vector<ShopItem> shopItems_;
@@ -50,3 +47,5 @@ private:
     ftxui::Component pageNextButton_;
     ftxui::Component mainContainer_;
 };
+
+#endif // SHOP_LAYOUT_H

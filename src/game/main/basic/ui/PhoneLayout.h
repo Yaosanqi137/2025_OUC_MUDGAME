@@ -16,19 +16,16 @@ class ShopLayout; // 前向声明
  */
 class PhoneLayout : public ftxui::ComponentBase {
 public:
-    explicit PhoneLayout(Game& game_logic, std::function<void()> onMapClick,
-        std::function<void()> onShopClick, std::function<void()> onInfoClick);
+    explicit PhoneLayout(Game& game_logic, bool& isShowingFlag,
+                         std::function<void()> onMapClick,
+                         std::function<void()> onShopClick,
+                         std::function<void()> onInfoClick);
 
     ftxui::Element Render() override;
 
-    // 控制显示和隐藏的方法
-    void show();
-    void hide();
-    bool isShowing() const;
-
 private:
     Game& game_logic_;
-    bool isShowing_ = false;
+    bool& isShowingFlag_;
 
     // --- 子组件成员 ---
     ftxui::Component buttonMap_;

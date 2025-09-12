@@ -4,7 +4,6 @@
 #include <string>
 
 #include "FTXUI/component/component.hpp"
-#include "FTXUI/component/screen_interactive.hpp"
 
 // 告知 Game 类存在
 class Game;
