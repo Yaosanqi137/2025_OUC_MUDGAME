@@ -222,7 +222,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
 
     // 将所有主界面组件组合到一个单独的容器中
     auto main_layout_renderer = Renderer(
-        Container::Vertical({interactiveMainView_, navigationContainer_, inputArea_}),
+        Container::Vertical({interactiveMainView_, Maybe(navigationContainer_, &showSidePanels_), Maybe(inputArea_, &showFooter_)}),
         [&] {
             Elements leftChildren;
             leftChildren.push_back(interactiveMainView_->Render() | vscroll_indicator | yframe | flex);
