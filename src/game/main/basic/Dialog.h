@@ -36,7 +36,7 @@ public:
      * @details 这是一个"读取后即消耗"的标志。调用此函数会返回当前状态并立即重置标志为false。
      * @return 如果历史记录被清除了，则返回true。
      */
-    [[nodiscard]] bool historyWasClearedAndConsume();
+    [[nodiscard]] bool historyWasClearedAndConsume() const;
 
 private:
     Game& game_logic_;

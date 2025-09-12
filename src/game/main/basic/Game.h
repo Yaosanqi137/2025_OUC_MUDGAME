@@ -53,12 +53,12 @@ public:
     Game();
     ~Game();
 
-    void run();
+    void run() const;
     void startNewGame();
     void loadGame() const;
     void showGameIntro() const;
     // static void showGameSettings(); -> 逻辑在View.cpp中实现
-    void exitGame();
+    void exitGame() const;
 
     // --- 服务访问器 ---
     [[nodiscard]] Dialog& getDialog() const;

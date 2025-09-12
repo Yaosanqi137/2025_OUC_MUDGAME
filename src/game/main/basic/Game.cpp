@@ -21,7 +21,7 @@ Game::~Game() {
     // TODO: 游戏退出析构函数
 }
 
-void Game::run() {
+void Game::run() const {
     if (view_) {
         view_->showMainMenu();
     }
@@ -57,7 +57,7 @@ void Game::showGameIntro() const {
     }
 }
 
-void Game::exitGame() {
+void Game::exitGame() const {
     std::cout << "退出游戏..." << std::endl;
     requestExit();
 }

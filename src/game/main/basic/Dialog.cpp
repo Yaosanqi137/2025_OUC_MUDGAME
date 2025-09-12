@@ -74,7 +74,7 @@ void Dialog::clearHistory() {
     history_was_cleared_ = true; // to be checked in GameLayout.cpp
 }
 
-bool Dialog::historyWasClearedAndConsume() {
+bool Dialog::historyWasClearedAndConsume() const {
     if (history_was_cleared_) {
         history_was_cleared_ = false;
         return true;
