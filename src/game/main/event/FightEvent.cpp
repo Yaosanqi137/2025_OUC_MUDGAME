@@ -120,14 +120,14 @@ void FightEvent::endBattle() {
     // 确定胜利者
     if (player_->getHealth() <= 0) {
         playerWon_ = false;
-    } else if (enemy_->getCurrentHealth() <= 0) {
+    } else if (enemy_->getHealth() <= 0) {
         playerWon_ = true;
         applyBattleRewards();
     }
 }
 
 bool FightEvent::isBattleOver() const {
-    return battleOver_ || player_->getHealth() <= 0 || enemy_->getCurrentHealth() <= 0;
+    return battleOver_ || player_->getHealth() <= 0 || enemy_->getHealth() <= 0;
 }
 
 bool FightEvent::isPlayerWinner() const {
@@ -200,8 +200,8 @@ void FightEvent::processEnemyTurn() {
         // 随机选择一个技能
         int skillIndex = std::rand() % enemySkills.size();
         auto skill = enemySkills[skillIndex];
-        if(skill.canUse(*enemy_)) {
-            skill.execute(*enemy_, *player_);
+        if(skill -> canUse(*enemy_)) {
+            skill -> execute(*enemy_, *player_);
             return;
         }
         else 
@@ -287,7 +287,7 @@ void FightEvent::processPlayerSkill(int skillIndex) {
 
         */
         double staminaCost = skill->calculateStaminaCost(player_->getStrength());
-        if (enemy_->getCurrentFatigue() < staminaCost) {
+        if (enemy_-> getFatigue() < staminaCost) {
             processKnockdown(enemy_, 20.0); // 敌人被击倒，恢复20%体力
         }
     }
