@@ -67,6 +67,7 @@ private:
     ftxui::Component mapLayout_;                      ///< 地图界面组件
     ftxui::Component shopLayout_;                     ///< 网购界面组件
     ftxui::Component infoLayout_;                     ///< 个人信息组件
+    ftxui::Component settingsLayout_;                 ///< 设置组件
     ftxui::Component topLevelContainer_;              ///< 添加一个顶层容器
 };
 

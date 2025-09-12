@@ -22,29 +22,45 @@ void View::showMainMenu() {
     auto screen = ScreenInteractive::Fullscreen();
 
     // --- 定义交互组件和状态 ---
-    bool show_settings  = false;
-    auto on_settings_exit = [&] { show_settings  = false; };
-    auto settings_layout = Make<SettingsLayout>(game_logic_, on_settings_exit);
+    auto settingsLayout = Make<SettingsLayout>(game_logic_);
 
     std::vector<std::string> menuItems = {
         "开始新游戏", "读取存档", "游戏介绍", "游戏设置", "退出游戏"
     };
+
+    auto* settingsPtr = settingsLayout.get();
 
     // 按钮的回调函数现在通过 game_logic_ 引用来调用 Game 类的方法
     auto menu= Container::Vertical({
         Button(menuItems[0], [&] { game_logic_.startNewGame(); }, ButtonOption::Animated()),
         Button(menuItems[1], [&] { game_logic_.loadGame(); }, ButtonOption::Animated()),
         Button(menuItems[2], [&] { game_logic_.showGameIntro(); }, ButtonOption::Animated()),
-        Button(menuItems[3], [&] { settings_layout->loadSettings(); show_settings = true; }, ButtonOption::Animated()),
+        Button(menuItems[3], [settingsPtr] { settingsPtr->show(); }, ButtonOption::Animated()),
         Button(menuItems[4], [&] { game_logic_.exitGame(); screen.ExitLoopClosure()(); }, ButtonOption::Animated())
     });
 
-    // --- 应用 Modal 装饰器 ---
-    // Modal() 返回一个装饰器, 这个装饰器会捕获 settings_layout 和 show_settings
-    auto root_component = menu | Modal(settings_layout, &show_settings);
+    auto topLevelContainer = Container::Stacked({
+        menu,
+        settingsLayout
+    });
 
     // --- 创建渲染器 ---
-    auto renderer = Renderer(root_component , [&] {
+    auto renderer = Renderer(topLevelContainer , [&] {
+        // a. 优先渲染覆盖层
+        if (settingsPtr->isShowing()) {
+            // 当设置显示时，让它获得焦点
+            if (!settingsLayout->Focused()) {
+                settingsLayout->TakeFocus();
+            }
+            return settingsLayout->Render();
+        }
+
+        // b. 如果没有覆盖层，则渲染主菜单
+        // 确保主菜单在需要时能重新获得焦点
+        if (!menu->Focused()) {
+            menu->TakeFocus();
+        }
+
         // 绘制主菜单背景
         Element background = vbox({
              vbox({
@@ -67,13 +83,6 @@ void View::showMainMenu() {
             hbox(text("游戏中请尽量不要命令行界面大小, 全屏游玩体验最佳") | color(Color::Blue) | center) | flex,
         }) | border | flex;
 
-        // 只有当 show_settings 为 true 时，才将设置UI渲染在背景之上
-        if (show_settings) {
-            return dbox({
-                background,
-                settings_layout->Render(),
-            });
-        }
         // 否则，只渲染背景
         return background;
     });

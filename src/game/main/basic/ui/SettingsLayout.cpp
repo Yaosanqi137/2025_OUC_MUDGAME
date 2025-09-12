@@ -5,8 +5,8 @@
 
 using namespace ftxui;
 
-SettingsLayout::SettingsLayout(Game& game_logic, std::function<void()> on_exit)
-    : game_logic_(game_logic), on_exit_callback_(std::move(on_exit)), difficultyEntries_{" 简单 ", " 普通 ", " 困难 "} {
+SettingsLayout::SettingsLayout(Game& game_logic)
+    : game_logic_(game_logic), difficultyEntries_{" 简单 ", " 普通 ", " 困难 "} {
 
     // --- 初始化UI组件 ---
     difficultyRadiobox_ = Radiobox(&difficultyEntries_, &tempDifficultyIndex_);
@@ -60,13 +60,12 @@ SettingsLayout::SettingsLayout(Game& game_logic, std::function<void()> on_exit)
 
     applyButton_ = Button(" 应用并保存 ", [this] {
         applyAndSaveChanges();
-        if (on_exit_callback_) on_exit_callback_();
+        hide(); // 应用后隐藏
     }, ButtonOption::Animated());
 
     backButton_ = Button("   返 回   ", [this] {
-        if (on_exit_callback_) on_exit_callback_();
+        hide(); // 直接隐藏
     }, ButtonOption::Animated());
-
 
     // --- 将子组件装配到容器中 ---
     auto speedControl = Container::Horizontal({
@@ -82,6 +81,19 @@ SettingsLayout::SettingsLayout(Game& game_logic, std::function<void()> on_exit)
     });
 
     Add(mainContainer_);
+}
+
+void SettingsLayout::show() {
+    loadSettings();
+    isShowing_ = true;
+}
+
+void SettingsLayout::hide() {
+    isShowing_ = false;
+}
+
+bool SettingsLayout::isShowing() const {
+    return isShowing_;
 }
 
 void SettingsLayout::updateSpeedString() {
@@ -104,6 +116,9 @@ void SettingsLayout::applyAndSaveChanges() {
 }
 
 Element SettingsLayout::Render() {
+    if (!isShowing_) {
+        return text(""); // 如果不可见，不渲染任何东西
+    }
     auto speedControlRenderer = hbox({
         text("文本速度 (ms/char): ") | center,
         speedDecrementButton_->Render(),

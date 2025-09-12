@@ -20,15 +20,15 @@ public:
     /**
      * @brief SettingsLayout的构造函数。
      * @param game_logic 对Game核心对象的引用。
-     * @param on_exit 当用户点击“应用”或“返回”时调用的回调函数。
      */
-    explicit SettingsLayout(Game& game_logic, std::function<void()> on_exit);
+    explicit SettingsLayout(Game& game_logic);
 
     ftxui::Element Render() override;
 
-    /**
-     * @brief 从Configuration加载最新设置到UI的临时状态。
-     */
+    void show();
+    void hide();
+    [[nodiscard]] bool isShowing() const;
+
     void loadSettings();
 
 private:
@@ -39,11 +39,11 @@ private:
     void updateSpeedString(); // 辅助函数，同步字符串和整数
 
     Game& game_logic_;
-    std::function<void()> on_exit_callback_;
+    bool isShowing_ = false;
 
     // --- 临时状态和数据 ---
-    int tempDifficultyIndex_; // 0:简单, 1:普通, 2:困难
-    int tempTypewriterSpeed_;
+    int tempDifficultyIndex_ = 1; // 0:简单, 1:普通, 2:困难
+    int tempTypewriterSpeed_ = 20;
     std::string tempSpeedStr_; // 用于Input组件的字符串
     std::vector<std::string> difficultyEntries_;
 

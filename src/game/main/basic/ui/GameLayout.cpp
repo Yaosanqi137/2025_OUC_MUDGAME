@@ -4,6 +4,7 @@
 #include "UserInfoLayout.h"
 #include "PhoneLayout.h"
 #include "MapLayout.h"
+#include "SettingsLayout.h"
 #include "../Game.h"
 #include "../Dialog.h"
 #include "../StoryController.h"
@@ -27,23 +28,24 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     mapLayout_ =  Make<MapLayout>(game_logic_);
     shopLayout_ = Make<ShopLayout>(game_logic_);
     infoLayout_ = Make<UserInfoLayout>(game_logic_);
+    settingsLayout_ = Make<SettingsLayout>(game_logic_);
 
-    MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
-    ShopLayout* shopPtr = static_cast<ShopLayout*>(shopLayout_.get());
-    UserInfoLayout* infoPtr = static_cast<UserInfoLayout*>(infoLayout_.get());
+    auto* mapPtr = dynamic_cast<MapLayout*>(mapLayout_.get());
+    auto* shopPtr = dynamic_cast<ShopLayout*>(shopLayout_.get());
+    auto* infoPtr = dynamic_cast<UserInfoLayout*>(infoLayout_.get());
 
     phoneLayout_ = Make<PhoneLayout>(
         game_logic_,
         [this, mapPtr] {  // onMapClick
-            static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
+            dynamic_cast<PhoneLayout*>(phoneLayout_.get())->hide();
             mapPtr->show();
         },
         [this, shopPtr] { // onShopClick
-            static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
+            dynamic_cast<PhoneLayout*>(phoneLayout_.get())->hide();
             shopPtr->show();
         },
         [this, infoPtr] { // onInfoClick
-            static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
+            dynamic_cast<PhoneLayout*>(phoneLayout_.get())->hide();
             infoPtr->show();
         }
     );
@@ -168,9 +170,10 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     // -- 右侧功能菜单 --
     auto* bagPtr = dynamic_cast<BagLayout*>(bagLayout_.get());
     auto* phonePtr = dynamic_cast<PhoneLayout*>(phoneLayout_.get());
+    auto* settingsPtr = dynamic_cast<SettingsLayout*>(settingsLayout_.get());
 
     auto buttonPhone = Button(" 我的手机 ", [phonePtr] { phonePtr->show(); }, ButtonOption::Animated());
-    auto buttonSettings = Button(" 游戏设置 ", [&] { game_logic_.showGameSettings(); }, ButtonOption::Animated());
+    auto buttonSettings = Button(" 游戏设置 ", [settingsPtr] { settingsPtr->show(); }, ButtonOption::Animated());
     auto buttonBag = Button("   背包  ", [bagPtr] { bagPtr->show(); }, ButtonOption::Animated());
     auto buttonSchedule = Button(" 我的日程 ", []{}, ButtonOption::Animated());
     navigationContainer_ = Container::Vertical({
@@ -233,7 +236,8 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
         phoneLayout_,
         mapLayout_,
         shopLayout_,
-        infoLayout_
+        infoLayout_,
+        settingsLayout_
     });
 
     // 将这个顶层容器作为 GameLayout 的子组件
@@ -247,6 +251,10 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
 Element GameLayout::Render() {
     // 在每一帧的开始，首先检查是否有任何叠加层处于活动状态。
     // 如果有，则立即渲染该层并返回，从而跳过主界面的所有逻辑和渲染。
+    auto* settingsPtr = dynamic_cast<SettingsLayout*>(settingsLayout_.get());
+    if (settingsPtr && settingsPtr->isShowing()) {
+        return settingsLayout_->Render();
+    }
     auto* bagPtr = dynamic_cast<BagLayout*>(bagLayout_.get());
     if (bagPtr && bagPtr->isShowing()) {
         return bagLayout_->Render();
@@ -259,11 +267,11 @@ Element GameLayout::Render() {
     if (mapPtr && mapPtr->isShowing()) {
         return mapLayout_->Render();
     }
-    ShopLayout* shopPtr = static_cast<ShopLayout*>(shopLayout_.get());
+    auto* shopPtr = dynamic_cast<ShopLayout*>(shopLayout_.get());
     if (shopPtr && shopPtr->isShowing()) {
         return shopLayout_->Render();
     }
-    UserInfoLayout* infoPtr = static_cast<UserInfoLayout*>(infoLayout_.get());
+    auto* infoPtr = dynamic_cast<UserInfoLayout*>(infoLayout_.get());
     if (infoPtr && infoPtr->isShowing()) {
         return infoLayout_->Render();
     }
