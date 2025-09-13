@@ -105,7 +105,7 @@ void Player::addFatigue(const double value) {
 void Player::addHealth(double value) {
     health += value;
     health = std::max(0.0, health);
-    health = std::max(health + exMaxHealth, maxHealth);
+    health = std::min(health + exMaxHealth, maxHealth);
 }
 
 
