@@ -7,6 +7,7 @@
 #include "../skill/Skill.h"
 #include "../skill/SkillFactory.h"
 #include "../skill/SkillTreeManager.h"
+#include "../../event/TrainingEvent.h"
 
 class Game;
 
@@ -117,7 +118,36 @@ public:
     void unlockNextEnemy(int currentEnemyId);
     int getHighestUnlockedEnemy() const;
 
+    // 训练系统相关
+    std::shared_ptr<TrainingEvent> getTrainingSystem();
+    bool train(TrainingEvent::TrainingType type);
+    bool canTrain(TrainingEvent::TrainingType type) const;
 
+    // 下面是特殊技能效果函数
+    double getSustainDamageRate() const;
+    double getUpperBodySustainDamageRate() const;
+    double getLowerBodySustainDamageRate() const;
+    double getFatigueConsumeRate() const;
+    double getExHitRate() const;
+
+    void setSustainDamageRate(double rate);
+    void setUpperBodySustainDamageRate(double rate);
+    void setLowerBodySustainDamageRate(double rate);
+    void setFatigueConsumeRate(double rate);
+    void setExHitRate(double rate);
+    // 上面是特殊技能效果函数
+
+    // 获取和设置额外的最大属性值(吃东西或使用物品改变)
+    double getExMaxHealth() const;
+    double getExMaxFatigue() const;
+    double getExMaxHunger() const;
+    void setExMaxHealth(double value);
+    void setExMaxFatigue(double value);
+    void setExMaxHunger(double value);
+
+    // 获取和设置游戏难度
+    int getGameDifficulty() const;
+    void setGameDifficulty(int level);
 
 protected:
     Game& game_logic_;
@@ -125,6 +155,8 @@ protected:
 private:
     std::string name;       // 玩家名
     std::string location;   // 位置
+
+    int gameDifficulty;      // 玩家的游戏难度 ( 1是简单, 2是普通, 3是困难 )
 
     // 核心属性
     double strength;        // 力量
@@ -150,6 +182,15 @@ private:
     double exMaxHealth;
 
 
+    // 下面这块是特殊技能专用属性
+    double sustainDamageRate;           // 普遍受到伤害倍数
+    double upperBodySustainDamageRate;  // 上肢受到伤害倍数
+    double lowerBodySustainDamageRate;     // 下肢施加伤害倍数
+    double fatigueConsumeRate;          // 体力消耗倍数
+    double exHitRate;                   // 额外命中率
+    // 上面这块是特殊技能专用属性
+
+
     double money;           // 积蓄
     double skillPoints;     // 技能点
 
@@ -160,6 +201,10 @@ private:
     std::vector<std::shared_ptr<AbstractItem>> inventory_;  // 背包
 
     std::vector<bool> unlockedEnemies_; // 解锁的敌人列表
+
+    // ATTENTION: 每日训练经验减少调用
+    // player->getTrainingSystem()->applyDailyExperienceDecay();
+    std::shared_ptr<TrainingEvent> trainingSystem; // 训练系统
 };
 
 #endif // PLAYER_H

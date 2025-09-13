@@ -124,27 +124,25 @@ void Skill::execute(Player& user, Player& target) {
     
     // 根据不同效果类型执行
     switch (effectType) {
-        case SkillEffectType::BASIC_ATTACK: {
-            double damage = calculateDamage(user.getStrength());
-            double hitRate = calculateHitRate(user.getAgility(), user.getStrength(), user.getStamina());
-            
-            if ((std::rand() % 100) <= hitRate) {
-                target.addHealth(-damage);
-            }
-            break;
-        }
         case SkillEffectType::ATTRIBUTE_BOOST: {
             if (attributeType == "strength") target.setMinStrength(std::max(target.getMinStrength(), minAttributeValue));
             else if (attributeType == "agility") target.setMinAgility(std::max(target.getMinAgility(), minAttributeValue));
             else if (attributeType == "stamina") target.setMinStamina(std::max(target.getMinStamina(), minAttributeValue));
             break;
         }
-        // 其他效果类型...
+        case SkillEffectType::TRAINING_EFFICIENCY:{
+            if(attributeType == "strength")
+                target.getTrainingSystem() -> setStrengthExpRate(trainingMultiplier);
+            else if(attributeType == "agility")
+                target.getTrainingSystem() -> setAgilityExpRate(trainingMultiplier);
+            else if(attributeType == "stamina")
+                target.getTrainingSystem() -> setStaminaExpRate(trainingMultiplier);
+            break;
+        }
 
-        //
         default: break;
     }
-}
+}   
 
 void Skill::execute(Player& user, Enemy& target) {
     if (!canUse(user)) return;
@@ -155,8 +153,9 @@ void Skill::execute(Player& user, Enemy& target) {
     if (effectType == SkillEffectType::BASIC_ATTACK) {
         double damage = calculateDamage(user.getStrength());
         double hitRate = calculateHitRate(user.getAgility(), user.getStrength(), user.getStamina());
-        
-        if ((std::rand() % 100) <= hitRate) {
+        hitRate += user.getExHitRate();     // 有特殊技能会增加命中率
+        hitRate = std::min(hitRate, 1.0);
+        if ((std::rand() % 10000) <= hitRate * 10000) {
             target.addHealth(-damage);
         }
     }
