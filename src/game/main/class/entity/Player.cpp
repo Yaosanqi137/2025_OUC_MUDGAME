@@ -15,12 +15,16 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , st
                    stamina(1), agility(1), hunger(80), fatigue(80), money(1000), location("???"), health(100),
                    minStrength(0), minStamina(0), minAgility(0), skillPoints(0),
                    maxHunger(80), maxFatigue(80), maxHealth(100),
-                   exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0) {
+                   exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0),
+                   gameDifficulty(2) {
     // 在构造函数中初始化背包
     initializeInventory();
 
     // 初始化技能树（可以初始化已学技能，暂时留个端口）
     // skillTreeManager_.addLearnedSkill("直拳");
+
+    // 初始化训练系统
+    trainingSystem_ = std::make_shared<TrainingEvent>(std::shared_ptr<Player>(this, [](Player*){}));
 }
 
 // TODO: 保存数据
@@ -421,4 +425,21 @@ std::vector<std::string> Player::getAvailableSkills() const {
 
 std::vector<std::string> Player::getLearnedSkillNames() const {
     return skillTreeManager.getLearnedSkills();
+}
+
+// 获取和设置游戏难度
+int Player::getGameDifficulty() const{return gameDifficulty;}
+void Player::setGameDifficulty(int level) {gameDifficulty = level;}
+
+// 训练系统相关
+std::shared_ptr<TrainingEvent> Player::getTrainingSystem() {
+    return trainingSystem_;
+}
+
+bool Player::train(TrainingEvent::TrainingType type) {
+    return trainingSystem_->train(type);
+}
+
+bool Player::canTrain(TrainingEvent::TrainingType type) const {
+    return trainingSystem_->canTrain(type);
 }
