@@ -129,6 +129,7 @@ bool SkillTreeManager::tryLearnSkill(const std::string& skillName, int available
         return false;
     }
     
+
     // 添加到已学技能
     addLearnedSkill(skillName);
     return true;

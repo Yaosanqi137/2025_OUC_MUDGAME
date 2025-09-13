@@ -159,36 +159,43 @@ std::shared_ptr<Skill> SkillFactory::createMotivation() {
 }
 
 // ==================== 特殊效果技能 ====================
+// Finished in player
 std::shared_ptr<Skill> SkillFactory::createFlashStrike() {
     return std::make_shared<Skill>(31, "闪击", "25%概率反伤25%对面造成的伤害", SkillEffectType::DAMAGE_REFLECT, 
                                   TargetType::ENEMY, 2, 0, 0, 0, 0, 0, 0, 0, "", 0, 0.25);
 }
 
+// Finished in player
 std::shared_ptr<Skill> SkillFactory::createSuicideAttack() {
     return std::make_shared<Skill>(32, "自杀式袭击", "命中率降低10%，能量消耗降低20%", SkillEffectType::HIT_RATE_MODIFIER, 
                                   TargetType::SELF, 2, 0, 0, 0, 0, 0, 0, 0, "", 0, -0.1);
 }
 
+// Finished in Player
 std::shared_ptr<Skill> SkillFactory::createThousandHands() {
     return std::make_shared<Skill>(33, "千手不破", "受到对面上肢攻击降低30%，下肢攻击增加20%", SkillEffectType::ATTACK_TYPE_DEFENSE, 
                                   TargetType::SELF, 2, 0, 0, 0, 0, 0, 0, 0, "", 0, 0.3);
 }
 
+// Finished in Player
 std::shared_ptr<Skill> SkillFactory::createHumanHammer() {
     return std::make_shared<Skill>(34, "人身重锤", "25%概率降低对面10耐力", SkillEffectType::ENEMY_ATTRIBUTE_MOD, 
                                   TargetType::ENEMY, 2, 0, 0, 0, 0, 0, 0, 0, "", 0, 10.0);
 }
 
+// Finished in player
 std::shared_ptr<Skill> SkillFactory::createBluntWeapon() {
     return std::make_shared<Skill>(35, "钝兵挫锐", "免伤20%", SkillEffectType::DAMAGE_REDUCTION, 
                                   TargetType::SELF, 4, 0, 0, 0, 0, 0, 0, 0, "", 0, 0.2);
 }
 
+// Finished in player
 std::shared_ptr<Skill> SkillFactory::createInfiniteEnergy() {
     return std::make_shared<Skill>(36, "无限能量", "如果体力低于50%，能量消耗降低15%", SkillEffectType::STAMINA_MODIFIER, 
                                   TargetType::SELF, 4, 0, 0, 0, 0, 0, 0, 0, "", 0, 0.15);
 }
 
+// Finished in player
 std::shared_ptr<Skill> SkillFactory::createBoxer() {
     return std::make_shared<Skill>(37, "拳击手", "命中率在原本基础上提高10%", SkillEffectType::GLOBAL_HIT_RATE_BOOST, 
                                   TargetType::SELF, 4, 0, 0, 0, 0, 0, 0, 0, "", 0, 0.1);

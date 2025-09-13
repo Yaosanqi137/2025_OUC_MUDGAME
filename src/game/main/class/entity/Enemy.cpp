@@ -7,7 +7,9 @@ Enemy::Enemy(int id_, const std::string& name_,
       strength(strength_), stamina(stamina_), agility(agility_),
       fatigue(100 + 5 * (stamina_ - 1)), 
       health(100 + 15 * (stamina_ - 1)),
-      maxHealth(100 + 15 * (stamina_ - 1)), maxFatigue(100 + 5 * (stamina_ - 1)) {
+      maxHealth(100 + 15 * (stamina_ - 1)), maxFatigue(100 + 5 * (stamina_ - 1)),
+      sustainDamageRate(1.0),upperBodySustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),
+      fatigueConsumeRate(1.0),exHitRate(0.0) {
 }
 
 Enemy::~Enemy() = default;
@@ -55,3 +57,17 @@ std::vector<std::shared_ptr<Skill>>& Enemy::getSkills() {
 void Enemy::addSkill(std::shared_ptr<Skill> skill) {
     skills_.push_back(skill);
 }
+
+// 下面是特殊技能效果函数
+double Enemy::getSustainDamageRate() const{return sustainDamageRate;}
+double Enemy::getUpperBodySustainDamageRate() const{return upperBodySustainDamageRate;}
+double Enemy::getLowerBodySustainDamageRate() const{return lowerBodySustainDamageRate;}
+double Enemy::getFatigueConsumeRate() const{return fatigueConsumeRate;}
+double Enemy::getExHitRate() const{return exHitRate;}
+
+void Enemy::setSustainDamageRate(double rate){sustainDamageRate = rate;}
+void Enemy::setUpperBodySustainDamageRate(double rate){upperBodySustainDamageRate = rate;}
+void Enemy::setLowerBodySustainDamageRate(double rate){lowerBodySustainDamageRate = rate;}
+void Enemy::setFatigueConsumeRate(double rate){fatigueConsumeRate = rate;}
+void Enemy::setExHitRate(double rate){exHitRate = rate;}
+// 上面是特殊技能效果函数
