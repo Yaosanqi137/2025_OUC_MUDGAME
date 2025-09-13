@@ -5,7 +5,8 @@
 
 TrainingEvent::TrainingEvent(std::shared_ptr<Player> player_)
     : player(player_), strengthExp(0), agilityExp(0), staminaExp(0),
-      strengthLevel(1), agilityLevel(1), staminaLevel(1) {}
+      strengthLevel(1), agilityLevel(1), staminaLevel(1),
+      strengthExpRate(1.0), agilityExpRate(1.0), staminaExpRate(1.0) {}
 
 bool TrainingEvent::train(TrainingType type) {
     if (!canTrain(type)) {
@@ -101,17 +102,17 @@ int TrainingEvent::getStaminaLevel() const {
 }
 
 void TrainingEvent::addStrengthExp(double exp) {
-    strengthExp += exp;
+    strengthExp += exp * strengthExpRate;
     checkAndLevelUp(TrainingType::STRENGTH);
 }
 
 void TrainingEvent::addAgilityExp(double exp) {
-    agilityExp += exp;
+    agilityExp += exp * agilityExpRate;
     checkAndLevelUp(TrainingType::AGILITY);
 }
 
 void TrainingEvent::addStaminaExp(double exp) {
-    staminaExp += exp;
+    staminaExp += exp * staminaExpRate;
     checkAndLevelUp(TrainingType::STAMINA);
 }
 
@@ -167,3 +168,11 @@ double TrainingEvent::getExperienceDecayRate() const {
         default: return 0.1;   // 默认普通难度
     }
 }
+
+double TrainingEvent::getStrengthExpRate() const { return strengthExpRate;}
+double TrainingEvent::getAgilityExpRate() const { return agilityExpRate;}
+double TrainingEvent::getStaminaExpRate() const { return staminaExpRate;}
+
+void TrainingEvent::setStaminaExpRate(double rate){staminaExpRate = rate;}
+void TrainingEvent::setAgilityExpRate(double rate){agilityExpRate = rate;}
+void TrainingEvent::setStrengthExpRate(double rate){strengthExpRate = rate;}

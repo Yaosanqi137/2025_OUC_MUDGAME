@@ -16,6 +16,8 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , st
                    minStrength(0), minStamina(0), minAgility(0), skillPoints(0),
                    maxHunger(80), maxFatigue(80), maxHealth(100),
                    exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0),
+                   sustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),upperBodySustainDamageRate(1.0),
+                   fatigueConsumeRate(1.0),exHitRate(0.0),
                    gameDifficulty(2) {
     // 在构造函数中初始化背包
     initializeInventory();
@@ -24,7 +26,7 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , st
     // skillTreeManager_.addLearnedSkill("直拳");
 
     // 初始化训练系统
-    trainingSystem_ = std::make_shared<TrainingEvent>(std::shared_ptr<Player>(this, [](Player*){}));
+    trainingSystem = std::make_shared<TrainingEvent>(std::shared_ptr<Player>(this, [](Player*){}));
 }
 
 // TODO: 保存数据
@@ -407,6 +409,20 @@ bool Player::learnSkill(const std::string& skillName) {
     skills_.push_back(skill);
     skillPoints -= skill->getUnlockCost();
     
+    if(skillName == "自杀式袭击"){
+        exHitRate -= 0.1;
+        fatigueConsumeRate - 0.2;
+    }
+    else if(skillName == "钝兵挫锐"){
+        sustainDamageRate -= 0.2;
+    }
+    else if(skillName == "拳击手"){
+        exHitRate += 0.1;
+    }
+    else if(skillName == "千手不破"){
+        upperBodySustainDamageRate -= 0.3;
+        lowerBodySustainDamageRate += 0.2;
+    }
     return true;
 }
 
@@ -433,13 +449,36 @@ void Player::setGameDifficulty(int level) {gameDifficulty = level;}
 
 // 训练系统相关
 std::shared_ptr<TrainingEvent> Player::getTrainingSystem() {
-    return trainingSystem_;
+    return trainingSystem;
 }
 
 bool Player::train(TrainingEvent::TrainingType type) {
-    return trainingSystem_->train(type);
+    return trainingSystem->train(type);
 }
 
 bool Player::canTrain(TrainingEvent::TrainingType type) const {
-    return trainingSystem_->canTrain(type);
+    return trainingSystem->canTrain(type);
 }
+
+// 下面是特殊技能效果函数
+double Player::getSustainDamageRate() const{return sustainDamageRate;}
+double Player::getUpperBodySustainDamageRate() const{return upperBodySustainDamageRate;}
+double Player::getLowerBodySustainDamageRate() const{return lowerBodySustainDamageRate;}
+double Player::getFatigueConsumeRate() const{return fatigueConsumeRate;}
+double Player::getExHitRate() const{return exHitRate;}
+
+void Player::setSustainDamageRate(double rate){sustainDamageRate = rate;}
+void Player::setUpperBodySustainDamageRate(double rate){upperBodySustainDamageRate = rate;}
+void Player::setLowerBodySustainDamageRate(double rate){lowerBodySustainDamageRate = rate;}
+void Player::setFatigueConsumeRate(double rate){fatigueConsumeRate = rate;}
+void Player::setExHitRate(double rate){exHitRate = rate;}
+// 上面是特殊技能效果函数
+
+
+// 获取和设置额外最大属性值(吃东西或使用物品改变)
+double Player::getExMaxHealth() const{return exMaxHealth;}
+double Player::getExMaxFatigue() const{return exMaxFatigue;}
+double Player::getExMaxHunger() const{return exMaxHunger;}
+void Player::setExMaxHealth(double value) {exMaxHealth = value;}
+void Player::setExMaxFatigue(double value) {exMaxFatigue = value;}
+void Player::setExMaxHunger(double value) {exMaxHunger = value;}

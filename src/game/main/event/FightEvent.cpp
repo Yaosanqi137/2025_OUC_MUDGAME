@@ -3,7 +3,6 @@
 Changed on 9-12 2:49 by Anyeling
 太晚了，没完工
 
-原文档写击倒 耐力值？？？ 没理解
 特殊奖励未处理，技能效果未处理
 */
 
@@ -12,11 +11,13 @@ Changed on 9-12 2:49 by Anyeling
 #include <iostream>
 #include <random>
 #include <algorithm>
-
+bool humanHummerRecover = false;
 FightEvent::FightEvent(std::shared_ptr<Player> player, std::shared_ptr<Enemy> enemy)
     : player_(player), enemy_(enemy), battleOver_(false), playerWon_(false),
       playerTurn_(false), currentRound_(0) {
-    
+
+    humanHummerRecover = false;
+
     // 配置敌人技能
     configureEnemySkills();
     
@@ -102,6 +103,23 @@ void FightEvent::startBattle() {
     playerWon_ = false;
     currentRound_ = 0;
     
+    // 特殊技能34 人身重锤
+    for (auto& skill : player_->getSkills()) {
+        if (skill->getSkillName() == "人身重锤") {
+            int roll_ = std::rand() % 100; 
+            if(roll_ < 25)
+                enemy_ -> addFatigue(-10.0);
+            }
+    }
+    for (auto& skill : enemy_->getSkills()) {
+        if (skill->getSkillName() == "人身重锤") {
+            int roll_ = std::rand() % 100; 
+            if(roll_ < 25)
+                player_ -> addFatigue(-10.0);
+                humanHummerRecover = true;
+            }
+    }
+
     // 决定先手：比较玩家和敌人的速度
     double playerSpeed = player_->getSpeed();
     double enemySpeed = enemy_->getSpeed();
@@ -129,7 +147,12 @@ void FightEvent::endBattle() {
 }
 
 bool FightEvent::isBattleOver() const {
-    return battleOver_ || player_->getHealth() <= 0 || enemy_->getHealth() <= 0;
+    if(battleOver_ || player_->getHealth() <= 0 || enemy_->getHealth() <= 0){
+        if(humanHummerRecover)
+            player_ -> addFatigue(10);
+        return true;
+    }
+    return false;
 }
 
 bool FightEvent::isPlayerWinner() const {
@@ -269,45 +292,50 @@ void FightEvent::processPlayerSkill(int skillIndex) {
         return;
     }
     
+
+
     // 计算伤害
     double damage = skill->calculateDamage(player_->getStrength());
+    // 上下肢伤害逻辑未完成
     double hitRate = skill->calculateHitRate(player_->getAgility(), 
                                            player_->getStrength(), 
                                            player_->getStamina());
-    
+    hitRate += player_ -> getExHitRate();
+    hitRate = std::max(0.0,hitRate);
+    hitRate = std::min(1.0,hitRate); 
     if (checkHit(hitRate)) {
         applyDamageToEnemy(damage);
         
+        // 特殊技能 31号技能"闪击"
+        double roll = std::rand() % 100;
+        if(roll < 25){
+            applyDamageToPlayer(damage * 0.25);
+        }
 
-
-        // 检查敌人是否被击倒（耐力透支）
-        /*
-
-
-        此处有逻辑bug: 文档说击倒是耐力值小于？敌人的攻击会导致耐力值减少？而且自身的属性居然会减少吗？
-
-
-        */
+        
         double staminaCost = skill->calculateStaminaCost(player_->getStrength());
         if (enemy_-> getFatigue() < staminaCost) {
-            processKnockdown(enemy_, 20.0); // 敌人被击倒，恢复20%体力
+            processKnockdown(enemy_, 20.0); // 敌人被击倒，恢复20%体力(后面这个参数其实没用)
         }
     }
     
-    // 消耗玩家体力
+    // 计算玩家体力
     double staminaCost = skill->calculateStaminaCost(player_->getStrength());
-    player_->addFatigue(-staminaCost);
     
-    // 执行技能效果 
-    /*
-    
-    TODO:注意，技能效果可能是自己也可能是敌人
-    
-    */
 
-    
-    skill->execute(*player_, *player_); 
-    // skill->execute(*player_, *enemy_); 
+    // 36 是 "无限能量"
+    if((19 <= skillIndex && skillIndex <= 30) || skillIndex == 36){
+        if(skillIndex == 36 && player_ -> getHealth() < (player_ -> getMaxHealth() + player_ -> getExMaxHealth()))
+            staminaCost *= (1 - 0.15);
+        // 消耗玩家体力
+        player_->addFatigue(-staminaCost);
+        skill->execute(*player_, *player_); 
+    }
+    else {
+        // 消耗玩家体力
+        player_->addFatigue(-staminaCost);
+        skill->execute(*player_, *enemy_); 
+    }
 }
 
 void FightEvent::processPlayerSkip() {

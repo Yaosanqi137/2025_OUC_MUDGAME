@@ -37,6 +37,16 @@ public:
     double getAgilityExp() const;  // 敏捷训练经验
     double getStaminaExp() const;  // 耐力训练经验
 
+    // 获取经验值倍数
+    double getStrengthExpRate() const;  // 力量训练经验获取系数
+    double getAgilityExpRate() const;   // 敏捷训练经验获取系数
+    double getStaminaExpRate() const;   // 耐力训练经验获取系数
+
+    // 设置经验获取倍数
+    void setStrengthExpRate(double rate);   // 设置力量训练经验获取系数
+    void setAgilityExpRate(double rate);   // 设置敏捷训练经验获取系数
+    void setStaminaExpRate(double rate);   // 设置耐力训练经验获取系数
+
     // 获取等级
     int getStrengthLevel() const; // 力量训练等级
     int getAgilityLevel() const;  // 敏捷训练等级
@@ -54,6 +64,11 @@ private:
     double strengthExp;
     double agilityExp;
     double staminaExp;
+
+    // 训练经验值倍数
+    double strengthExpRate;
+    double agilityExpRate;
+    double staminaExpRate;
 
     // 训练等级
     int strengthLevel;
