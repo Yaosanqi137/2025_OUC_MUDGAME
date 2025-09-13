@@ -6,7 +6,8 @@
 TrainingEvent::TrainingEvent(std::shared_ptr<Player> player_)
     : player(player_), strengthExp(0), agilityExp(0), staminaExp(0),
       strengthLevel(1), agilityLevel(1), staminaLevel(1),
-      strengthExpRate(1.0), agilityExpRate(1.0), staminaExpRate(1.0) {}
+      strengthExpRate(1.0), agilityExpRate(1.0), staminaExpRate(1.0),
+      hasSideEffect(false) {}
 
 bool TrainingEvent::train(TrainingType type) {
     if (!canTrain(type)) {
@@ -160,12 +161,22 @@ void TrainingEvent::checkAndLevelUp(TrainingType type) {
 
 double TrainingEvent::getExperienceDecayRate() const {
     int difficulty = player->getGameDifficulty();
-    
-    switch (difficulty) {
-        case 1: return 0.0;    // 简单：无衰减
-        case 2: return 0.1;    // 普通：10%衰减
-        case 3: return 0.2;    // 困难：20%衰减
-        default: return 0.1;   // 默认普通难度
+    double exDecay = 0.5;
+    if(hasSideEffect){
+        switch (difficulty) {
+        case 1: return 0.0 + exDecay;    // 简单：无衰减 + 嗑药 50% 衰减
+        case 2: return 0.1 + exDecay;    // 普通：10% 衰减 + 嗑药 50% 衰减
+        case 3: return 0.2 + exDecay;    // 困难：20% 衰减 + 嗑药 50% 衰减
+        default: return 0.1 + exDecay;   // 默认普通难度 + 嗑药 50% 衰减
+        }
+    }
+    else{
+        switch (difficulty) {
+            case 1: return 0.0;    // 简单：无衰减
+            case 2: return 0.1;    // 普通：10% 衰减
+            case 3: return 0.2;    // 困难：20% 衰减
+            default: return 0.1;   // 默认普通难度
+        }
     }
 }
 
@@ -176,3 +187,6 @@ double TrainingEvent::getStaminaExpRate() const { return staminaExpRate;}
 void TrainingEvent::setStaminaExpRate(double rate){staminaExpRate = rate;}
 void TrainingEvent::setAgilityExpRate(double rate){agilityExpRate = rate;}
 void TrainingEvent::setStrengthExpRate(double rate){strengthExpRate = rate;}
+
+bool TrainingEvent::getHasSideEffect() const {return hasSideEffect;}
+void TrainingEvent::setHasSideEffect(bool flag) {hasSideEffect = flag;}
