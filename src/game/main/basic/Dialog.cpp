@@ -1,5 +1,6 @@
 #include "Dialog.h"
 #include "Game.h"
+#include "GameTime.h"
 #include "InputProcess.h"
 #include "StoryController.h"
 
@@ -50,14 +51,40 @@ void Dialog::processPlayerInput(std::string& input) {
     if (input[0] == '/') {
         // 命令，交给 Game 逻辑层处理
         input = trim(input);
+        auto loc = game_logic_.getPlayer().getLocation();
 
         // TODO: 在这里解析并执行具体的命令
         if (input == "/help") {
-            game_logic_.getDialog().addMessage("系统", "可用命令: /status, /save, /quit");
-        } else if (input == "/status") {
-            game_logic_.getDialog().addMessage("系统", "你感觉状态良好。"); // TODO: 需要API接入
-        } else {
-            game_logic_.getDialog().addMessage("系统", "未知命令: " + input);
+            game_logic_.getDialog().addMessage("<SYSTEM>", "--==指令帮助菜单==--");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "可用命令:");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/help: 查看本条指令帮助");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/clear: 清除对话");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/use: 查看本场景下能够使用的指令");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/skill: 查看技能点及帮助菜单");
+            // game_logic_.getDialog().addMessage("<SYSTEM>", "/npc: 查看附加能够对话的NPC");
+            // game_logic_.getDialog().addMessage("<SYSTEM>", "/chat: 与NPC对话，格式 /chat NPC名称"); 有时间再说
+        } else if (input == "/clear") {
+            game_logic_.getDialog().clearHistory(); // 清除历史记录
+        } else if (input == "/use") {
+            if (loc == "家") {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "/sleep: 睡觉，用于恢复疲劳或跳过一天");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "恢复5点生命值和8点体力");
+            }
+        } else if (input == "/sleep") {
+            if (loc == "家") {
+                game_logic_.getDialog().addMessage("", "你躺在了你的床上，闭上眼睛，渐渐进入了梦乡...");
+                GameTime::_Time_.addDay(1);
+                GameTime::_Time_.addHour(rand() % 3 - 2);
+                GameTime::_Time_.addMinute(rand() % 30 - 15);
+                for (int i = 0; i < rand() % 3 + 3; i++) {
+                    game_logic_.getDialog().addMessage("<PLAYER_NAME>", "Zzz...");
+                }
+                game_logic_.getDialog().addMessage("", "你醒来了，感觉精神焕发！");
+                game_logic_.getPlayer().addHealth(5);
+                game_logic_.getPlayer().addStamina(8);
+            }
+        } else if (input == "/skill") {
+            game_logic_.getDialog().addMessage("<SYSTEM>", "当前技能点：");
         }
     } else {
         // 对话，将其添加到历史记录中

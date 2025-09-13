@@ -1,13 +1,10 @@
 #include "GameTime.h"
 
-// --- [关键] 在 .cpp 文件中定义静态成员变量 ---
-// 这会为 _Time_ 单例对象分配内存，并调用其默认构造函数。
 GameTime GameTime::_Time_;
 // 这会为 month 静态数组分配内存并初始化。
 const unsigned int GameTime::month[13] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 
-// --- 构造函数实现 ---
 GameTime::GameTime() :
     YEAR_(2007), MONTH_(8), DAY_(31), HOUR_(14), MINUTE_(39) {
     // 构造时立即检查并设置初始年份是否为闰年
@@ -15,7 +12,6 @@ GameTime::GameTime() :
     updateLeapYearStatus();
 }
 
-// --- 成员函数实现 ---
 void GameTime::addYear(const unsigned int YEAR) {
     if (!YEAR) return;
     _Time_.YEAR_ += YEAR;
@@ -68,7 +64,6 @@ bool GameTime::setTime(const unsigned int YEAR,
                        const unsigned int DAY,
                        const unsigned int HOUR,
                        const unsigned int MINUTE) {
-    // 验证输入参数的有效性
     if (MONTH < 1 || MONTH > 12 || DAY < 1 || DAY > 31 || HOUR > 23 || MINUTE > 59) {
         return false;
     }
@@ -98,14 +93,12 @@ bool GameTime::setTime(const unsigned int YEAR,
     return true;
 }
 
-// --- Getter 函数实现 ---
 unsigned int GameTime::getYear()   { return _Time_.YEAR_; }
 unsigned int GameTime::getMonth()  { return _Time_.MONTH_; }
 unsigned int GameTime::getDay()    { return _Time_.DAY_; }
 unsigned int GameTime::getHour()   { return _Time_.HOUR_; }
 unsigned int GameTime::getMinute() { return _Time_.MINUTE_; }
 
-// --- 私有函数实现 ---
 void GameTime::updateLeapYearStatus() {
     _Time_.isLeapYear = (_Time_.YEAR_ % 400 == 0) || (_Time_.YEAR_ % 4 == 0 && _Time_.YEAR_ % 100 != 0);
 }

@@ -159,7 +159,7 @@ Element MapLayout::Render() {
     // 在连接线之上绘制所有地点节点
     for (const auto& [id, loc] : locations_) {
         Color nodeColor = Color::GrayLight; // 普通地点的默认颜色
-        std::string extraText = "";
+        std::string extraText;
 
         if (locations_[id].name == player_loc_id) {
             nodeColor = Color::Yellow;
