@@ -423,6 +423,10 @@ bool Player::learnSkill(const std::string& skillName) {
         upperBodySustainDamageRate -= 0.3;
         lowerBodySustainDamageRate += 0.2;
     }
+
+    // 自身增益
+    skill -> execute(*this,*this);
+
     return true;
 }
 

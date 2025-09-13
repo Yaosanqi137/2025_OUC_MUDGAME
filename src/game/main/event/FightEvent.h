@@ -3,8 +3,11 @@
 
 /*
 
-Changed on 9-12 2:49 by Anyeling
-太晚了，没完工
+Changed on 9-14 2:23 by Anyeling
+回合制战斗机制未完成
+特殊奖励未处理
+系统提示未完成
+时间流逝未完成
 
 */
 
@@ -13,13 +16,15 @@ Changed on 9-12 2:49 by Anyeling
 #include "../class/entity/Enemy.h"
 #include "../class/skill/Skill.h"
 #include "../class/skill/SkillFactory.h"
+#include "../basic/Dialog.h"
+#include "../basic/Game.h"
 
 #include <memory>
 #include <vector>
 #include <stdexcept>
 #include <cstdlib>
 #include <ctime>
-
+#include <set>
 class Player;
 class Enemy;
 class Skill;
@@ -37,7 +42,7 @@ public:
     FightEvent(std::shared_ptr<Player> player, std::shared_ptr<Enemy> enemy);
     
     // 战斗流程控制
-    void startBattle();
+    void startBattle(Game& game);
     void endBattle();
     bool isBattleOver() const;
     

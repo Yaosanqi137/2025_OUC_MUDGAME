@@ -56,6 +56,21 @@ std::vector<std::shared_ptr<Skill>>& Enemy::getSkills() {
 
 void Enemy::addSkill(std::shared_ptr<Skill> skill) {
     skills_.push_back(skill);
+    std::string skillName_ = skill -> getSkillName();
+    if(skillName_ == "自杀式袭击"){
+        exHitRate -= 0.1;
+        fatigueConsumeRate - 0.2;
+    }
+    else if(skillName_ == "钝兵挫锐"){
+        sustainDamageRate -= 0.2;
+    }
+    else if(skillName_ == "拳击手"){
+        exHitRate += 0.1;
+    }
+    else if(skillName_ == "千手不破"){
+        upperBodySustainDamageRate -= 0.3;
+        lowerBodySustainDamageRate += 0.2;
+    }
 }
 
 // 下面是特殊技能效果函数
