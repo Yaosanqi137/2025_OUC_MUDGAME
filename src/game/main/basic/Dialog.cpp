@@ -3,6 +3,7 @@
 #include "GameTime.h"
 #include "InputProcess.h"
 #include "StoryController.h"
+#include <random>
 
 Dialog::Dialog(Game& game_logic) : game_logic_(game_logic) {}
 
@@ -70,20 +71,32 @@ void Dialog::processPlayerInput(std::string& input) {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "/sleep: 睡觉，用于恢复疲劳或跳过一天");
                 game_logic_.getDialog().addMessage("<SYSTEM>", "恢复5点生命值和8点体力");
             }
+            if (loc == "工地") {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "/work: 工作，赚取微薄的收入");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "每次工作赚取50-150元，消耗10点体力,10点");
+            }
         } else if (input == "/sleep") {
             if (loc == "家") {
                 game_logic_.getDialog().addMessage("", "你躺在了你的床上，闭上眼睛，渐渐进入了梦乡...");
-                GameTime::_Time_.addDay(1);
-                GameTime::_Time_.addHour(rand() % 3 - 2);
-                GameTime::_Time_.addMinute(rand() % 30 - 15);
-                for (int i = 0; i < rand() % 3 + 3; i++) {
+                GameTime::addDay(1);
+                static std::mt19937 rng(std::random_device{}());
+                std::uniform_int_distribution<int> distHour(-2, 2);
+                std::uniform_int_distribution<int> distMinute(-15, 15);
+                std::uniform_int_distribution<int> distSleep(3, 5);
+                GameTime::addHour(distHour(rng));
+                GameTime::addMinute(distMinute(rng));
+                for (int i = 0; i < distSleep(rng); i++) {
                     game_logic_.getDialog().addMessage("<PLAYER_NAME>", "Zzz...");
                 }
                 game_logic_.getDialog().addMessage("", "你醒来了，感觉精神焕发！");
                 game_logic_.getPlayer().addHealth(5);
                 game_logic_.getPlayer().addStamina(8);
+            } else {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在家里睡觉！");
             }
-        } else if (input == "/skill") {
+        } else if (input == "/use") {
+
+        }else if (input == "/skill") {
             game_logic_.getDialog().addMessage("<SYSTEM>", "当前技能点：");
         }
     } else {
