@@ -163,8 +163,14 @@ void Skill::execute(Player& user, Enemy& target) {
 
 void Skill::execute(Enemy& user, Player& target) {
     if (!canUse(user)) return;
-    
+
     double staminaCost = calculateStaminaCost(user.getStrength());
+    for(auto& skill__ : user.getSkills()){
+        if(skill__ -> getSkillName() == "无限能量"){
+            if(user.getHealth() < user.getMaxHealth())
+                staminaCost *= (1 - 0.15);
+        }
+    }
     user.addFatigue(-staminaCost);
     
     if (effectType == SkillEffectType::BASIC_ATTACK) {
@@ -177,6 +183,7 @@ void Skill::execute(Enemy& user, Player& target) {
     }
 }
 
+// 这个函数弃用
 void Skill::execute(Enemy& user, Enemy& target) {
     if (!canUse(user)) return;
     

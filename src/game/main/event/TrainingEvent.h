@@ -3,6 +3,13 @@
 
 #include <memory>
 
+/*
+
+Changed on 9-14 2:23 by Anyeling
+时间流逝未完成
+
+*/
+
 class Player;
 
 class TrainingEvent
@@ -57,6 +64,8 @@ public:
     void addAgilityExp(double exp);
     void addStaminaExp(double exp);
 
+    bool getHasSideEffect() const;
+    void setHasSideEffect(bool flag);
 private:
     std::shared_ptr<Player> player;
 
@@ -75,6 +84,7 @@ private:
     int agilityLevel;
     int staminaLevel;
 
+    bool hasSideEffect;
     // 计算升级所需经验
     double calculateRequiredExp(int level) const;
 

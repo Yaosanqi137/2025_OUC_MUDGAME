@@ -1,9 +1,12 @@
 /*
 
-Changed on 9-12 2:49 by Anyeling
-太晚了，没完工
+Changed on 9-14 2:23 by Anyeling
+回合制战斗机制未完成
+特殊奖励未处理
+系统提示未完成
+时间流逝未完成
+战败属性降低未完成
 
-特殊奖励未处理，技能效果未处理
 */
 
 
@@ -98,7 +101,7 @@ void FightEvent::configureEnemySkills() {
     }
 }
 
-void FightEvent::startBattle() {
+void FightEvent::startBattle(Game& game) {
     battleOver_ = false;
     playerWon_ = false;
     currentRound_ = 0;
@@ -132,6 +135,16 @@ void FightEvent::startBattle() {
     
     // 开始第一回合
     currentRound_ = 1;
+
+    
+    if(playerTurn_){
+        game.getDialog().addMessage("<SYSTEM>", "轮到了你的回合，请选择你要做出的选择");
+        std::string input ;
+        playerChooseAction(TurnAction::SKILL, 0);
+    }
+    else{
+
+    }
 }
 
 void FightEvent::endBattle() {
@@ -262,7 +275,7 @@ void FightEvent::processEnemyTurn() {
 }
 
 bool FightEvent::checkHit(double hitRate) const {
-    double roll = (std::rand() % 10000) / 100.0; // 0.0 到 100.0
+    double roll = (std::rand() % 10000) / 10000.0; // 0.0 到 100.0
     return roll <= hitRate;
 }
 
@@ -296,10 +309,23 @@ void FightEvent::processPlayerSkill(int skillIndex) {
 
     // 计算伤害
     double damage = skill->calculateDamage(player_->getStrength());
-    // 上下肢伤害逻辑未完成
+    for(auto& skill__ : player_->getSkills()){
+        // 查找玩家是否有这个特殊技能
+        if(skill__ -> getSkillName() == "千手不破"){
+            std::set<int> upperSkillIndex = {1,4,5,6,7,8,11,12,13,14,15};
+            std::set<int> lowerSkillIndex = {2,3,9,10};
+            // 上肢伤害乘受伤倍数
+            if(upperSkillIndex.find(skillIndex) != upperSkillIndex.end())
+                damage *= enemy_ -> getUpperBodySustainDamageRate();
+            // 下肢伤害乘受伤倍数
+            else if(lowerSkillIndex.find(skillIndex) != lowerSkillIndex.end())
+                damage *= enemy_ -> getLowerBodySustainDamageRate();
+        }
+    }
     double hitRate = skill->calculateHitRate(player_->getAgility(), 
                                            player_->getStrength(), 
                                            player_->getStamina());
+    // ExHitRate 由特殊技能而得
     hitRate += player_ -> getExHitRate();
     hitRate = std::max(0.0,hitRate);
     hitRate = std::min(1.0,hitRate); 
@@ -307,9 +333,13 @@ void FightEvent::processPlayerSkill(int skillIndex) {
         applyDamageToEnemy(damage);
         
         // 特殊技能 31号技能"闪击"
-        double roll = std::rand() % 100;
-        if(roll < 25){
-            applyDamageToPlayer(damage * 0.25);
+        for(auto& skill__ : enemy_->getSkills()){
+            if(skill__ -> getSkillName() == "闪击"){
+                double roll = std::rand() % 100;
+                if(roll < 25){
+                    applyDamageToPlayer(damage * 0.25);
+                }
+            }
         }
 
         
