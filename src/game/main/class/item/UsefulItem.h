@@ -11,7 +11,8 @@ public:
     // 枚举物品类型
     enum class ItemType {
         BOXING_GLOVES,      // 拳套
-        BOXING_GYM_PASS     // 拳击馆通行证
+        BOXING_GYM_PASS,    // 拳击馆通行证
+        CARD                // 弗兰克的名片
     };
 
     UsefulItem(ItemType type);
@@ -23,15 +24,15 @@ public:
     ItemType getItemType() const;
     int getDurability() const;
 
-    static UsefulItem createBoxingGloves();
-    static UsefulItem createBoxingGymPass();
+    static UsefulItem createBoxingGloves(bool isUsable = false);
+    static UsefulItem createBoxingGymPass(bool isUsable = false);
+    static UsefulItem createCard(bool isUsable = false);
 
 private:
     ItemType type_;
     int price_;
     int durability_;
-
-    UsefulItem(ItemType type, const std::string& name, const std::string& intro, int price, int durability);
+    UsefulItem(ItemType type, const std::string& name, const std::string& intro, int price, int durability, bool isUsable);
 
     bool decreaseDurability();
 };

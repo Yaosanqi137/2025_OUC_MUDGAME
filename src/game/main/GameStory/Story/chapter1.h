@@ -94,7 +94,7 @@ namespace Chapter1 {
         SpeakAction{"<SYSTEM>", "提示，先来熟悉一下界面吧"},
         SpeakAction{"<SYSTEM>", "这个小镇可没有卖拳套的地方，尝试尝试网购吧"},
         SpeakAction{"<SYSTEM>", "点击侧栏\"我的手机\"，然后点击\"网购平台\""},
-        SpeakAction{"<SYSTEM>", "你的兜里初始有1000元，如果不够的话，可以去工地打工"},
+        SpeakAction{"<SYSTEM>", "你的兜里初始有100元，如果不够的话，可以去工地打工"},
         SpeakAction{"<SYSTEM>", "打开手机里的地图，可以快捷的前往某个地点"},
     });
 

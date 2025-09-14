@@ -2,8 +2,12 @@
 #include <stdexcept>
 
 // 私有构造函数
-UsefulItem::UsefulItem(ItemType type, const std::string& name, const std::string& intro, int price, int durability)
-    : AbstractItem(name, intro), type_(type), price_(price), durability_(durability) {}
+UsefulItem::UsefulItem(ItemType type, const std::string& name, const std::string& intro, int price, int durability, bool isUsable)
+    : AbstractItem(name, intro), type_(type), price_(price), durability_(durability) {
+    price_ = price;
+    durability_ = durability;
+    isUsable_ = isUsable;
+}
 
 // 公共构造函数
 UsefulItem::UsefulItem(ItemType type) {
@@ -13,6 +17,9 @@ UsefulItem::UsefulItem(ItemType type) {
             break;
         case ItemType::BOXING_GYM_PASS:
             *this = createBoxingGymPass();
+            break;
+        case ItemType::CARD:
+            *this = createCard();
             break;
         default:
             throw std::invalid_argument("Unknown useful item type");
@@ -43,12 +50,16 @@ int UsefulItem::getDurability() const {
 
 
 // 静态工厂方法
-UsefulItem UsefulItem::createBoxingGloves() {
-    return {ItemType::BOXING_GLOVES, "拳套", "一副基础的拳击手套，提供了基础的保护。", 50, 10};
+UsefulItem UsefulItem::createBoxingGloves(bool isUsable) {
+    return {ItemType::BOXING_GLOVES, "拳套", "一副基础的拳击手套，提供了基础的保护。", 50, 10, isUsable};
 }
 
-UsefulItem UsefulItem::createBoxingGymPass() {
-    return {ItemType::BOXING_GYM_PASS, "拳击馆通行证", "一张可以在拳击馆使用的通行证。", 500, 15};
+UsefulItem UsefulItem::createBoxingGymPass(bool isUsable) {
+    return {ItemType::BOXING_GYM_PASS, "拳击馆通行证", "一张可以在拳击馆使用的通行证。", 500, 15, isUsable};
+}
+
+UsefulItem UsefulItem::createCard(bool isUsable) {
+    return {ItemType::CARD, "弗兰克的名片", "一张闪闪发光的名片，上面写着弗兰克，拳击手经纪人", 5, 1, isUsable};
 }
 
 // 辅助函数，减少耐久度

@@ -71,11 +71,14 @@ BagLayout::BagLayout(Game& game_logic, bool& isShowingFlag, std::vector<std::sha
     useButton_ = Button(" [ 使用物品 ] ", [this] {
         if (selectedItemIndex_ >= 0 && selectedItemIndex_ < static_cast<int>(displayableItems_.size())) {
             const auto& selectedItem = displayableItems_[selectedItemIndex_];
-            player_.useItem(selectedItem->getName());
-            refreshItems(); // 使用后刷新物品列表
-            // 如果物品用完了，重置选择
-            if (selectedItemIndex_ >= static_cast<int>(displayableItems_.size())) {
-                selectedItemIndex_ = -1;
+            // 判断物品是否可用
+            if (selectedItem->isUsable()) {
+                player_.useItem(selectedItem->getName());
+                refreshItems(); // 使用后刷新物品列表
+                // 如果物品用完了，重置选择
+                if (selectedItemIndex_ >= static_cast<int>(displayableItems_.size())) {
+                    selectedItemIndex_ = -1;
+                }
             }
         }
     });
@@ -157,7 +160,7 @@ Element BagLayout::Render() {
     std::string itemDetailAmount;
     std::string itemDetailClass;
     bool canUseItem = false;
-
+    bool isUsable = false;
     if (selectedItemIndex_ >= 0 && selectedItemIndex_ < static_cast<int>(displayableItems_.size())) {
         const auto& item = displayableItems_[selectedItemIndex_];
         itemDetailName = "名称: " + item->getName();
@@ -165,6 +168,7 @@ Element BagLayout::Render() {
         itemDetailAmount = "数量: " + std::to_string(item->getAmount());
         itemDetailClass = "类型: " + getItemTypeString(item);
         canUseItem = item->getAmount() > 0;
+        isUsable = item->isUsable();
     }
 
     auto detailPanel = vbox({
@@ -175,7 +179,7 @@ Element BagLayout::Render() {
         paragraph(itemDetailAmount) | vscroll_indicator | frame | flex,
         paragraph(itemDetailClass) | vscroll_indicator | frame | flex,
         separator(),
-        (canUseItem ? useButton_->Render() : text("无法使用") | color(Color::GrayDark)) | center
+        (canUseItem && isUsable ? useButton_->Render() : text("无法使用") | color(Color::GrayDark)) | center
     }) | border;
 
     int totalPages = getTotalPages();

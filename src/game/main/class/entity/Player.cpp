@@ -12,7 +12,7 @@ Bug to fix: not link to BagLayout(ui) yet
 #include "../item/UsefulItem.h"
 
 Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
-                   stamina(1), agility(1), hunger(80), fatigue(80), money(1000), location("???"), health(100),
+                   stamina(1), agility(1), hunger(80), fatigue(80), money(100), location("???"), health(100),
                    minStrength(0), minStamina(0), minAgility(0), skillPoints(0),
                    maxHunger(80), maxFatigue(80), maxHealth(100),
                    exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0),
@@ -319,15 +319,15 @@ void Player::initializeInventory() {
 
     // 添加所有食物类型，数量为0
     auto meat = std::make_shared<Food>(Food::FoodType::MEAT);
-    meat->setAmount(2); // 测试用：添加2个肉
+    meat->setAmount(0); // 测试用：添加2个肉
     inventory_.push_back(meat);
 
     auto soda = std::make_shared<Food>(Food::FoodType::SODA);
-    soda->setAmount(3); // 测试用：添加3个苏打水
+    soda->setAmount(0); // 测试用：添加3个苏打水
     inventory_.push_back(soda);
 
     auto energyDrink = std::make_shared<Food>(Food::FoodType::ENERGY_DRINK);
-    energyDrink->setAmount(1); // 测试用：添加1个能量饮料
+    energyDrink->setAmount(0); // 测试用：添加1个能量饮料
     inventory_.push_back(energyDrink);
 
     auto frozenPizza = std::make_shared<Food>(Food::FoodType::FROZEN_PIZZA);
@@ -344,12 +344,16 @@ void Player::initializeInventory() {
 
     // 添加所有有用物品类型，数量为0
     auto boxingGloves = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GLOVES);
-    boxingGloves->setAmount(1); // 测试用：添加1个拳套
+    boxingGloves->setAmount(0);
     inventory_.push_back(boxingGloves);
 
     auto gymPass = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GYM_PASS);
-    gymPass->setAmount(0);
+    gymPass->setAmount(1);
     inventory_.push_back(gymPass);
+
+    auto card = std::make_shared<UsefulItem>(UsefulItem::ItemType::CARD);
+    card->setAmount(1);
+    inventory_.push_back(card);
 }
 
 
