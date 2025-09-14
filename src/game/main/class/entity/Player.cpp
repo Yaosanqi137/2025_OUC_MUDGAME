@@ -10,6 +10,7 @@ Bug to fix: not link to BagLayout(ui) yet
 #include "Player.h"
 #include "../item/Food.h"
 #include "../item/UsefulItem.h"
+#include "../../event/TrainingEvent.h"
 
 Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
                    stamina(1), agility(1), hunger(80), fatigue(80), money(100), location("???"), health(100),
@@ -111,7 +112,7 @@ void Player::addFatigue(const double value) {
 void Player::addHealth(double value) {
     health += value;
     health = std::max(0.0, health);
-    health = std::min(health + exMaxHealth, maxHealth);
+    health = std::min(health, maxHealth + exMaxHealth);
 }
 
 
@@ -460,11 +461,11 @@ std::shared_ptr<TrainingEvent> Player::getTrainingSystem() {
     return trainingSystem;
 }
 
-bool Player::train(TrainingEvent::TrainingType type) {
-    return trainingSystem->train(type);
+bool Player::train(TrainingType type) {
+    return trainingSystem->train(type, this->game_logic_);
 }
 
-bool Player::canTrain(TrainingEvent::TrainingType type) const {
+bool Player::canTrain(TrainingType type) const {
     return trainingSystem->canTrain(type);
 }
 

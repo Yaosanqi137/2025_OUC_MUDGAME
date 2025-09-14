@@ -21,8 +21,6 @@ public:
     // 检查是否可以学习技能
     bool canLearnSkill(const std::string& skillName) const;
     
-    // 获取所有可学习的技能
-    std::vector<std::string> getAvailableSkills() const;
     
     // 获取技能前置要求
     std::vector<std::string> getPrerequisites(const std::string& skillName) const;
@@ -33,6 +31,7 @@ public:
     // 获取已学技能列表
     const std::vector<std::string>& getLearnedSkills() const;
 
+    std::vector<std::string> getAvailableSkills() const;
 
 private:
     std::vector<std::string> learnedSkills_;
