@@ -4,6 +4,7 @@
 #include "InputProcess.h"
 #include "StoryController.h"
 #include "../event/TrainingEvent.h"
+#include "BattleCommandHandler.h" // 包含新的命令处理器
 #include <random>
 
 Dialog::Dialog(Game& game_logic) : game_logic_(game_logic) {}
@@ -49,6 +50,18 @@ void Dialog::processPlayerInput(std::string& input) {
         return;
     }
 
+    //检查是否在战斗中
+    if (game_logic_.isInBattle()) {
+        // 使用新的命令处理器处理战斗命令
+        if (BattleCommandHandler::handleCommand(game_logic_, input)) {
+            return;
+        } else {
+            addMessage("<SYSTEM>", "在战斗中，请使用战斗命令: /enemy attack skill <id> 或 /enemy attack pass");
+            return;
+        }
+    }
+
+
     // 命令与对话
     if (input[0] == '/') {
         // 命令，交给 Game 逻辑层处理
@@ -70,20 +83,21 @@ void Dialog::processPlayerInput(std::string& input) {
             game_logic_.getDialog().clearHistory(); // 清除历史记录
         } else if (input == "/use") {
             if (loc == "家") {
-                game_logic_.getDialog().addMessage("<SYSTEM>", "/sleep: 睡觉，用于恢复疲劳或跳过一天");
-                game_logic_.getDialog().addMessage("<SYSTEM>", "恢复5点生命值和8点体力");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "/sleep: 睡觉，用于恢复疲劳并跳过一天");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "恢复10点生命值和50点体力");
             }
             if (loc == "工地") {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "/work: 工作，赚取微薄的收入");
-                game_logic_.getDialog().addMessage("<SYSTEM>", "每次工作赚取50-150元，消耗10点体力,10点");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "每次工作赚取50-150元，消耗10点体力,10点饥饿值");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "预计花费6-8小时");
             }
         } else if (input == "/sleep") {
             if (loc == "家") {
                 game_logic_.getDialog().addMessage("", "你躺在了你的床上，闭上眼睛，渐渐进入了梦乡...");
                 GameTime::addDay(1);
                 static std::mt19937 rng(std::random_device{}());
-                std::uniform_int_distribution<int> distHour(-2, 2);
-                std::uniform_int_distribution<int> distMinute(-15, 15);
+                std::uniform_int_distribution<int> distHour(-8, -4);
+                std::uniform_int_distribution<int> distMinute(-30, 30);
                 std::uniform_int_distribution<int> distSleep(3, 5);
                 GameTime::addHour(distHour(rng));
                 GameTime::addMinute(distMinute(rng));
@@ -92,12 +106,24 @@ void Dialog::processPlayerInput(std::string& input) {
                 }
                 game_logic_.getDialog().addMessage("", "你醒来了，感觉精神焕发！");
                 game_logic_.getPlayer().addHealth(5);
-                game_logic_.getPlayer().addStamina(8);
+                game_logic_.getPlayer().addFatigue(50);
             } else {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在家里睡觉！");
             }
-        } else if (input == "/use") {
-
+        } else if (input == "/work") {
+            if (loc == "工地") {
+                static std::mt19937 rng(std::random_device{}());
+                std::uniform_int_distribution<int> distMoney(40, 100);
+                int earned = distMoney(rng);
+                game_logic_.getPlayer().addSavings(earned);
+                game_logic_.getPlayer().addFatigue(-10);
+                game_logic_.getPlayer().addHunger(-10);
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你在工地辛勤工作，赚取了 " + std::to_string(earned) + " 元");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "但你也消耗了10点体力和10点饥饿值");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你觉得你需要休息一下，吃点东西");
+            } else {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在工地工作！");
+            }
         }else if (input == "/skill") {
             game_logic_.getDialog().addMessage("<SYSTEM>", "当前技能点：" + std::to_string((int)game_logic_.getPlayer().getSkillPoints()));
             game_logic_.getDialog().addMessage("<SYSTEM>", "技能命令用法:");
@@ -155,27 +181,49 @@ void Dialog::processPlayerInput(std::string& input) {
             }
             
         } else if (input == "/train status") {
-            // 查看训练状态
-            auto statusInfo = game_logic_.getPlayer().getTrainingSystem()->getTrainingStatus();
-            // 按行分割状态信息并逐行显示
-            size_t pos = 0;
-            while ((pos = statusInfo.find('\n')) != std::string::npos) {
-                game_logic_.getDialog().addMessage("<SYSTEM>", statusInfo.substr(0, pos));
-                statusInfo.erase(0, pos + 1);
+            if (loc == "拳击馆") {
+                // 查看训练状态
+                auto statusInfo = game_logic_.getPlayer().getTrainingSystem()->getTrainingStatus();
+                // 按行分割状态信息并逐行显示
+                size_t pos = 0;
+                while ((pos = statusInfo.find('\n')) != std::string::npos) {
+                    game_logic_.getDialog().addMessage("<SYSTEM>", statusInfo.substr(0, pos));
+                    statusInfo.erase(0, pos + 1);
+                }
+                if (!statusInfo.empty()) {
+                    game_logic_.getDialog().addMessage("<SYSTEM>", statusInfo);
+                }
+            } else {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在拳击馆查看训练状态！");
+                return;
             }
-            if (!statusInfo.empty()) {
-                game_logic_.getDialog().addMessage("<SYSTEM>", statusInfo);
-            }
-            
         } else if (input == "/train strength") {
+            if (loc != "拳击馆") {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在拳击馆训练！");
+                return;
+            }
             game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::STRENGTH, game_logic_);
             
         } else if (input == "/train agility") {
+            if (loc != "拳击馆") {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在拳击馆训练！");
+                return;
+            }
             game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::AGILITY, game_logic_);
             
         } else if (input == "/train stamina") {
+            if (loc != "拳击馆") {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在拳击馆训练！");
+                return;
+            }
             game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::STAMINA, game_logic_);
-        }else {
+        } else if (input == "/enemy show") {
+            int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
+            BattleCommandHandler::showEnemyInfo(game_logic_, nextEnemyId);
+        } else if (input == "/enemy battle") {
+            int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
+            BattleCommandHandler::startBattle(game_logic_, nextEnemyId);
+        } else {
             // 对话，将其添加到历史记录中
             addMessage(game_logic_.getPlayer().getName(), input);
         }
