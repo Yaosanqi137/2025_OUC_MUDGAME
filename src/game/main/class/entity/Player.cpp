@@ -10,7 +10,11 @@ Bug to fix: not link to BagLayout(ui) yet
 #include "Player.h"
 #include "../item/Food.h"
 #include "../item/UsefulItem.h"
+<<<<<<< HEAD
 #include "../../event/TrainingEvent.h"
+=======
+#include "../item/Medicine.h"
+>>>>>>> cd1d0244ff543892a424baadfb42bbee7e76de60
 
 Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
                    stamina(1), agility(1), hunger(80), fatigue(80), money(100), location("???"), health(100),
@@ -275,6 +279,30 @@ void Player::addItemByType(const std::string& itemType, int amount) {
         auto item = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GYM_PASS);
         item->setAmount(amount);
         addItem(item);
+    } else if (itemType == "弗兰克的名片") {
+        auto item = std::make_shared<UsefulItem>(UsefulItem::ItemType::CARD);
+        item->setAmount(amount);
+        addItem(item);
+    } else if (itemType == "回生丹") {
+        auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::REVIVAL_PILL);
+        medicine->setAmount(amount);
+        addItem(medicine);
+    } else if (itemType == "力量药水") {
+        auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::STRENGTH_POTION);
+        medicine->setAmount(amount);
+        addItem(medicine);
+    } else if (itemType == "敏捷药水") {
+        auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::AGILITY_POTION);
+        medicine->setAmount(amount);
+        addItem(medicine);
+    } else if (itemType == "耐力药水") {
+        auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::STAMINA_POTION);
+        medicine->setAmount(amount);
+        addItem(medicine);
+    } else if (itemType == "技能点药水") {
+        auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::SKILL_POINT_POTION);
+        medicine->setAmount(amount);
+        addItem(medicine);
     }
 }
 
@@ -320,15 +348,15 @@ void Player::initializeInventory() {
 
     // 添加所有食物类型，数量为0
     auto meat = std::make_shared<Food>(Food::FoodType::MEAT);
-    meat->setAmount(0); // 测试用：添加2个肉
+    meat->setAmount(0);
     inventory_.push_back(meat);
 
     auto soda = std::make_shared<Food>(Food::FoodType::SODA);
-    soda->setAmount(0); // 测试用：添加3个苏打水
+    soda->setAmount(0);
     inventory_.push_back(soda);
 
     auto energyDrink = std::make_shared<Food>(Food::FoodType::ENERGY_DRINK);
-    energyDrink->setAmount(0); // 测试用：添加1个能量饮料
+    energyDrink->setAmount(0);
     inventory_.push_back(energyDrink);
 
     auto frozenPizza = std::make_shared<Food>(Food::FoodType::FROZEN_PIZZA);
@@ -349,16 +377,34 @@ void Player::initializeInventory() {
     inventory_.push_back(boxingGloves);
 
     auto gymPass = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GYM_PASS);
-    gymPass->setAmount(1);
+    gymPass->setAmount(0);
     inventory_.push_back(gymPass);
 
     auto card = std::make_shared<UsefulItem>(UsefulItem::ItemType::CARD);
-    card->setAmount(1);
+    card->setAmount(0);
     inventory_.push_back(card);
+
+    auto revivalPill = std::make_shared<Medicine>(Medicine::MedicineType::REVIVAL_PILL);
+    revivalPill->setAmount(0);
+    inventory_.push_back(revivalPill);
+
+    auto strengthPotion = std::make_shared<Medicine>(Medicine::MedicineType::STRENGTH_POTION);
+    strengthPotion->setAmount(0);
+    inventory_.push_back(strengthPotion);
+
+    auto agilityPotion = std::make_shared<Medicine>(Medicine::MedicineType::AGILITY_POTION);
+    agilityPotion->setAmount(0);
+    inventory_.push_back(agilityPotion);
+
+    auto staminaPotion = std::make_shared<Medicine>(Medicine::MedicineType::STAMINA_POTION);
+    staminaPotion->setAmount(0);
+    inventory_.push_back(staminaPotion);
+
+    auto skillPointPotion = std::make_shared<Medicine>(Medicine::MedicineType::SKILL_POINT_POTION);
+    skillPointPotion->setAmount(0);
+    inventory_.push_back(skillPointPotion);
 }
 
-
-// ==================== 敌人解锁进度管理 ====================
 bool Player::isEnemyUnlocked(int enemyId) const {
     if (enemyId < 1 || enemyId >= unlockedEnemies_.size()) {
         return false;
@@ -491,6 +537,7 @@ double Player::getExMaxHunger() const{return exMaxHunger;}
 void Player::setExMaxHealth(double value) {exMaxHealth = value;}
 void Player::setExMaxFatigue(double value) {exMaxFatigue = value;}
 void Player::setExMaxHunger(double value) {exMaxHunger = value;}
+<<<<<<< HEAD
 
 // 指令集( Skill )展示
 std::vector<std::string> Player::getAllSkillsInfo() const {
@@ -550,3 +597,5 @@ bool Player::learnSkillById(int skillId) {
     
     return learnSkill(skillName);
 }
+=======
+>>>>>>> cd1d0244ff543892a424baadfb42bbee7e76de60
