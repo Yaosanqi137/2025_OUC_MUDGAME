@@ -13,14 +13,14 @@ Bug to fix: not link to BagLayout(ui) yet
 #include "../../event/TrainingEvent.h"
 #include "../item/Medicine.h"
 
-Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
-                   stamina(1), agility(1), hunger(80), fatigue(80), money(100), location("???"), health(100),
-                   minStrength(0), minStamina(0), minAgility(0), skillPoints(0),
-                   maxHunger(80), maxFatigue(80), maxHealth(100),
-                   exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0),
-                   sustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),upperBodySustainDamageRate(1.0),
-                   fatigueConsumeRate(1.0),exHitRate(0.0),
-                   gameDifficulty(2) {
+Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , location("???"),
+                   gameDifficulty(2), strength(1), stamina(1), agility(1), hunger(80), fatigue(80), health(100),
+                   minStrength(0), minStamina(0), minAgility(0), maxHunger(80),
+                   maxFatigue(80), maxHealth(100), maxStamina(100), exMaxHunger(0),
+                   exMaxFatigue(0), exMaxHealth(0), sustainDamageRate(1.0),
+                   upperBodySustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),fatigueConsumeRate(1.0),
+                   exHitRate(0.0),money(100),
+                   skillPoints(0) {
     // 在构造函数中初始化背包
     initializeInventory();
 
@@ -82,6 +82,10 @@ double Player::getHealth() const {
     return health;
 }
 
+double Player::getMaxStamina() const {
+    return maxStamina;
+}
+
 
 void Player::addStrength(const double value) {
     strength += value;
@@ -91,6 +95,7 @@ void Player::addStrength(const double value) {
 void Player::addStamina(const double value) {
     stamina += value;
     stamina = std::max(stamina, minStamina);    // 确保不低于最低耐力值
+    stamina = std::min(stamina, maxStamina);    // 确保不超过最大耐力值
 }
 
 void Player::addAgility(const double value) {
@@ -158,7 +163,7 @@ double Player::getMaxHealth() const {
     return maxHealth;
 }
 
-// 设置最高属性值(饱食度，体力，生命值)
+// 设置最高属性值(饱食度，体力，生命值，耐力)
 void Player::setMaxHunger(double value) {
     maxHunger = value;
 }
@@ -169,6 +174,10 @@ void Player::setMaxFatigue(double value) {
 
 void Player::setMaxHealth(double value) {
     maxHealth = value;
+}
+
+void Player::setMaxStamina(double value) {
+    maxStamina = value;
 }
 
 
@@ -231,7 +240,6 @@ std::vector<std::shared_ptr<AbstractItem>> Player::getDisplayableItems() const {
 }
 
 void Player::addItem(std::shared_ptr<AbstractItem> item) {
-    // 检查背包中是否已经有同名物品
     auto existingItem = findItemByName(item->getName());
     if (existingItem) {
         // 如果已存在，增加数量
@@ -539,40 +547,40 @@ void Player::setExMaxHunger(double value) {exMaxHunger = value;}
 std::vector<std::string> Player::getAllSkillsInfo() const {
     std::vector<std::string> result;
     auto allSkillNames = SkillFactory::getAllSkillNames();
-    
+
     for (const auto& skillName : allSkillNames) {
         auto skill = SkillFactory::createSkillByName(skillName);
         if (skill) {
-            std::string info = "[" + std::to_string(skill->getId()) + "] " + 
-                              skillName + " - " + skill->getDescription() + 
+            std::string info = "[" + std::to_string(skill->getId()) + "] " +
+                              skillName + " - " + skill->getDescription() +
                               " (消耗:" + std::to_string(skill->getUnlockCost()) + "技能点)";
             result.push_back(info);
         }
     }
-    
+
     return result;
 }
 
 std::vector<std::string> Player::getLearnableSkillsInfo() const {
     std::vector<std::string> result;
     auto availableSkills = skillTreeManager.getAvailableSkills();
-    
+
     for (const auto& skillName : availableSkills) {
         auto skill = SkillFactory::createSkillByName(skillName);
         if (skill) {
             std::string status = "可学习";
             if (skillPoints < skill->getUnlockCost()) {
-                status = "技能点不足 (需要:" + std::to_string(skill->getUnlockCost()) + 
+                status = "技能点不足 (需要:" + std::to_string(skill->getUnlockCost()) +
                         ", 当前:" + std::to_string((int)skillPoints) + ")";
             }
-            
-            std::string info = "[" + std::to_string(skill->getId()) + "] " + 
-                              skillName + " - " + skill->getDescription() + 
+
+            std::string info = "[" + std::to_string(skill->getId()) + "] " +
+                              skillName + " - " + skill->getDescription() +
                               " (" + status + ")";
             result.push_back(info);
         }
     }
-    
+
     return result;
 }
 
@@ -586,23 +594,10 @@ bool Player::learnSkillById(int skillId) {
             break;
         }
     }
-    
+
     if (skillName.empty()) {
         return false;
     }
-    
+
     return learnSkill(skillName);
-}
-
-// 返回游戏引用
-Game& Player::getGameLogic() {return game_logic_;}
-
-int Player::getHighestUnlockedEnemy() const {
-    // 从最高ID开始向下查找，找到第一个已解锁的敌人
-    for (int i = unlockedEnemies_.size() - 1; i >= 0; --i) {
-        if (unlockedEnemies_[i]) {
-            return i;
-        }
-    }
-    return 0; // 如果没有解锁任何敌人，返回0
 }

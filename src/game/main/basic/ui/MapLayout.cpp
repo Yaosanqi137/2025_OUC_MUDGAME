@@ -1,10 +1,13 @@
 #include "MapLayout.h"
 #include "../Game.h"
+#include "../GameTime.h"
 #include "../../class/entity/Player.h"
 #include "FTXUI/dom/elements.hpp"
 #include "FTXUI/screen/string.hpp"
 #include "FTXUI/dom/canvas.hpp"
 #include "FTXUI/component/component.hpp"
+
+#include <random>
 
 using namespace ftxui;
 
@@ -110,22 +113,55 @@ void MapLayout::initializeLocations() {
     locations_["gym"]          = {"拳击馆",          "拳击馆",     40, 22, "construction", "", "", "store"};
     locations_["construction"] = {"工地", "工地",       40, 12, "", "gym", "", ""};
     locations_["arena"]        = {"比赛场地",        "比赛场地",   80,  5, "", "store", "", ""};
-    locations_["pharmacy"]     = {"药店/体检",     "药店/体检", 120, 22, "", "", "store", ""};
+    locations_["pharmacy"]     = {"药店",     "药店", 120, 22, "", "", "store", ""};
 }
 
 void MapLayout::travelBy(const std::string& method) {
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> distWalkTime(10, 25); // 步行时间10-20分钟
+    std::uniform_int_distribution<int> distTaxiTime(4, 10);  // 计程车时间5-10分钟
+
     Player& player = game_logic_.getPlayer();
     const auto& destination = locations_.at(selectedLocationId_);
 
     if (method == "taxi") {
-        if (player.getSavings() < 15) {
-            viewMode_ = 0;
-            return;
+        if (player.getSavings() >= 15) {
+            player.addSavings(-15);
+            GameTime::addMinute(distTaxiTime(rng));
+            game_logic_.getDialog().addMessage("", "你乘坐计程车前往了 " + destination.name + " ，花费了15元");
         }
-        player.addSavings(-15);
+        game_logic_.getDialog().addMessage("你发现你没钱坐车了！", "你掏出钱包一看，发现只剩下 " + std::to_string(player.getSavings()) + " 元了");
     } else if (method == "walk") {
         player.addHunger(-5);
         player.addFatigue(-3);
+        GameTime::addMinute(distWalkTime(rng));
+        game_logic_.getDialog().addMessage("", "虽然有点累，但是你还是选择了步行前往了 " + destination.name);
+    }
+
+    if (destination.name == "家") {
+        game_logic_.getDialog().addMessage("", "你回到了家，闻到家里的空气，让你感到放松");
+        game_logic_.getDialog().addMessage("", "想吃点零食休息一下吗？");
+    } else if (destination.name == "工地") {
+        game_logic_.getDialog().addMessage("", "你来到了工地，这里有很多体力活可以做");
+        game_logic_.getDialog().addMessage("包工头", "喂！小子，看什么呢，你也想搬砖吗？");
+        game_logic_.getDialog().addMessage("包工头", "如果你想打工，可以试试/work命令");
+    } else if (destination.name == "拳击馆") {
+        game_logic_.getDialog().addMessage("", "你来到了拳击馆，看到几个拳击手正在挥汗如雨的训练");
+        game_logic_.getDialog().addMessage("教练", "准备练拳！赶紧输入/train指令吧！");
+    } else if (destination.name == "比赛场地") {
+        game_logic_.getDialog().addMessage("", "你来到了比赛场地，这里经常举办各种拳击比赛");
+        game_logic_.getDialog().addMessage("", "看着上面面的擂台，你不由得心潮澎湃");
+    } else if (destination.name == "商店") {
+        game_logic_.getDialog().addMessage("", "你来到了商店，这里可以买到各种生活用品和食物");
+        game_logic_.getDialog().addMessage("商店老板", "欢迎光临，有什么需要的吗？吃的喝的都可以在这里买哦");
+    } else if (destination.name == "药店") {
+        game_logic_.getDialog().addMessage("", "你来到了药店，这里可以买到药品和营养品");
+        game_logic_.getDialog().addMessage("药店小姐", "你好呀，请问哪里不舒服呢？");
+    } else if (destination.name == "咖啡馆") {
+        game_logic_.getDialog().addMessage("", "你来到了咖啡馆，这里有各种美味的饮品和甜点");
+        game_logic_.getDialog().addMessage("","此时，一个可爱的，穿着女仆装的少女走了过来");
+        game_logic_.getDialog().addMessage("女仆", "你好呀，欢迎来到女仆咖啡馆，请问需要点什么吗？");
+        game_logic_.getDialog().addMessage("女仆", "我们这里有这里最好吃最好喝的甜点和饮品哦~");
     }
 
     player.setLocation(destination.name);
@@ -174,41 +210,42 @@ Element MapLayout::Render() {
         DrawLocationNode(canvas, loc, nodeColor, (id == selectedLocationId_), extraText);
     }
 
-    auto mapElement = vbox({ // 提示框和退出按钮
+    // 创建右下角的出行方式选择区域
+    Element travelDialog = text("");
+    if (viewMode_ == 1) {
+        auto& dest = locations_.at(selectedLocationId_);
+        travelDialog = vbox({
+            text("前往 " + dest.name) | bold | color(Color::Yellow),
+            hbox({
+                buttonTaxi_->Render() | size(WIDTH, LESS_THAN, 20),
+                text(" "),
+                buttonWalk_->Render() | size(WIDTH, LESS_THAN, 20),
+                text(" "),
+                buttonCancelTravel_->Render() | size(WIDTH, LESS_THAN, 20)
+            })
+        }) | border | size(WIDTH, LESS_THAN, 35) | size(HEIGHT, LESS_THAN, 10);
+    }
+
+    auto mapElement = vbox({
         legend | center,
         separator(),
-        ftxui::canvas(std::move(canvas)) | flex_grow | center,
-        separator(),
         hbox({
-            text("使用 [↑↓←→] 移动选择, [Home] 确认") | color(Color::GrayLight),
-            filler(),
-            buttonExit_->Render()
+            ftxui::canvas(std::move(canvas)) | flex_grow,
+            viewMode_ == 1 ? vbox({
+                filler(),
+                travelDialog
+            }) : filler()
+        }) | flex,
+        separator(),
+        vbox({
+            text("使用 [↑↓←→] 移动选择, [Home] 确认, [↑↓]键选择出行方式或退选") | color(Color::GrayLight),
+            text("如果选择[计程车]出行，则需要花费15元并流逝4~10分钟") | color(Color::GrayLight),
+            text("选择[步行]则不花钱但流逝10~25分钟，并消耗5点饥饿值和3点体力") | color(Color::GrayLight),
+            text("注：如果没有足够的钱打车，则只能选择步行") | color(Color::GrayLight),
+            separator(),
+            buttonExit_->Render() | center
         })
     });
 
-    auto mainMapWindow = window(text(" 地图 ") | bold, mapElement | border);
-
-    if (viewMode_ == 1) {
-        auto& dest = locations_.at(selectedLocationId_);
-        auto dialog = vbox({
-            text("前往 " + dest.name + " ?") | bold | hcenter,
-            separator(),
-            text("请选择出行方式："),
-            text(" "),
-            hbox({
-                filler(),
-                buttonTaxi_->Render(),
-                filler(),
-                buttonWalk_->Render(),
-                filler(),
-            }),
-            text(" "),
-            separator(),
-            buttonCancelTravel_->Render() | center
-        }) | border | size(WIDTH, LESS_THAN, 50);
-
-        return dbox({ mainMapWindow, dialog | center }) | clear_under;
-    }
-
-    return mainMapWindow | clear_under;
+    return window(text(" 地图 ") | bold, mapElement) | clear_under;
 }

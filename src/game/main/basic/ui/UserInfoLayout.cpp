@@ -38,15 +38,6 @@ std::string UserInfoLayout::formatGameTime() const {
     return ss.str();
 }
 
-std::string UserInfoLayout::formatPlayerStats() const {
-    std::stringstream ss;
-    ss << "玩家姓名: " << player_.getName() << "\n"
-       << "健康度: " << std::fixed << std::setprecision(1) << (player_.getHealth()) << "%\n"
-       << "饥饿度: " << std::fixed << std::setprecision(1) << (player_.getHunger() * 100) << "%\n"
-       << "所在位置: " << player_.getLocation();
-    return ss.str();
-}
-
 std::string UserInfoLayout::formatMoney() const {
     std::stringstream ss;
     ss << "💰 金钱: " << std::fixed << std::setprecision(2) << player_.getSavings() << " 元";
@@ -56,35 +47,62 @@ std::string UserInfoLayout::formatMoney() const {
 Element UserInfoLayout::Render() {
     // 游戏时间区域
     auto timeSection = vbox({
-        text("⏰ 当前时间") | bold | hcenter,
+        text("时间与位置") | bold | hcenter,
         separator(),
         text(formatGameTime()) | hcenter | color(Color::Cyan),
-        text(" ")
+        text(" "),
+        text("所在位置: " + player_.getLocation()) | color(Color::White),
     }) | border | flex;
 
-    // 玩家状态区域
+    // 玩家状态区域 - 修改为多个独立的text元素
     auto statsSection = vbox({
-        text("👤 玩家信息") | bold | hcenter,
+        text("👤 玩家状态") | bold | hcenter,
         separator(),
-        paragraph(formatPlayerStats()) | color(Color::White),
+        text("玩家姓名: " + player_.getName()) | color(Color::White),
+        text("生命值: " + std::to_string(static_cast<int>(player_.getHealth()))) | color(Color::White),
+        text("饱食度: " + std::to_string(static_cast<int>(player_.getHunger()))) | color(Color::White),
+        text("体力值: " + std::to_string(static_cast<int>(player_.getFatigue()))) | color(Color::White),
+        text("敏捷度: " + std::to_string(static_cast<int>(player_.getAgility()))) | color(Color::White),
+        text("力量: " + std::to_string(static_cast<int>(player_.getStrength()))) | color(Color::White),
+        text("耐力: " + std::to_string(static_cast<int>(player_.getStamina()))) | color(Color::White),
         text(" ")
     }) | border | flex;
 
     // 金钱区域
     auto moneySection = vbox({
-        text("💰 财务状况") | bold | hcenter,
+        text("银行") | bold | hcenter,
         separator(),
         text(formatMoney()) | hcenter | color(Color::Yellow),
         text(" ")
     }) | border | flex;
 
-    // 主要内容布局
+    // 技能区域（右下角）
+    auto skillSection = vbox({
+        text("技能状态") | bold | hcenter,
+        separator(),
+        text("技能点: " + std::to_string(static_cast<int>(player_.getSkillPoints()))) | color(Color::Green),
+        text("已学技能: " + std::to_string(player_.getLearnedSkillNames().size()) + "个") | color(Color::Green),
+        text(" ")
+    }) | border | flex;
+
+    // 田字型布局：上下两行，每行左右两列
+    auto topRow = hbox({
+        timeSection | flex,     // 左上：时间
+        text(" "),
+        statsSection | flex     // 右上：玩家信息
+    });
+
+    auto bottomRow = hbox({
+        moneySection | flex,    // 左下：金钱
+        text(" "),
+        skillSection | flex     // 右下：技能状态
+    });
+
+    // 主要内容布局 - 田字型
     auto mainContent = vbox({
-        timeSection,
+        topRow | flex,
         text(" "),
-        statsSection,
-        text(" "),
-        moneySection,
+        bottomRow | flex,
         text(" "),
         exitButton_->Render() | hcenter
     });
@@ -94,7 +112,7 @@ Element UserInfoLayout::Render() {
         filler(),
         hbox({
             filler(),
-            mainContent | size(WIDTH, LESS_THAN, 50) | size(HEIGHT, LESS_THAN, 25),
+            mainContent | size(WIDTH, LESS_THAN, 80) | size(HEIGHT, LESS_THAN, 30),
             filler()
         }),
         filler()

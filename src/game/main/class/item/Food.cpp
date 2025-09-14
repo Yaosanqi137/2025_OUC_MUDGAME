@@ -5,7 +5,11 @@
 // 私有构造函数
 Food::Food(FoodType type, double price, const std::string& name, const std::string& intro, double healthEffect, double hungerEffect, double energyEffect)
     : AbstractItem(name, intro), type_(type), price_(price), healthEffect_(healthEffect),
-      hungerEffect_(hungerEffect), energyEffect_(energyEffect) {}
+      hungerEffect_(hungerEffect), energyEffect_(energyEffect) {
+    intro_ += "使用后恢复饱食度 " + std::to_string(hungerEffect_) + " 点" +
+            "恢复体力 " + std::to_string(energyEffect_) + " 点" +
+            "恢复生命值 " + std::to_string(healthEffect_) + " 点";
+}
 
 // 公共构造函数
 Food::Food(FoodType type) {

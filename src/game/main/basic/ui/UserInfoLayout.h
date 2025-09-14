@@ -15,7 +15,6 @@ public:
 
 private:
     std::string formatGameTime() const;
-    std::string formatPlayerStats() const;
     std::string formatMoney() const;
 
     Game& game_logic_;
