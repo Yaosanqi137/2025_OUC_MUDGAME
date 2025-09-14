@@ -5,6 +5,7 @@
 #include "PhoneLayout.h"
 #include "MapLayout.h"
 #include "SettingsLayout.h"
+#include "SkillTreeLayout.h"
 #include "../Game.h"
 #include "../Dialog.h"
 #include "../StoryController.h"
@@ -30,6 +31,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     shopLayout_ = Make<ShopLayout>(game_logic_, showShop_);
     infoLayout_ = Make<UserInfoLayout>(game_logic_, showInfo_);
     settingsLayout_ = Make<SettingsLayout>(game_logic_, showSettings_);
+    skillTreeLayout_ = Make<SkillTreeLayout>(game_logic_, showSkillTree_);
 
     phoneLayout_ = Make<PhoneLayout>(
         game_logic_,
@@ -174,7 +176,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
         if(auto* settingsPtr = dynamic_cast<SettingsLayout*>(settingsLayout_.get())) { settingsPtr->loadSettings(); }
         showSettings_ = true; }, ButtonOption::Animated());
     auto buttonBag = Button("   背包  ", [&] { showBag_ = true; }, ButtonOption::Animated());
-    auto buttonSchedule = Button(" 我的日程 ", []{}, ButtonOption::Animated());
+    auto buttonSkillTree = Button("  技能树  ", [&] { showSkillTree_ = true; }, ButtonOption::Animated()); // 替换
     auto buttonExitToMainMenu = Button(" 回到主界面 ", [&] {
         game_logic_.getDialog().clearHistory();
         game_logic_.getDialog().addMessage("<SYSTEM>", "欢迎回来");
@@ -186,7 +188,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
         buttonPhone,
         buttonSettings,
         buttonBag,
-        buttonSchedule,
+        buttonSkillTree,
         buttonExitToMainMenu,
     });
 
@@ -276,7 +278,8 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
         Maybe(mapLayout_, &showMap_),
         Maybe(shopLayout_, &showShop_),
         Maybe(infoLayout_, &showInfo_),
-        Maybe(settingsLayout_, &showSettings_)
+        Maybe(settingsLayout_, &showSettings_),
+        Maybe(skillTreeLayout_, &showSkillTree_)
     });
 
     // 将这个顶层容器作为 GameLayout 的子组件
@@ -284,7 +287,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
 }
 
 /**
- * @brief 渲染函数��FTXUI每一帧都会调用。
+ * @brief 渲染函数：FTXUI每一帧都会调用。
  * @details 负责根据当前游戏状态同步UI，并组合所有子组件来构建最终的界面布局。
  */
 Element GameLayout::Render() {
@@ -294,7 +297,7 @@ Element GameLayout::Render() {
     // 更新剧情控制器
     game_logic_.getStoryController().update();
 
-    // 状态同步：根据Game状��切换Tab的显示，并动态更新内容
+    // 状态同步：根据Game状态切换Tab的显示，并动态更新内容
     GameState state = game_logic_.getCurrentState();
     auto requestOpt = game_logic_.getCurrentInputRequest();
     lastInputPrompt_ = " 指令 ";
@@ -308,7 +311,7 @@ Element GameLayout::Render() {
             selectedInputMode_ = 2;
             if (requestOpt) {
                 lastInputPrompt_ = requestOpt->prompt;
-                // 动态更新���项按钮
+                // 动态更新选项按钮
                 if (choiceContainer_->ChildCount() != requestOpt->choices.size()) {
                     choiceContainer_->DetachAllChildren();
                     for (int i = 0; i < requestOpt->choices.size(); ++i) {
@@ -353,7 +356,7 @@ Element GameLayout::Render() {
 }
 
 bool GameLayout::isAnyPopupActive() const {
-    return showBag_ || showPhone_ || showMap_ || showShop_ || showInfo_ || showSettings_;
+    return showBag_ || showPhone_ || showMap_ || showShop_ || showInfo_ || showSettings_ || showSkillTree_;
 }
 
 GameLayout::~GameLayout() = default;
