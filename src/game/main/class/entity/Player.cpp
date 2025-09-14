@@ -490,3 +490,62 @@ double Player::getExMaxHunger() const{return exMaxHunger;}
 void Player::setExMaxHealth(double value) {exMaxHealth = value;}
 void Player::setExMaxFatigue(double value) {exMaxFatigue = value;}
 void Player::setExMaxHunger(double value) {exMaxHunger = value;}
+
+// 指令集( Skill )展示
+std::vector<std::string> Player::getAllSkillsInfo() const {
+    std::vector<std::string> result;
+    auto allSkillNames = SkillFactory::getAllSkillNames();
+    
+    for (const auto& skillName : allSkillNames) {
+        auto skill = SkillFactory::createSkillByName(skillName);
+        if (skill) {
+            std::string info = "[" + std::to_string(skill->getId()) + "] " + 
+                              skillName + " - " + skill->getDescription() + 
+                              " (消耗:" + std::to_string(skill->getUnlockCost()) + "技能点)";
+            result.push_back(info);
+        }
+    }
+    
+    return result;
+}
+
+std::vector<std::string> Player::getLearnableSkillsInfo() const {
+    std::vector<std::string> result;
+    auto availableSkills = skillTreeManager.getAvailableSkills();
+    
+    for (const auto& skillName : availableSkills) {
+        auto skill = SkillFactory::createSkillByName(skillName);
+        if (skill) {
+            std::string status = "可学习";
+            if (skillPoints < skill->getUnlockCost()) {
+                status = "技能点不足 (需要:" + std::to_string(skill->getUnlockCost()) + 
+                        ", 当前:" + std::to_string((int)skillPoints) + ")";
+            }
+            
+            std::string info = "[" + std::to_string(skill->getId()) + "] " + 
+                              skillName + " - " + skill->getDescription() + 
+                              " (" + status + ")";
+            result.push_back(info);
+        }
+    }
+    
+    return result;
+}
+
+bool Player::learnSkillById(int skillId) {
+    // 通过ID找到技能名称
+    std::string skillName;
+    for (const auto& skill : SkillFactory::getAllSkillNames()) {
+        auto skillObj = SkillFactory::createSkillByName(skill);
+        if (skillObj && skillObj->getId() == skillId) {
+            skillName = skill;
+            break;
+        }
+    }
+    
+    if (skillName.empty()) {
+        return false;
+    }
+    
+    return learnSkill(skillName);
+}

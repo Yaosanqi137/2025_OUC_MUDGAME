@@ -97,11 +97,52 @@ void Dialog::processPlayerInput(std::string& input) {
         } else if (input == "/use") {
 
         }else if (input == "/skill") {
-            game_logic_.getDialog().addMessage("<SYSTEM>", "当前技能点：");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "当前技能点：" + std::to_string((int)game_logic_.getPlayer().getSkillPoints()));
+            game_logic_.getDialog().addMessage("<SYSTEM>", "技能命令用法:");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/skill show all - 显示所有技能");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/skill show canlearn - 显示可学习技能");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/skill learn <id> - 学习指定ID的技能");
+        }else if (input == "/skill show all") {
+        // 显示所有技能
+        auto allSkills = game_logic_.getPlayer().getAllSkillsInfo();
+        game_logic_.getDialog().addMessage("<SYSTEM>", "=== 所有技能列表 ===");
+        for (const auto& skillInfo : allSkills) {
+            game_logic_.getDialog().addMessage("<SYSTEM>", skillInfo);
         }
-    } else {
-        // 对话，将其添加到历史记录中
-        addMessage(game_logic_.getPlayer().getName(), input);
+        
+        } else if (input == "/skill show canlearn") {
+            // 显示可学习技能
+            auto learnableSkills = game_logic_.getPlayer().getLearnableSkillsInfo();
+            game_logic_.getDialog().addMessage("<SYSTEM>", "=== 可学习技能 ===");
+            if (learnableSkills.empty()) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "暂无可以学习的技能");
+            } else {
+                    for (const auto& skillInfo : learnableSkills) {
+                        game_logic_.getDialog().addMessage("<SYSTEM>", skillInfo);
+                    }
+                }
+            
+        } else if (input.rfind("/skill learn ", 0) == 0) {
+            // 学习技能
+            std::string idStr = input.substr(12); // 去掉 "/skill learn "
+            try {
+                int skillId = std::stoi(idStr);
+                bool success = game_logic_.getPlayer().learnSkillById(skillId);
+                if (success) {
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "技能学习成功！");
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "剩余技能点: " + 
+                                                    std::to_string((int)game_logic_.getPlayer().getSkillPoints()));
+                } else {
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "技能学习失败！");
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "可能的原因: 技能点不足、前置条件未满足或技能ID无效");
+                }
+            } catch (const std::exception& e) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "错误: 无效的技能ID格式");
+            }
+        } else {
+            // 对话，将其添加到历史记录中
+            addMessage(game_logic_.getPlayer().getName(), input);
+        }
     }
 }
 

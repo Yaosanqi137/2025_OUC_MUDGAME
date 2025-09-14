@@ -149,6 +149,11 @@ public:
     int getGameDifficulty() const;
     void setGameDifficulty(int level);
 
+    // 指令集( Skill )提示
+    std::vector<std::string> getAllSkillsInfo() const;
+    std::vector<std::string> getLearnableSkillsInfo() const;
+    bool learnSkillById(int skillId);
+
 protected:
     Game& game_logic_;
 
