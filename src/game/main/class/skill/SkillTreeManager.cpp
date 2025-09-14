@@ -138,3 +138,4 @@ bool SkillTreeManager::tryLearnSkill(const std::string& skillName, int available
 const std::vector<std::string>& SkillTreeManager::getLearnedSkills() const {
     return learnedSkills_;
 }
+

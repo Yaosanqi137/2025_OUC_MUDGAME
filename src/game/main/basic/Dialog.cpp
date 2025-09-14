@@ -3,6 +3,7 @@
 #include "GameTime.h"
 #include "InputProcess.h"
 #include "StoryController.h"
+#include "../event/TrainingEvent.h"
 #include <random>
 
 Dialog::Dialog(Game& game_logic) : game_logic_(game_logic) {}
@@ -62,6 +63,7 @@ void Dialog::processPlayerInput(std::string& input) {
             game_logic_.getDialog().addMessage("<SYSTEM>", "/clear: 清除对话");
             game_logic_.getDialog().addMessage("<SYSTEM>", "/use: 查看本场景下能够使用的指令");
             game_logic_.getDialog().addMessage("<SYSTEM>", "/skill: 查看技能点及帮助菜单");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/train: 训练及帮助菜单");
             // game_logic_.getDialog().addMessage("<SYSTEM>", "/npc: 查看附加能够对话的NPC");
             // game_logic_.getDialog().addMessage("<SYSTEM>", "/chat: 与NPC对话，格式 /chat NPC名称"); 有时间再说
         } else if (input == "/clear") {
@@ -97,11 +99,86 @@ void Dialog::processPlayerInput(std::string& input) {
         } else if (input == "/use") {
 
         }else if (input == "/skill") {
-            game_logic_.getDialog().addMessage("<SYSTEM>", "当前技能点：");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "当前技能点：" + std::to_string((int)game_logic_.getPlayer().getSkillPoints()));
+            game_logic_.getDialog().addMessage("<SYSTEM>", "技能命令用法:");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/skill show all      - 显示所有技能");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/skill show canlearn - 显示可学习技能");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/skill learn <id>    - 学习指定ID的技能");
+        }else if (input == "/skill show all") {
+            // 显示所有技能
+            auto allSkills = game_logic_.getPlayer().getAllSkillsInfo();
+            game_logic_.getDialog().addMessage("<SYSTEM>", "=== 所有技能列表 ===");
+            for (const auto& skillInfo : allSkills) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", skillInfo);
+            }
+        
+        } else if (input == "/skill show canlearn") {
+            // 显示可学习技能
+            auto learnableSkills = game_logic_.getPlayer().getLearnableSkillsInfo();
+            game_logic_.getDialog().addMessage("<SYSTEM>", "=== 可学习技能 ===");
+            if (learnableSkills.empty()) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "暂无可以学习的技能");
+            } else {
+                    for (const auto& skillInfo : learnableSkills) {
+                        game_logic_.getDialog().addMessage("<SYSTEM>", skillInfo);
+                    }
+                }
+            
+        } else if (input.rfind("/skill learn ", 0) == 0) {
+            // 学习技能
+            std::string idStr = input.substr(12); // 去掉 "/skill learn "
+            try {
+                int skillId = std::stoi(idStr);
+                bool success = game_logic_.getPlayer().learnSkillById(skillId);
+                if (success) {
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "技能学习成功！");
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "剩余技能点: " + 
+                                                    std::to_string((int)game_logic_.getPlayer().getSkillPoints()));
+                } else {
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "技能学习失败！");
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "可能的原因: 技能点不足、前置条件未满足或技能ID无效");
+                }
+            } catch (const std::exception& e) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "错误: 无效的技能ID格式");
+            }
+        } else if (input == "/train") {
+            // 训练帮助菜单
+            auto helpInfo = TrainingEvent::getTrainingHelp();
+            // 按行分割帮助信息并逐行显示
+            size_t pos = 0;
+            while ((pos = helpInfo.find('\n')) != std::string::npos) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", helpInfo.substr(0, pos));
+                helpInfo.erase(0, pos + 1);
+            }
+            if (!helpInfo.empty()) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", helpInfo);
+            }
+            
+        } else if (input == "/train status") {
+            // 查看训练状态
+            auto statusInfo = game_logic_.getPlayer().getTrainingSystem()->getTrainingStatus();
+            // 按行分割状态信息并逐行显示
+            size_t pos = 0;
+            while ((pos = statusInfo.find('\n')) != std::string::npos) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", statusInfo.substr(0, pos));
+                statusInfo.erase(0, pos + 1);
+            }
+            if (!statusInfo.empty()) {
+                game_logic_.getDialog().addMessage("<SYSTEM>", statusInfo);
+            }
+            
+        } else if (input == "/train strength") {
+            game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::STRENGTH, game_logic_);
+            
+        } else if (input == "/train agility") {
+            game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::AGILITY, game_logic_);
+            
+        } else if (input == "/train stamina") {
+            game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::STAMINA, game_logic_);
+        }else {
+            // 对话，将其添加到历史记录中
+            addMessage(game_logic_.getPlayer().getName(), input);
         }
-    } else {
-        // 对话，将其添加到历史记录中
-        addMessage(game_logic_.getPlayer().getName(), input);
     }
 }
 

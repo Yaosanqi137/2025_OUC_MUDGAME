@@ -3,12 +3,15 @@
 
 #include <iostream>
 #include "../../basic/Game.h"
+#include "../../basic/Dialog.h"
 #include "../item/AbstractItem.h"
 #include "../skill/Skill.h"
 #include "../skill/SkillFactory.h"
 #include "../skill/SkillTreeManager.h"
 #include "../../event/TrainingEvent.h"
 
+enum class TrainingType;
+class TrainingEvent;
 class Game;
 
 class Player {
@@ -120,8 +123,8 @@ public:
 
     // 训练系统相关
     std::shared_ptr<TrainingEvent> getTrainingSystem();
-    bool train(TrainingEvent::TrainingType type);
-    bool canTrain(TrainingEvent::TrainingType type) const;
+    bool train(TrainingType type);
+    bool canTrain(TrainingType type) const;
 
     // 下面是特殊技能效果函数
     double getSustainDamageRate() const;
@@ -148,6 +151,11 @@ public:
     // 获取和设置游戏难度
     int getGameDifficulty() const;
     void setGameDifficulty(int level);
+
+    // 指令集( Skill )提示
+    std::vector<std::string> getAllSkillsInfo() const;
+    std::vector<std::string> getLearnableSkillsInfo() const;
+    bool learnSkillById(int skillId);
 
 protected:
     Game& game_logic_;

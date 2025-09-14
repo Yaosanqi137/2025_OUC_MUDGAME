@@ -2,34 +2,35 @@
 #define TRAININGEVENT_H
 
 #include <memory>
-
-/*
-
-Changed on 9-14 2:23 by Anyeling
-时间流逝未完成
-
-*/
+#include <string>
 
 class Player;
+class Game;
+class Dialog;
+
+enum class TrainingType
+{
+    STRENGTH, // 力量训练
+    AGILITY,  // 敏捷训练
+    STAMINA   // 耐力训练
+};
 
 class TrainingEvent
 {
 public:
     explicit TrainingEvent(std::shared_ptr<Player> player);
 
-    // 训练类型枚举
-    enum class TrainingType
-    {
-        STRENGTH, // 力量训练
-        AGILITY,  // 敏捷训练
-        STAMINA   // 耐力训练
-    };
-
     // 执行训练
-    bool train(TrainingType type);
+    bool train(TrainingType type, Game& game);
 
     // 检查是否可以训练
     bool canTrain(TrainingType type) const;
+
+    // 获取训练状态信息
+    std::string getTrainingStatus() const;
+    
+    // 获取训练帮助信息
+    static std::string getTrainingHelp();
 
     // 获取训练消耗
     int getTrainingCost() const;   // 金币消耗
@@ -60,12 +61,13 @@ public:
     int getStaminaLevel() const;  // 耐力训练等级
 
     // 经验值操作
-    void addStrengthExp(double exp);
-    void addAgilityExp(double exp);
-    void addStaminaExp(double exp);
+    bool addStrengthExp(double exp);
+    bool addAgilityExp(double exp);
+    bool addStaminaExp(double exp);
 
     bool getHasSideEffect() const;
     void setHasSideEffect(bool flag);
+
 private:
     std::shared_ptr<Player> player;
 
@@ -85,14 +87,27 @@ private:
     int staminaLevel;
 
     bool hasSideEffect;
+
     // 计算升级所需经验
     double calculateRequiredExp(int level) const;
 
     // 检查并处理升级
-    void checkAndLevelUp(TrainingType type);
+    bool checkAndLevelUp(TrainingType type);
 
     // 获取经验衰减比例
     double getExperienceDecayRate() const;
+
+    // 训练成功消息
+    void sendTrainingSuccessMessage(Game& game, TrainingType type) const;
+    
+    // 训练失败消息
+    void sendTrainingFailureMessage(Game& game, TrainingType type) const;
+
+    // 升级消息
+    void sendLevelUpMessage(Game& game, TrainingType type, int newLevel) const;
+    
+    // 获取下一级所需经验信息
+    std::string getNextLevelExpInfo(TrainingType type) const;
 };
 
 #endif // TRAININGEVENT_H

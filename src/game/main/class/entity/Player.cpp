@@ -10,6 +10,7 @@ Bug to fix: not link to BagLayout(ui) yet
 #include "Player.h"
 #include "../item/Food.h"
 #include "../item/UsefulItem.h"
+#include "../../event/TrainingEvent.h"
 #include "../item/Medicine.h"
 
 Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
@@ -112,7 +113,7 @@ void Player::addFatigue(const double value) {
 void Player::addHealth(double value) {
     health += value;
     health = std::max(0.0, health);
-    health = std::min(health + exMaxHealth, maxHealth);
+    health = std::min(health, maxHealth + exMaxHealth);
 }
 
 
@@ -503,11 +504,11 @@ std::shared_ptr<TrainingEvent> Player::getTrainingSystem() {
     return trainingSystem;
 }
 
-bool Player::train(TrainingEvent::TrainingType type) {
-    return trainingSystem->train(type);
+bool Player::train(TrainingType type) {
+    return trainingSystem->train(type, this->game_logic_);
 }
 
-bool Player::canTrain(TrainingEvent::TrainingType type) const {
+bool Player::canTrain(TrainingType type) const {
     return trainingSystem->canTrain(type);
 }
 
@@ -533,3 +534,62 @@ double Player::getExMaxHunger() const{return exMaxHunger;}
 void Player::setExMaxHealth(double value) {exMaxHealth = value;}
 void Player::setExMaxFatigue(double value) {exMaxFatigue = value;}
 void Player::setExMaxHunger(double value) {exMaxHunger = value;}
+
+// 指令集( Skill )展示
+std::vector<std::string> Player::getAllSkillsInfo() const {
+    std::vector<std::string> result;
+    auto allSkillNames = SkillFactory::getAllSkillNames();
+    
+    for (const auto& skillName : allSkillNames) {
+        auto skill = SkillFactory::createSkillByName(skillName);
+        if (skill) {
+            std::string info = "[" + std::to_string(skill->getId()) + "] " + 
+                              skillName + " - " + skill->getDescription() + 
+                              " (消耗:" + std::to_string(skill->getUnlockCost()) + "技能点)";
+            result.push_back(info);
+        }
+    }
+    
+    return result;
+}
+
+std::vector<std::string> Player::getLearnableSkillsInfo() const {
+    std::vector<std::string> result;
+    auto availableSkills = skillTreeManager.getAvailableSkills();
+    
+    for (const auto& skillName : availableSkills) {
+        auto skill = SkillFactory::createSkillByName(skillName);
+        if (skill) {
+            std::string status = "可学习";
+            if (skillPoints < skill->getUnlockCost()) {
+                status = "技能点不足 (需要:" + std::to_string(skill->getUnlockCost()) + 
+                        ", 当前:" + std::to_string((int)skillPoints) + ")";
+            }
+            
+            std::string info = "[" + std::to_string(skill->getId()) + "] " + 
+                              skillName + " - " + skill->getDescription() + 
+                              " (" + status + ")";
+            result.push_back(info);
+        }
+    }
+    
+    return result;
+}
+
+bool Player::learnSkillById(int skillId) {
+    // 通过ID找到技能名称
+    std::string skillName;
+    for (const auto& skill : SkillFactory::getAllSkillNames()) {
+        auto skillObj = SkillFactory::createSkillByName(skill);
+        if (skillObj && skillObj->getId() == skillId) {
+            skillName = skill;
+            break;
+        }
+    }
+    
+    if (skillName.empty()) {
+        return false;
+    }
+    
+    return learnSkill(skillName);
+}
