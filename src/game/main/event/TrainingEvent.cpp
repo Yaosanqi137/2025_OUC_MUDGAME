@@ -8,7 +8,7 @@ TrainingEvent::TrainingEvent(std::shared_ptr<Player> player_)
     : player(player_), strengthExp(0), agilityExp(0), staminaExp(0),
       strengthLevel(1), agilityLevel(1), staminaLevel(1),
       strengthExpRate(1.0), agilityExpRate(1.0), staminaExpRate(1.0),
-      hasSideEffect(false) {}
+      hasSideEffect(false), moneyCostRate(1.0) {}
 
 
 std::string TrainingEvent::getTrainingStatus() const {
@@ -253,7 +253,7 @@ bool TrainingEvent::canTrain(TrainingType type) const {
 }
 
 int TrainingEvent::getTrainingCost() const {
-    return 10; // 健身房门票10金币
+    return (int)(10 * moneyCostRate); // 健身房门票10金币
 }
 
 double TrainingEvent::getFatigueCost() const {
@@ -347,3 +347,6 @@ void TrainingEvent::setStrengthExpRate(double rate){strengthExpRate = rate;}
 
 bool TrainingEvent::getHasSideEffect() const {return hasSideEffect;}
 void TrainingEvent::setHasSideEffect(bool flag) {hasSideEffect = flag;}
+
+double TrainingEvent::getMoneyCostRate() const {return moneyCostRate;}
+void TrainingEvent::setMoneyCostRate(double rate) {moneyCostRate = rate;}

@@ -16,8 +16,6 @@ Changed on 9-14 2:23 by Anyeling
 #include "../class/entity/Enemy.h"
 #include "../class/skill/Skill.h"
 #include "../class/skill/SkillFactory.h"
-#include "../basic/Dialog.h"
-#include "../basic/Game.h"
 
 #include <memory>
 #include <vector>
@@ -25,10 +23,13 @@ Changed on 9-14 2:23 by Anyeling
 #include <cstdlib>
 #include <ctime>
 #include <set>
+#include <string>
 class Player;
 class Enemy;
 class Skill;
 class SkillFactory;
+class Game;
+class Dialog;
 
 class FightEvent {
 public:

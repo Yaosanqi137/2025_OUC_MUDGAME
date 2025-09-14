@@ -2,18 +2,19 @@
 
 Changed on 9-14 2:23 by Anyeling
 回合制战斗机制未完成
-特殊奖励未处理
 系统提示未完成
 时间流逝未完成
-战败属性降低未完成
 
 */
 
 
 #include "FightEvent.h"
+#include "../basic/Dialog.h"
+#include "../basic/Game.h"
 #include <iostream>
 #include <random>
 #include <algorithm>
+
 bool humanHummerRecover = false;
 FightEvent::FightEvent(std::shared_ptr<Player> player, std::shared_ptr<Enemy> enemy)
     : player_(player), enemy_(enemy), battleOver_(false), playerWon_(false),
@@ -102,6 +103,7 @@ void FightEvent::configureEnemySkills() {
 }
 
 void FightEvent::startBattle(Game& game) {
+    game.getDialog().addMessage("<SYSTEM>", "战斗开始了，对手是" + enemy_ -> getName());
     battleOver_ = false;
     playerWon_ = false;
     currentRound_ = 0;
@@ -418,7 +420,8 @@ void FightEvent::applyBattleRewards() {
         case 4: // 健身房教练
             player_->addSavings(50);
             player_->addSkillPoints(2);
-            applySpecialRewards(enemyId);
+            player_ -> getTrainingSystem() -> setMoneyCostRate(0.5);
+            player_ -> getGameLogic().getDialog().addMessage("<SYSTEM>","获得健身房VIP卡！训练费用减半！");
             break;
             
         case 5: // 职业新人
@@ -434,7 +437,9 @@ void FightEvent::applyBattleRewards() {
         case 7: // 耐力型选手
             player_->addSavings(100);
             player_->addSkillPoints(2);
-            applySpecialRewards(enemyId);
+            // applySpecialRewards(enemyId);
+            player_ -> getTrainingSystem() -> setStaminaExpRate(player_ -> getTrainingSystem() -> getStaminaExpRate() + 0.2);
+            player_ -> getGameLogic().getDialog().addMessage("<SYSTEM>","获得耐力训练器！耐力训练效率+20%！");
             break;
             
         case 8: // 技巧型拳手
@@ -450,7 +455,11 @@ void FightEvent::applyBattleRewards() {
         case 10: // 冠军挑战者
             player_->addSavings(500);
             player_->addSkillPoints(3);
-            applySpecialRewards(enemyId);
+            // applySpecialRewards(enemyId);
+            player_->addStrength(2);
+            player_->addStamina(2);
+            player_->addAgility(2);
+            player_ -> getGameLogic().getDialog().addMessage("<SYSTEM>","获得冠军腰带！全属性+2！");
             break;
             
         case 11: // 世界拳王

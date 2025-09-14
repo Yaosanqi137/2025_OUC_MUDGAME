@@ -593,3 +593,6 @@ bool Player::learnSkillById(int skillId) {
     
     return learnSkill(skillName);
 }
+
+// 返回游戏引用
+Game& Player::getGameLogic() {return game_logic_;}
