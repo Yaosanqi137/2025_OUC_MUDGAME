@@ -1,15 +1,20 @@
+// Enemy.cpp
 #include "Enemy.h"
 #include <algorithm>
 
 Enemy::Enemy(int id_, const std::string& name_, 
              double strength_, double stamina_, double agility_)
-    : id(id), name(name), 
+    : id(id_), name(name_), 
       strength(strength_), stamina(stamina_), agility(agility_),
       fatigue(100 + 5 * (stamina_ - 1)), 
       health(100 + 15 * (stamina_ - 1)),
       maxHealth(100 + 15 * (stamina_ - 1)), maxFatigue(100 + 5 * (stamina_ - 1)),
-      sustainDamageRate(1.0),upperBodySustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),
-      fatigueConsumeRate(1.0),exHitRate(0.0) {
+      sustainDamageRate(1.0), upperBodySustainDamageRate(1.0), lowerBodySustainDamageRate(1.0),
+      fatigueConsumeRate(1.0), exHitRate(0.0) {
+    // 确保 name 不为空
+    if (name.empty()) {
+        name = "未知敌人";
+    }
 }
 
 Enemy::~Enemy() = default;

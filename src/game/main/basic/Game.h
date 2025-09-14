@@ -10,12 +10,11 @@
 #include <string>
 #include <vector>
 
+// 前向声明
+class FightEvent;
 class View;
-
 class Dialog;
-
 class Player;
-
 class StoryController;
 
 /**
@@ -79,6 +78,13 @@ public:
                        const std::vector<std::string>& choices, 
                        std::function<void(int, const std::string&)> onSelect);
 
+    // --- 战斗管理 ---
+    void setCurrentBattle(std::shared_ptr<FightEvent> battle);
+    void clearCurrentBattle();
+    bool isInBattle() const;
+    std::shared_ptr<FightEvent> getCurrentBattle();
+    std::shared_ptr<Player> getPlayerSharedPtr();
+
     bool isFirstNewGame = true; // 标记是否是第一次开始新游戏
 
 private:
@@ -92,6 +98,11 @@ private:
     std::unique_ptr<StoryController> storyController_;
     
     Configuration* config_;
+
+    // 战斗相关成员
+    std::shared_ptr<FightEvent> currentBattle_;
+    bool inBattle_;
+
 };
 
 inline static const std::string VOICEOVER; // 旁白
