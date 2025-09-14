@@ -64,11 +64,13 @@ public:
     [[nodiscard]] double getMaxHunger() const;          // 最高饱食度
     [[nodiscard]] double getMaxFatigue() const;         // 最高体力
     [[nodiscard]] double getMaxHealth() const;          // 最高生命值
+    [[nodiscard]] double getMaxStamina() const;         // 最高耐力
 
     // 设置最高属性值
     void setMaxHunger(double value);                    // 最高饱食度
     void setMaxFatigue(double value);                   // 最高体力
     void setMaxHealth(double value);                    // 最高生命值
+    void setMaxStamina(double value);                   // 最高耐力
 
     // 背包相关操作
     std::vector<std::shared_ptr<AbstractItem>>& getInventory();
@@ -183,6 +185,7 @@ private:
     double maxHunger;       // 最高饱食度(饥饿槽)
     double maxFatigue;      // 最高体力值(体力槽)
     double maxHealth;       // 最高生命值(血量槽)
+    double maxStamina;      // 最高耐力值
 
     // 吃东西或技能增加的血量上限，体力上限，饱食上限
     double exMaxHunger;
