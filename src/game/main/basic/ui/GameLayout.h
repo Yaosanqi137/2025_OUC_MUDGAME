@@ -9,12 +9,10 @@
 #include <string>
 
 class Game;
-
 class BagLayout;
-
 class MapLayout;
-
 class SettingsLayout;
+class SkillTreeLayout;
 
 /**
  * @class GameLayout
@@ -63,6 +61,7 @@ private:
     bool showShop_ = false;
     bool showInfo_ = false;
     bool showSettings_ = false;
+    bool showSkillTree_ = false;
 
     // --- 子组件成员 ---
     ftxui::Component interactiveMainView_;            ///< 可交互的对话历史显示区。
@@ -79,6 +78,7 @@ private:
     ftxui::Component shopLayout_;                     ///< 网购界面组件
     ftxui::Component infoLayout_;                     ///< 个人信息组件
     ftxui::Component settingsLayout_;                 ///< 设置组件
+    ftxui::Component skillTreeLayout_;                ///< 技能树组件
     ftxui::Component topLevelContainer_;              ///< 添加一个顶层容器
 };
 
