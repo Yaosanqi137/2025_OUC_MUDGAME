@@ -10,11 +10,8 @@ Bug to fix: not link to BagLayout(ui) yet
 #include "Player.h"
 #include "../item/Food.h"
 #include "../item/UsefulItem.h"
-<<<<<<< HEAD
 #include "../../event/TrainingEvent.h"
-=======
 #include "../item/Medicine.h"
->>>>>>> cd1d0244ff543892a424baadfb42bbee7e76de60
 
 Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
                    stamina(1), agility(1), hunger(80), fatigue(80), money(100), location("???"), health(100),
@@ -537,7 +534,6 @@ double Player::getExMaxHunger() const{return exMaxHunger;}
 void Player::setExMaxHealth(double value) {exMaxHealth = value;}
 void Player::setExMaxFatigue(double value) {exMaxFatigue = value;}
 void Player::setExMaxHunger(double value) {exMaxHunger = value;}
-<<<<<<< HEAD
 
 // 指令集( Skill )展示
 std::vector<std::string> Player::getAllSkillsInfo() const {
@@ -597,5 +593,3 @@ bool Player::learnSkillById(int skillId) {
     
     return learnSkill(skillName);
 }
-=======
->>>>>>> cd1d0244ff543892a424baadfb42bbee7e76de60
