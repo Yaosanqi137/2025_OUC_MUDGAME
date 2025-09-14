@@ -1,124 +1,169 @@
 #include "Medicine.h"
+#include "Player.h"
+#include <stdexcept>
 
-
-// 构造函数实现
-Medicine::Medicine(MedicineType type, 
-                   std::string name, 
-                   double price, 
-                   int attribute_boost, 
-                   int skill_points,
-                   bool permanent)
-    : type(type),
-      name(std::move(name)),
+// 私有构造函数实现
+Medicine::Medicine(MedicineType type, double price, const std::string& name, 
+                 const std::string& intro, double healthEffect, double strengthEffect,
+                 double agilityEffect, double staminaEffect, int skillPointEffect,
+                 bool hasSideEffect)
+    : AbstractItem(name, intro),  // 调用父类构造函数
+      type(type),
       price(price),
-      attribute_boost(attribute_boost),
-      skill_points(skill_points),
-      is_permanent(permanent) {}
+      healthEffect(healthEffect),
+      strengthEffect(strengthEffect),
+      agilityEffect(agilityEffect),
+      staminaEffect(staminaEffect),
+      skillPointEffect(skillPointEffect),
+      hasSideEffect(hasSideEffect) {}
 
-// 获取药物名称
-const std::string& Medicine::getName() const {
-    return name;
+// 公共构造函数实现
+Medicine::Medicine(MedicineType type) : AbstractItem("", "") {
+    // 这里可以设置默认值，实际应该通过createMedicine创建
+    this->type = type;
+    this->price = 0;
+    this->healthEffect = 0;
+    this->strengthEffect = 0;
+    this->agilityEffect = 0;
+    this->staminaEffect = 0;
+    this->skillPointEffect = 0;
+    this->hasSideEffect = false;
 }
 
-// 获取药物类型
-MedicineType Medicine::getType() const {
-    return type;
+// 获取价格
+int Medicine::getPrice() const {
+    return static_cast<int>(price);
 }
 
-// 获取药物价格
-double Medicine::getPrice() const {
-    return price;
-}
+// 使用药物
+void Medicine::use(Player& user) {
+    // 应用主要效果
+    if (healthEffect > 0) {
+        user.increaseHealth(healthEffect);
+    }
+    if (strengthEffect > 0) {
+        user.increaseStrength(strengthEffect);
+    }
+    if (agilityEffect > 0) {
+        user.increaseAgility(agilityEffect);
+    }
+    if (staminaEffect > 0) {
+        user.increaseStamina(staminaEffect);
+    }
+    if (skillPointEffect > 0) {
+        user.addSkillPoints(skillPointEffect);
+    }
 
-// 使用药物逻辑实现
-void Medicine::useOnPlayer(Player& player) const {
-    switch (type) {
-        case MedicineType::WOUND_RECOVERY:
-            // 战败受伤直接恢复伤病状态
-            player.recoverAllWounds();      // 恢复所有伤病
-            player.setHealthToMax();        // 生命值回满
-            player.clearNegativeStatus();   // 清除负面状态
-            break;
-
-        case MedicineType::STRENGTH_BOOST:
-            // 提升力量属性
-            player.increaseStrength(attribute_boost);
-            
-            // 副作用：能力下降速度提升一倍
-            player.setDecayRateMultiplier(2.0);
-            break;
-
-        case MedicineType::ENDURANCE_BOOST:
-            // 提升耐力属性
-            player.increaseEndurance(attribute_boost);
-            
-            // 副作用：能力下降速度提升一倍
-            player.setDecayRateMultiplier(2.0);
-            break;
-
-        case MedicineType::AGILITY_BOOST:
-            // 提升敏捷属性
-            player.increaseAgility(attribute_boost);
-            
-            // 副作用：能力下降速度提升一倍
-            player.setDecayRateMultiplier(2.0);
-            break;
-
-        case MedicineType::SKILL_POINT:
-            // 增加技能点
-            player.addSkillPoints(skill_points);
-            break;
+    // 处理副作用
+    if (hasSideEffect) {
+        // 根据药物类型添加相应的副作用
+        switch (type) {
+            case MedicineType::STRENGTH_POTION:
+            case MedicineType::AGILITY_POTION:
+            case MedicineType::STAMINA_POTION:
+                user.setDecayRateMultiplier(2.0);  // 能力下降速度加倍
+                break;
+            default:
+                break;
+        }
     }
 }
 
-// 药物创建方法
-Medicine Medicine::createWoundRecovery() {
-    return Medicine(
-        MedicineType::WOUND_RECOVERY,
-        "创伤愈合剂",
-        50.0  // 价格50
-    );
+// 获取药物类型
+Medicine::MedicineType Medicine::getMedicineType() const {
+    return type;
 }
 
-Medicine Medicine::createStrengthBoost() {
-    return Medicine(
-        MedicineType::STRENGTH_BOOST,
-        "力量强化剂",
-        200.0,  // 单价200
-        1,      // 力量+1
-        0,
-        true    // 永久buff
-    );
+// 创建药物的静态工厂方法
+Medicine Medicine::createMedicine(MedicineType type) {
+    switch (type) {
+        case MedicineType::REVIVAL_PILL:
+            return Medicine(
+                type, 
+                50.0, 
+                "回生丹", 
+                "恢复所有伤病并回满生命值，清除负面状态",
+                100.0,  // 生命值效果
+                0.0,    // 力量效果
+                0.0,    // 敏捷效果
+                0.0,    // 耐力效果
+                0,      // 技能点效果
+                false   // 无副作用
+            );
+        case MedicineType::STRENGTH_POTION:
+            return Medicine(
+                type, 
+                200.0, 
+                "力量药水", 
+                "永久提升1点力量，但会使能力下降速度加倍",
+                0.0,    // 生命值效果
+                1.0,    // 力量效果
+                0.0,    // 敏捷效果
+                0.0,    // 耐力效果
+                0,      // 技能点效果
+                true    // 有副作用
+            );
+        case MedicineType::AGILITY_POTION:
+            return Medicine(
+                type, 
+                200.0, 
+                "敏捷药水", 
+                "永久提升1点敏捷，但会使能力下降速度加倍",
+                0.0,    // 生命值效果
+                0.0,    // 力量效果
+                1.0,    // 敏捷效果
+                0.0,    // 耐力效果
+                0,      // 技能点效果
+                true    // 有副作用
+            );
+        case MedicineType::STAMINA_POTION:
+            return Medicine(
+                type, 
+                200.0, 
+                "耐力药水", 
+                "永久提升1点耐力，但会使能力下降速度加倍",
+                0.0,    // 生命值效果
+                0.0,    // 力量效果
+                0.0,    // 敏捷效果
+                1.0,    // 耐力效果
+                0,      // 技能点效果
+                true    // 有副作用
+            );
+        case MedicineType::SKILL_POINT_POTION:
+            return Medicine(
+                type, 
+                100.0, 
+                "技能点药水", 
+                "增加1个技能点",
+                0.0,    // 生命值效果
+                0.0,    // 力量效果
+                0.0,    // 敏捷效果
+                0.0,    // 耐力效果
+                1,      // 技能点效果
+                false   // 无副作用
+            );
+        default:
+            throw std::invalid_argument("未知的药物类型");
+    }
 }
 
-Medicine Medicine::createEnduranceBoost() {
-    return Medicine(
-        MedicineType::ENDURANCE_BOOST,
-        "耐力强化剂",
-        200.0,  // 单价200
-        1,      // 耐力+1
-        0,
-        true    // 永久buff
-    );
+// 各种效果的getter方法
+double Medicine::getHealthEffect() const {
+    return healthEffect;
 }
 
-Medicine Medicine::createAgilityBoost() {
-    return Medicine(
-        MedicineType::AGILITY_BOOST,
-        "敏捷强化剂",
-        200.0,  // 单价200
-        1,      // 敏捷+1
-        0,
-        true    // 永久buff
-    );
+double Medicine::getStrengthEffect() const {
+    return strengthEffect;
 }
 
-Medicine Medicine::createSkillPointPotion() {
-    return Medicine(
-        MedicineType::SKILL_POINT,
-        "技能点药剂",
-        100.0,  // 1个技能点100
-        0,
-        1       // 增加1个技能点
-    )
+double Medicine::getAgilityEffect() const {
+    return agilityEffect;
+}
+
+double Medicine::getStaminaEffect() const {
+    return staminaEffect;
+}
+
+int Medicine::getSkillPointEffect() const {
+    return skillPointEffect;
 }

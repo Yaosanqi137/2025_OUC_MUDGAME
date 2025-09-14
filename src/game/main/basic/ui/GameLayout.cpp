@@ -1,10 +1,15 @@
 #include "GameLayout.h"
 #include "BagLayout.h"
+#include "ShopLayout.h"
+#include "UserInfoLayout.h"
 #include "PhoneLayout.h"
 #include "MapLayout.h"
+#include "SettingsLayout.h"
+#include "SkillTreeLayout.h"
 #include "../Game.h"
 #include "../Dialog.h"
 #include "../StoryController.h"
+#include "../View.h"
 #include "../../class/entity/Player.h"
 
 #include "FTXUI/component/screen_interactive.hpp"
@@ -20,19 +25,39 @@ using namespace ftxui;
  */
 GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
                                            animationStartTime_(std::chrono::steady_clock::now()) {
-    // 初始化背包组件
-    bagLayout_ = Make<BagLayout>(game_logic_);
-    mapLayout_ =  Make<MapLayout>(game_logic_);
+    // --- 初始化所有 Layout，并传入对应的可见性标志 ---
+    bagLayout_ = Make<BagLayout>(game_logic_, showBag_, game_logic_.getPlayer().getInventory());
+    mapLayout_ =  Make<MapLayout>(game_logic_, showMap_);
+    shopLayout_ = Make<ShopLayout>(game_logic_, showShop_);
+    infoLayout_ = Make<UserInfoLayout>(game_logic_, showInfo_);
+    settingsLayout_ = Make<SettingsLayout>(game_logic_, showSettings_);
+    skillTreeLayout_ = Make<SkillTreeLayout>(game_logic_, showSkillTree_);
 
-    MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
-    phoneLayout_ = Make<PhoneLayout>(game_logic_, [this, mapPtr] {
-    // 当点击地图按钮时：先隐藏手机，再显示地图
-        static_cast<PhoneLayout*>(phoneLayout_.get())->hide();
-        mapPtr->show();
-    });
+    phoneLayout_ = Make<PhoneLayout>(
+        game_logic_,
+        showPhone_,
+        [this] { // onMapClick
+            showPhone_ = false;
+            if (auto* mapPtr = dynamic_cast<MapLayout*>(mapLayout_.get())) {
+                mapPtr->resetState(); // 调用派生类的特定方法
+            }
+            showMap_ = true;
+        },
+        [this] { // onShopClick
+            showPhone_ = false;
+            showShop_ = true;
+        },
+        [this] { // onInfoClick
+            showPhone_ = false;
+            showInfo_ = true;
+        }
+    );
 
     // -- 对话历史渲染器 --
     auto mainViewRenderer = Renderer([this] {
+        // 获取打字动画效果速度
+        const int typewriter_speed_ms = game_logic_.getConfig().getTypewriterSpeed();
+
         const auto& messages = game_logic_.getDialog().getHistory();
 
         // -- 动画状态重置逻辑 --
@@ -55,7 +80,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
             auto contentSize = Utf8ToGlyphs(currentMsg.content).size();
 
             // 计算完成当前消息动画所需的总时间（打字时间 + 结束后延迟）
-            auto typingDuration = std::chrono::milliseconds(contentSize * 20);
+            auto typingDuration = std::chrono::milliseconds(contentSize * typewriter_speed_ms);
             auto postDelay = std::chrono::milliseconds(500);
             auto totalAnimationTime = typingDuration + postDelay;
 
@@ -99,7 +124,12 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
                 auto elapsedMS = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::steady_clock::now() - animationStartTime_
                 ).count();
-                shownChars = std::min(contentSize, static_cast<size_t>(elapsedMS / 20));
+                // 使用配置的速度值。增加一个保护，防止速度为0时除零错误。
+                if (typewriter_speed_ms > 0) {
+                    shownChars = std::min(contentSize, static_cast<size_t>(elapsedMS / typewriter_speed_ms));
+                } else {
+                    shownChars = contentSize; // 速度为0或负数时立即显示
+                }
             }
             // (i > current_message_index_) 的未来消息，shownChars 保持为0，不显示
 
@@ -141,18 +171,25 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     });
 
     // -- 右侧功能菜单 --
-    BagLayout* bagPtr = static_cast<BagLayout*>(bagLayout_.get());
-    PhoneLayout* phonePtr = static_cast<PhoneLayout*>(phoneLayout_.get());
+    auto buttonPhone = Button(" 我的手机 ", [&] { showPhone_ = true; }, ButtonOption::Animated());
+    auto buttonSettings = Button(" 游戏设置 ", [&] {
+        if(auto* settingsPtr = dynamic_cast<SettingsLayout*>(settingsLayout_.get())) { settingsPtr->loadSettings(); }
+        showSettings_ = true; }, ButtonOption::Animated());
+    auto buttonBag = Button("   背包  ", [&] { showBag_ = true; }, ButtonOption::Animated());
+    auto buttonSkillTree = Button("  技能树  ", [&] { showSkillTree_ = true; }, ButtonOption::Animated()); // 替换
+    auto buttonExitToMainMenu = Button(" 回到主界面 ", [&] {
+        game_logic_.getDialog().clearHistory();
+        game_logic_.getDialog().addMessage("<SYSTEM>", "欢迎回来");
+        // TODO: 调用自动保存方法
+        game_logic_.getView().showMainMenu();
+    }, ButtonOption::Animated());
 
-    auto buttonPhone = Button(" 我的手机 ", [phonePtr] { phonePtr->show(); }, ButtonOption::Animated());
-    auto buttonSettings = Button(" 游戏设置 ", [&] { game_logic_.showGameSettings(); }, ButtonOption::Animated());
-    auto buttonBag = Button("   背包  ", [bagPtr] { bagPtr->show(); }, ButtonOption::Animated());
-    auto buttonSchedule = Button(" 我的日程 ", []{}, ButtonOption::Animated());
     navigationContainer_ = Container::Vertical({
         buttonPhone,
         buttonSettings,
         buttonBag,
-        buttonSchedule,
+        buttonSkillTree,
+        buttonExitToMainMenu,
     });
 
     // -- 输入组件 --
@@ -195,62 +232,85 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     );
 
     // 将所有主界面组件组合到一个单独的容器中
-    auto mainGameContainer = Container::Vertical({
-        interactiveMainView_,
-        Maybe(navigationContainer_, &showSidePanels_),
-        Maybe(inputArea_, &showFooter_),
-    });
+    auto mainLayoutRenderer = Renderer(
+        Container::Vertical({interactiveMainView_, Maybe(navigationContainer_, &showSidePanels_), Maybe(inputArea_, &showFooter_)}),
+        [&] {
+            Elements leftChildren;
+            leftChildren.push_back(interactiveMainView_->Render() | vscroll_indicator | yframe | flex);
+            if (showPlayerStatus_) {
+                leftChildren.push_back(
+                    window(text(" 玩家状态 "),
+                           hbox({
+                               text("生命值: " + std::to_string(game_logic_.getPlayer().getHealth())) | color(Color::Green) | flex,
+                               separator(),
+                               text("体力: " + std::to_string(game_logic_.getPlayer().getFatigue())) | color(Color::Yellow) | flex,
+                               separator(),
+                               text("饥饿值: " + std::to_string(game_logic_.getPlayer().getHunger())) | color(Color::RedLight) | flex
+                           }))
+                );
+            }
+            auto leftPanel = vbox(leftChildren) | flex;
 
-    // 使用 Container::Stacked 来管理主界面和背包层，确保背包也能接收事件
-    auto topLevelContainer = Container::Stacked({
-        mainGameContainer,
-        bagLayout_,
-        phoneLayout_,
-        mapLayout_,
+            Element rightPanel = emptyElement();
+            if (showSidePanels_) {
+                rightPanel = window(text(" 功能菜单 "), navigationContainer_->Render()) | size(WIDTH, EQUAL, 22);
+            }
+
+            Element mainContent = hbox({ leftPanel, rightPanel });
+
+            Element footer = emptyElement();
+            if (showFooter_) {
+                // lastInputPrompt_ 是在 Render() 函数中更新的，这里通过引用捕获来获取最新值。
+                footer = window(text(lastInputPrompt_), inputArea_->Render());
+            }
+
+            return vbox({ mainContent | flex, footer });
+        }
+    );
+
+    // --- 创建最终的顶层容器 ---
+    topLevelContainer_ = Container::Stacked({
+        // 底层：主游戏布局
+        Maybe(mainLayoutRenderer, &showMainUI_),
+        // 顶层：所有可能的弹出窗口
+        Maybe(bagLayout_, &showBag_),
+        Maybe(phoneLayout_, &showPhone_),
+        Maybe(mapLayout_, &showMap_),
+        Maybe(shopLayout_, &showShop_),
+        Maybe(infoLayout_, &showInfo_),
+        Maybe(settingsLayout_, &showSettings_),
+        Maybe(skillTreeLayout_, &showSkillTree_)
     });
 
     // 将这个顶层容器作为 GameLayout 的子组件
-    Add(topLevelContainer);
+    Add(topLevelContainer_);
 }
 
-
 /**
- * @brief 渲染函数，FTXUI每一帧都会调用。
+ * @brief 渲染函数：FTXUI每一帧都会调用。
  * @details 负责根据当前游戏状态同步UI，并组合所有子组件来构建最终的界面布局。
  */
 Element GameLayout::Render() {
-    // 在每一帧的开始，首先检查是否有任何叠加层处于活动状态。
-    // 如果有，则立即渲染该层并返回，从而跳过主界面的所有逻辑和渲染。
-    BagLayout* bagPtr = static_cast<BagLayout*>(bagLayout_.get());
-    if (bagPtr && bagPtr->isShowing()) {
-        return bagLayout_->Render();
-    }
-    PhoneLayout* phonePtr = static_cast<PhoneLayout*>(phoneLayout_.get());
-    if (phonePtr && phonePtr->isShowing()) {
-        return phoneLayout_->Render();
-    }
-    MapLayout* mapPtr = static_cast<MapLayout*>(mapLayout_.get());
-    if (mapPtr && mapPtr->isShowing()) {
-        return mapLayout_->Render();
-    }
+    // 使用 Maybe 后，不再需要在 Render 函数的开头检查每个覆盖层是否显示。
+    // FTXUI 会自动处理。只需要考虑渲染主布局即可。
 
-    // 如果代码执行到这里，说明没有活动的叠加层，可以更新和渲染主界面
+    // 更新剧情控制器
     game_logic_.getStoryController().update();
 
     // 状态同步：根据Game状态切换Tab的显示，并动态更新内容
     GameState state = game_logic_.getCurrentState();
     auto requestOpt = game_logic_.getCurrentInputRequest();
-    std::string inputPrompt = " 指令 ";
+    lastInputPrompt_ = " 指令 ";
 
     switch(state) {
         case GameState::AwaitingTextInput:
             selectedInputMode_ = 1;
-            if (requestOpt) inputPrompt = requestOpt->prompt;
+            if (requestOpt) lastInputPrompt_ = requestOpt->prompt;
             break;
         case GameState::AwaitingChoice:
             selectedInputMode_ = 2;
             if (requestOpt) {
-                inputPrompt = requestOpt->prompt;
+                lastInputPrompt_ = requestOpt->prompt;
                 // 动态更新选项按钮
                 if (choiceContainer_->ChildCount() != requestOpt->choices.size()) {
                     choiceContainer_->DetachAllChildren();
@@ -266,58 +326,37 @@ Element GameLayout::Render() {
             break;
         case GameState::InStory:
             selectedInputMode_ = -1;
-            inputPrompt = "正在播放剧情...";
+            lastInputPrompt_ = "正在播放剧情...";
             break;
         default: // GameState::InGame 或其他
             selectedInputMode_ = 0;
             break;
     }
 
-    showSidePanels_ = (state == GameState::InGame);
-    showPlayerStatus_ = (state == GameState::InGame);
-    showFooter_ = (state != GameState::InStory);
+    showMainUI_ = !isAnyPopupActive();
+    showSidePanels_ = (state == GameState::InGame) && !isAnyPopupActive();
+    showPlayerStatus_ = (state == GameState::InGame) && !isAnyPopupActive();
+    showFooter_ = (state != GameState::InStory) && !isAnyPopupActive();
 
-    // -- 布局组装 --
+    // 构建最外层的静态框架 (header)
     auto header = hbox({
         text("   拳王之路   ") | bold | color(Color::Red),
         filler(),
         text("当前位置: " + game_logic_.getPlayer().getLocation() + " ") | color(Color::Yellow),
     }) | border;
 
-    Elements leftChildren;
-    leftChildren.push_back(interactiveMainView_->Render() | vscroll_indicator | yframe | flex);
-    if (showPlayerStatus_) {
-        leftChildren.push_back(
-            window(text(" 玩家状态 "),
-                   hbox({
-                       text("生命值: " + std::to_string(game_logic_.getPlayer().getHealth())) | color(Color::Green) | flex,
-                       separator(),
-                       text("疲劳值: " + std::to_string(game_logic_.getPlayer().getFatigue())) | color(Color::Yellow) | flex,
-                       separator(),
-                       text("饥饿值: " + std::to_string(game_logic_.getPlayer().getHunger())) | color(Color::RedLight) | flex
-                   }))
-        );
-    }
-    auto leftPanel = vbox(leftChildren) | flex;
+    Element mainContent = topLevelContainer_->Render();
 
-    Element rightPanel = emptyElement();
-    if (showSidePanels_) {
-        rightPanel = window(text(" 功能菜单 "), navigationContainer_->Render()) | size(WIDTH, EQUAL, 22);
-    }
+    Element screenLayout = vbox({
+        header,
+        mainContent | flex,
+    });
 
-    auto mainContent = hbox({ leftPanel, rightPanel });
-    Element mainLayout;
+    return screenLayout;
+}
 
-    if (state == GameState::InStory) {
-        // 在故事模式下，我们构建一个不包含底部输入栏 (footer) 的布局。
-        mainLayout = vbox({ header, mainContent | flex });
-    } else {
-        // 在其他模式下，正常创建并包含 footer。
-        Element footer = window(text(inputPrompt), inputArea_->Render());
-        mainLayout = vbox({ header, mainContent | flex, footer });
-    }
-
-    return mainLayout;
+bool GameLayout::isAnyPopupActive() const {
+    return showBag_ || showPhone_ || showMap_ || showShop_ || showInfo_ || showSettings_ || showSkillTree_;
 }
 
 GameLayout::~GameLayout() = default;

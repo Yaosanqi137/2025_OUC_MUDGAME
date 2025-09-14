@@ -1,42 +1,33 @@
-#pragma once
+#ifndef BAGLAYOUT_H
+#define BAGLAYOUT_H
 
 #include "ftxui/component/component.hpp"
 #include <vector>
 #include <string>
 #include <array>
+#include <memory>
 
-// Forward declaration
 class Game;
-
-struct Item {
-    std::string id;
-    std::string name;
-    std::string description;
-    std::string icon;
-    int amount;
-    int type; // 0: 普通物品, 1: 食物, 2: 药品
-};
+class Player;
+class AbstractItem;
 
 class BagLayout : public ftxui::ComponentBase {
 public:
-    explicit BagLayout(Game& game_logic);
+    explicit BagLayout(Game& game_logic, bool& isShowingFlag, std::vector<std::shared_ptr<AbstractItem>>& displayableItems);
 
     ftxui::Element Render() override;
-    void show();
-    void hide();
-    [[nodiscard]] bool isShowing() const;
-
-    void setItemAmount(const int amount, Item* item);
 
 private:
-    void initializeItems();
+    void refreshItems(); // 从Player获取最新的物品列表
     [[nodiscard]] int getTotalPages() const;
+    [[nodiscard]] std::string getItemTypeString(const std::shared_ptr<AbstractItem>& item) const;
 
     Game& game_logic_;
-    bool isShowing_ = false;
+    Player& player_;
+    bool& isShowingFlag_;
 
     // --- 物品数据 ---
-    std::vector<Item*> items_;
+    std::vector<std::shared_ptr<AbstractItem>>& displayableItems_; // 从Player获取的可显示物品
     int selectedItemIndex_ = -1;
     int currentPage_ = 0;
 
@@ -46,8 +37,10 @@ private:
     ftxui::Component exitButton_;
     ftxui::Component pagePrevButton_;
     ftxui::Component pageNextButton_;
+    ftxui::Component useButton_;  // 新增使用物品按钮
 
-    // [核心修复] 使用一个主容器来统一管理所有可交互的子组件
-    // 这是确保所有按钮都能接收事件的关键
+    // 使用一个主容器来统一管理所有可交互的子组件
     ftxui::Component mainContainer_;
 };
+
+#endif // BAGLAYOUT_H

@@ -3,8 +3,11 @@
 
 #include "FTXUI/component/component_base.hpp"
 #include "FTXUI/component/component.hpp"
+#include <memory>
 
 class Game; // 前向声明
+class UserInfoLayout; // 前向声明
+class ShopLayout; // 前向声明
 
 /**
  * @class PhoneLayout
@@ -13,18 +16,16 @@ class Game; // 前向声明
  */
 class PhoneLayout : public ftxui::ComponentBase {
 public:
-    explicit PhoneLayout(Game& game_logic, std::function<void()> onMapClick);
+    explicit PhoneLayout(Game& game_logic, bool& isShowingFlag,
+                         std::function<void()> onMapClick,
+                         std::function<void()> onShopClick,
+                         std::function<void()> onInfoClick);
 
     ftxui::Element Render() override;
 
-    // 控制显示和隐藏的方法
-    void show();
-    void hide();
-    bool isShowing() const;
-
 private:
     Game& game_logic_;
-    bool isShowing_ = false;
+    bool& isShowingFlag_;
 
     // --- 子组件成员 ---
     ftxui::Component buttonMap_;
@@ -33,7 +34,9 @@ private:
     ftxui::Component buttonHome_;
     ftxui::Component mainContainer_;
 
-    std::function<void()> on_map_click_; // 地图按钮
+    std::function<void()> onMapClick_; // 地图按钮
+    std::function<void()> onShopClick_; // 网购平台按钮
+    std::function<void()> onInfoClick_; // 用户信息按钮
 };
 
 #endif //INC_2025_OUC_MUDGAME_PHONELAYOUT_H

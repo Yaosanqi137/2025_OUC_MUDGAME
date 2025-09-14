@@ -2,132 +2,130 @@
 #include "../entity/Player.h"
 #include <stdexcept>
 
-// 构造函数实现
-Medicine::Medicine(MedicineType type, 
-                   std::string name, 
-                   double price, 
-                   int attribute_boost, 
-                   int skill_points,
-                   bool permanent)
-    : type(type),
-      name(std::move(name)),
-      price(price),
-      attribute_boost(attribute_boost),
-      skill_points(skill_points),
-      is_permanent(permanent) {}
+// 私有构造函数
+Medicine::Medicine(MedicineType type, double price, const std::string& name, 
+                  const std::string& intro, double healthEffect, double strengthEffect,
+                  double agilityEffect, double staminaEffect, int skillPointEffect,
+                  bool hasSideEffect)
+    : AbstractItem(name, intro), type(type), price(static_cast<int>(price)), 
+      healthEffect(healthEffect), strengthEffect(strengthEffect),
+      agilityEffect(agilityEffect), staminaEffect(staminaEffect),
+      skillPointEffect(skillPointEffect), hasSideEffect(hasSideEffect),
+      amount_(1) {}  // 默认数量为1
+
+// 公共构造函数
+Medicine::Medicine(MedicineType type) {
+    *this = createMedicine(type);
+}
 
 // 实现抽象接口：获取物品名称
 const std::string& Medicine::getName() const {
-    return name;
+    return AbstractItem::getName();
 }
 
 // 实现抽象接口：获取物品价格
 int Medicine::getPrice() const {
-    return static_cast<int>(price); // 转换为int以匹配抽象接口定义
+    return price;
+}
+
+// 实现抽象接口：使用物品
+void Medicine::use(Player& user) {
+    // 应用主要效果
+    if (healthEffect > 0) {
+        user.recoverAllWounds();      // 恢复所有伤病
+        user.setHealthToMax();        // 生命值回满
+        user.clearNegativeStatus();   // 清除负面状态
+    }
+    
+    if (strengthEffect != 0) {
+        user.increaseStrength(static_cast<int>(strengthEffect));
+    }
+    
+    if (agilityEffect != 0) {
+        user.increaseAgility(static_cast<int>(agilityEffect));
+    }
+    
+    if (staminaEffect != 0) {
+        user.increaseEndurance(static_cast<int>(staminaEffect));
+    }
+    
+    if (skillPointEffect != 0) {
+        user.addSkillPoints(skillPointEffect);
+    }
+    
+    // 副作用处理
+    if (hasSideEffect) {
+        user.setDecayRateMultiplier(2.0);
+        user.getTrainingSystem()->setHasSideEffect(true);
+    }
+    
+    // 减少物品数量
+    if (amount_ > 0) {
+        amount_--;
+    }
 }
 
 // 获取药物类型
-MedicineType Medicine::getType() const {
+Medicine::MedicineType Medicine::getType() const {
     return type;
 }
 
-// 实现抽象接口：使用物品（统一接口为use，内部调用原逻辑）
-void Medicine::use(Player& user) {
-    useOnPlayer(user); // 复用原有药物使用逻辑
-}
-
-// 药物使用逻辑实现（保留原有核心逻辑）
-void Medicine::useOnPlayer(Player& player) const {
+// 创建药物的工厂方法
+Medicine Medicine::createMedicine(MedicineType type) {
     switch (type) {
         case MedicineType::WOUND_RECOVERY:
-            // 战败受伤直接恢复伤病状态
-            player.recoverAllWounds();      // 恢复所有伤病
-            player.setHealthToMax();        // 生命值回满
-            player.clearNegativeStatus();   // 清除负面状态
-            break;
-
+            return {type, 50.0, "创伤愈合剂", "战败受伤直接恢复伤病状态（0血恢复到满血）", 
+                    1.0, 0.0, 0.0, 0.0, 0, false};
+                    
         case MedicineType::STRENGTH_BOOST:
-            // 提升力量属性
-            player.increaseStrength(attribute_boost);
-            
-            // 副作用：能力下降速度提升一倍
-            player.setDecayRateMultiplier(2.0);
-            break;
-
-        case MedicineType::ENDURANCE_BOOST:
-            // 提升耐力属性
-            player.increaseEndurance(attribute_boost);
-            
-            // 副作用：能力下降速度提升一倍
-            player.setDecayRateMultiplier(2.0);
-            break;
-
+            return {type, 200.0, "力量强化剂", "提升力量值+1（副作用：能力下降速度提升一倍）", 
+                    0.0, 1.0, 0.0, 0.0, 0, true};
+                    
         case MedicineType::AGILITY_BOOST:
-            // 提升敏捷属性
-            player.increaseAgility(attribute_boost);
-            
-            // 副作用：能力下降速度提升一倍
-            player.setDecayRateMultiplier(2.0);
-            break;
-
+            return {type, 200.0, "敏捷强化剂", "提升敏捷值+1（副作用：能力下降速度提升一倍）", 
+                    0.0, 0.0, 1.0, 0.0, 0, true};
+                    
+        case MedicineType::ENDURANCE_BOOST:
+            return {type, 200.0, "耐力强化剂", "提升耐力值+1（副作用：能力下降速度提升一倍）", 
+                    0.0, 0.0, 0.0, 1.0, 0, true};
+                    
         case MedicineType::SKILL_POINT:
-            // 增加技能点
-            player.addSkillPoints(skill_points);
-            break;
-
+            return {type, 100.0, "技能点药剂", "获得1个技能点", 
+                    0.0, 0.0, 0.0, 0.0, 1, false};
+                    
         default:
             throw std::invalid_argument("Unknown medicine type");
     }
 }
 
-// 药物创建工厂方法（保持原有配置）
-Medicine Medicine::createWoundRecovery() {
-    return Medicine(
-        MedicineType::WOUND_RECOVERY,
-        "创伤愈合剂",
-        50.0  // 价格50
-    );
+// 各类效果的getter方法
+double Medicine::getHealthEffect() const {
+    return healthEffect;
 }
 
-Medicine Medicine::createStrengthBoost() {
-    return Medicine(
-        MedicineType::STRENGTH_BOOST,
-        "力量强化剂",
-        200.0,  // 单价200
-        1,      // 力量+1
-        0,
-        true    // 永久buff
-    );
+double Medicine::getStrengthEffect() const {
+    return strengthEffect;
 }
 
-Medicine Medicine::createEnduranceBoost() {
-    return Medicine(
-        MedicineType::ENDURANCE_BOOST,
-        "耐力强化剂",
-        200.0,  // 单价200
-        1,      // 耐力+1
-        0,
-        true    // 永久buff
-    );
+double Medicine::getAgilityEffect() const {
+    return agilityEffect;
 }
 
-Medicine Medicine::createAgilityBoost() {
-    return Medicine(
-        MedicineType::AGILITY_BOOST,
-        "敏捷强化剂",
-        200.0,  // 单价200
-        1,      // 敏捷+1
-        0,
-        true    // 永久buff
-    );
+double Medicine::getStaminaEffect() const {
+    return staminaEffect;
 }
 
-Medicine Medicine::createSkillPointPotion() {
-    return Medicine(
-        MedicineType::SKILL_POINT,
-        "技能点药剂",
-        100.0,  // 1个技能点100
-        0,
-        1       // 增加1个技能点
-    );
+int Medicine::getSkillPointEffect() const {
+    return skillPointEffect;
+}
+
+// 物品数量管理
+int Medicine::getAmount() const {
+    return amount_;
+}
+
+void Medicine::setAmount(int amount) {
+    if (amount >= 0) {
+        amount_ = amount;
+    }
 }

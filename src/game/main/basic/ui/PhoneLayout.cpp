@@ -39,28 +39,32 @@ Component createAppButton(const std::string& icon, const std::string& label, std
 /**
  * @brief PhoneLayout的构造函数。
  * @details 在此初始化所有UI组件，并将它们添加到容器中以处理事件。
- */
-PhoneLayout::PhoneLayout(Game& game_logic, std::function<void()> onMapClick)
-    : game_logic_(game_logic), on_map_click_(onMapClick) {
+*/
+PhoneLayout::PhoneLayout(Game& game_logic, bool& isShowingFlag,
+                         std::function<void()> onMapClick,
+                         std::function<void()> onShopClick,
+                         std::function<void()> onInfoClick)
+    : game_logic_(game_logic), isShowingFlag_(isShowingFlag),
+      onMapClick_(onMapClick), onShopClick_(onShopClick), onInfoClick_(onInfoClick) {
 
     // 应用按钮
-    buttonMap_ = createAppButton(" 🗺 ", "地图", on_map_click_);
-    buttonShop_ = createAppButton("🛒", "网购平台", [] { /* TODO: 网购逻辑 */ });
-    buttonInfo_ = createAppButton("👤", "我的信息", [] { /* TODO: 信息逻辑 */ });
+    buttonMap_ = createAppButton(" 🗺 ", "地图", onMapClick_);
+    buttonShop_ = createAppButton("🛒", "网购平台", onShopClick_);
+    buttonInfo_ = createAppButton("👤", "我的信息", onInfoClick_);
 
     // Home键 (退出按钮)
-    buttonHome_ = Button(" ○ ", [this] { hide(); }, ButtonOption::Ascii());
+    buttonHome_ = Button(" ○ ", [this] { isShowingFlag_ = false; }, ButtonOption::Ascii());
 
     // 将所有按钮添加到一个容器中，这是确保它们能交互的关键
-    mainContainer_ = Container::Horizontal({ // 使用Horizontal因为应用图标是横向排列的
-        buttonMap_,
-        buttonShop_,
-        buttonInfo_,
-        // Home键是独立的，但为了事件处理也需要加入容器
-        Container::Vertical({buttonHome_}),
-    });
+    Components interactive_components;
+    interactive_components.push_back(buttonMap_);
+    interactive_components.push_back(buttonShop_);
+    interactive_components.push_back(buttonInfo_);
+    interactive_components.push_back(buttonHome_);
 
-    // 4. 将主容器作为PhoneLayout的子组件
+    mainContainer_ = Container::Vertical(interactive_components);
+
+    // 将主容器作为PhoneLayout的子组件
     Add(mainContainer_);
 }
 
@@ -68,11 +72,6 @@ PhoneLayout::PhoneLayout(Game& game_logic, std::function<void()> onMapClick)
  * @brief 渲染函数，负责绘制手机界面。
  */
 Element PhoneLayout::Render() {
-    // 如果不显示，则渲染一个空元素
-    if (!isShowing_) {
-        return emptyElement();
-    }
-
     // --- 模拟手机状态栏 ---
     // 获取游戏内时间
     unsigned int gameHour = GameTime::getHour();
@@ -129,16 +128,4 @@ Element PhoneLayout::Render() {
         }),
         filler(),
     }) | clear_under;
-}
-
-void PhoneLayout::show() {
-    isShowing_ = true;
-}
-
-void PhoneLayout::hide() {
-    isShowing_ = false;
-}
-
-bool PhoneLayout::isShowing() const {
-    return isShowing_;
 }

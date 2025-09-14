@@ -20,12 +20,12 @@ inline std::string rtrim(std::string s) {
 }
 
 // 移除字符串两端的空白
-inline std::string trim(std::string s) {
+inline std::string trim(const std::string& s) {
     return ltrim(rtrim(s));
 }
 
 // 计算含中文字符串的长度 :(
-inline int getLength(std::string s) {
+inline int getLength(const std::string& s) {
     int count = 0;
     for (int i = 0; s[i]; i++)
     {

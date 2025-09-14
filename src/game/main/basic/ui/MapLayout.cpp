@@ -36,8 +36,9 @@ MapLayout::MapLayout(Game& game_logic, bool& isShowingFlag)
 
 void MapLayout::resetState() {
     viewMode_ = 0;
+    // 找到玩家当前位置对应的地图ID
     const std::string& player_loc_name = game_logic_.getPlayer().getLocation();
-    std::string start_id = "home";
+    std::string start_id = "home"; // 默认值
     for (const auto& [id, loc] : locations_) {
         if (loc.name == player_loc_name) {
             start_id = id;
@@ -62,10 +63,20 @@ void DrawLocationNode(Canvas& canvas, const MapLocation& loc, Color color, bool 
         tl = "┌"; tr = "┐"; bl = "└"; br = "┘"; h = "─"; v = "│";
     }
 
-    canvas.DrawText(startX, startY, std::string(tl) + std::string(boxWidth - 2, *h) + std::string(tr), color);
-    canvas.DrawText(startX, startY + 2, std::string(bl) + std::string(boxWidth - 2, *h) + std::string(br), color);
-    canvas.DrawText(startX, startY + 1, *v, color);
-    canvas.DrawText(startX + boxWidth - 1, startY + 1, *v, color);
+    // 1. 绘制空心方框
+    // 1.1 构造顶部和底部边框线
+    std::string horizontalLine;
+    for (int i = 0; i < boxWidth - 2; ++i) {
+        horizontalLine += h;
+    }
+    canvas.DrawText(startX, startY, std::string(tl) + horizontalLine + std::string(tr), color);
+    canvas.DrawText(startX, startY + 2, std::string(bl) + horizontalLine + std::string(br), color);
+
+    // 1.2 绘制侧边框
+    canvas.DrawText(startX, startY + 1, v, color);
+    canvas.DrawText(startX + boxWidth - 1, startY + 1, v, color);
+
+    // 2. 在方框内部的正确位置单独绘制地名文本
     canvas.DrawText(startX + 2, startY + 1, displayName, color);
 }
 
@@ -107,7 +118,7 @@ void MapLayout::initializeLocations() {
     locations_["pharmacy"]     = {"药店",       "药店",     120, 22, "", "", "store", ""};
 }
 
-// 新增：处理购买命令的函数
+// 处理购买命令的函数
 void MapLayout::processBuyCommand(const std::string& itemName) {
     Player& player = game_logic_.getPlayer();
     const std::string& currentLoc = player.getLocation();
@@ -283,4 +294,86 @@ Element MapLayout::Render() {
     auto legend = hbox({
         text("图例: "),
         text("■") | color(Color::Green) | bold, text(" 已选择  "),
-        text("■") | color(Color::Yellow) | bold,
+        text("■") | color(Color::Yellow) | bold, text(" 当前位置  "),
+        text("■") | color(Color::GrayLight), text(" 其他地点"),
+    });
+
+    // 显著增大画布尺寸
+    auto canvas = Canvas(160, 45);
+    const std::string& player_loc_name = game_logic_.getPlayer().getLocation();
+    std::string player_loc_id = "home";
+    for (const auto& [id, loc] : locations_) {
+        if (loc.name == player_loc_name) {
+            player_loc_id = id;
+            break;
+        }
+    }
+
+    // 先绘制所有连接线，让它们作为背景
+    for (const auto& [id, loc] : locations_) {
+        for (const auto& navId : {loc.nav_up, loc.nav_down, loc.nav_left, loc.nav_right}) {
+            if (!navId.empty() && locations_.contains(navId)) {
+                const auto& neighbor = locations_.at(navId);
+                // 使用更暗的颜色绘制连接线，以突出节点
+                canvas.DrawPointLine(loc.x, loc.y, neighbor.x, neighbor.y, Color::GrayDark);
+            }
+        }
+    }
+
+    // 在连接线之上绘制所有地点节点
+    for (const auto& [id, loc] : locations_) {
+        Color nodeColor = Color::GrayLight; // 普通地点的默认颜色
+        std::string extraText;
+
+        if (id == player_loc_id) {
+            nodeColor = Color::Yellow;
+            extraText = " (你)";
+        }
+        // 如果当前地点被选中，绿色会覆盖黄色
+        if (id == selectedLocationId_) {
+            nodeColor = Color::Green;
+        }
+
+        // 调用节点绘制函数
+        DrawLocationNode(canvas, loc, nodeColor, (id == selectedLocationId_), extraText);
+    }
+
+    // 创建右下角的出行方式选择区域
+    Element travelDialog = text("");
+    if (viewMode_ == 1) {
+        auto& dest = locations_.at(selectedLocationId_);
+        travelDialog = vbox({
+            text("前往 " + dest.name) | bold | color(Color::Yellow),
+            hbox({
+                buttonTaxi_->Render() | size(WIDTH, LESS_THAN, 20),
+                text(" "),
+                buttonWalk_->Render() | size(WIDTH, LESS_THAN, 20),
+                text(" "),
+                buttonCancelTravel_->Render() | size(WIDTH, LESS_THAN, 20)
+            })
+        }) | border | size(WIDTH, LESS_THAN, 35) | size(HEIGHT, LESS_THAN, 10);
+    }
+
+    auto mapElement = vbox({
+        legend | center,
+        separator(),
+        hbox({
+            ftxui::canvas(std::move(canvas)) | flex_grow,
+            viewMode_ == 1 ? vbox({
+                filler(),
+                travelDialog
+            }) : filler()
+        }) | flex,
+        separator(),
+        vbox({
+            text("使用 [↑↓←→] 移动选择, [Home] 确认, [↑↓]键选择出行方式或退选") | color(Color::GrayLight),
+            text("如果选择[计程车]出行，则需要花费15元并流逝4~10分钟") | color(Color::GrayLight),
+            text("选择[步行]则不花钱但流逝10~25分钟，并消耗5点饥饿值和3点体力") | color(Color::GrayLight),
+            text("注：如果没有足够的钱打车，则只能选择步行") | color(Color::GrayLight),
+            separator(),
+            buttonExit_->Render() | center
+        })
+    });
+
+    return window(text(" 地图 ") | bold, mapElement) | clear_under;
+}

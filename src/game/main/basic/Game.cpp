@@ -1,40 +1,44 @@
-#include "Dialog.h"
 #include "Game.h"
+#include "Dialog.h"
 #include "StoryController.h"
 #include "View.h"
 #include "../class/entity/Player.h"
 #include "../GameStory/GameProcess.h"
-#include "GameTime.h"
 
 #include <iostream>
+#include <cstdlib>
 
 Game::Game() : currentState_(GameState::MainMenu)  {
-    view_ = std::make_unique<View>(*this);
+    config_ = Configuration::getInstance();
+
     dialog_ = std::make_unique<Dialog>(*this);
     player_ = std::make_unique<Player>(*this);
     storyController_ = std::make_unique<StoryController>(*this);
 
-    GameTime(); // 初始化游戏时间
+    view_ = std::make_unique<View>(*this);
 }
 
 Game::~Game() {
     // TODO: 游戏退出析构函数
 }
 
-void Game::run() {
+void Game::run() const {
     if (view_) {
         view_->showMainMenu();
     }
 }
 
 void Game::startNewGame() {
-    if (view_) {
-        View::showLoadingScreen("正在加载新游戏");
+    if (isFirstNewGame) {
+        isFirstNewGame = false;
+        if (view_) {
+            View::showLoadingScreen("正在加载新游戏");
+        }
+        std::cout << "开始新游戏..." << std::endl;
+        // TODO
+        // ... 此处是开始新游戏的具体逻辑 ...
+        GameProcess::newStart(*this);
     }
-    std::cout << "开始新游戏..." << std::endl;
-    // TODO
-    // ... 此处是开始新游戏的具体逻辑 ...
-    GameProcess::newStart(*this);
     if (view_) {
         view_->showGameScreen();
     }
@@ -57,15 +61,9 @@ void Game::showGameIntro() const {
     }
 }
 
-void Game::showGameSettings() {
-    std::cout << "游戏设置..." << std::endl;
-    // TODO
-    // ... 显示设置的具体逻辑 ...
-}
-
-void Game::exitGame() {
+void Game::exitGame() const {
     std::cout << "退出游戏..." << std::endl;
-    requestExit();
+    std::exit(0);
 }
 
 // --- 服务访问器实现 ---
@@ -83,6 +81,10 @@ StoryController& Game::getStoryController() const {
 
 View& Game::getView() const {
     return *view_;
+}
+
+Configuration& Game::getConfig() const {
+    return *config_;
 }
 
 // --- 状态管理实现 ---
@@ -125,16 +127,4 @@ void Game::requestChoice(const std::string& prompt,
         .onChoiceSelect = std::move(onSelect)
     };
     setGameState(GameState::AwaitingChoice);
-}
-
-void Game::setScreen(ftxui::ScreenInteractive* screen) {
-    screen_ = screen;
-}
-
-void Game::requestExit() const {
-    if (screen_) {
-        // 发布一个自定义的特殊事件。
-        // UI线程的事件循环会在下一轮处理这个事件。
-        screen_->Post(ftxui::Event::Special("GAME_EXIT_REQUEST"));
-    }
 }
