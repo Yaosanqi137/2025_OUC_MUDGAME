@@ -596,3 +596,13 @@ bool Player::learnSkillById(int skillId) {
 
 // 返回游戏引用
 Game& Player::getGameLogic() {return game_logic_;}
+
+int Player::getHighestUnlockedEnemy() const {
+    // 从最高ID开始向下查找，找到第一个已解锁的敌人
+    for (int i = unlockedEnemies_.size() - 1; i >= 0; --i) {
+        if (unlockedEnemies_[i]) {
+            return i;
+        }
+    }
+    return 0; // 如果没有解锁任何敌人，返回0
+}
