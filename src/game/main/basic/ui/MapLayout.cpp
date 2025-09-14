@@ -104,17 +104,73 @@ void MapLayout::initializeLocations() {
 
 void MapLayout::travelBy(const std::string& method) {
     Player& player = game_logic_.getPlayer();
-    const auto& destination = locations_.at(selectedLocationId_);
+    // 增加目标地点不存在的容错处理
+    auto dest_it = locations_.find(selectedLocationId_);
+    if (dest_it == locations_.end()) {
+        game_logic_.addMessage("【错误】目标地点不存在，请重新选择！");
+        viewMode_ = 0;
+        return;
+    }
+    const auto& destination = dest_it->second;
 
     if (method == "taxi") {
         if (player.getSavings() < 15) {
+            game_logic_.addMessage("钱不够乘坐计程车，需要15元。");
             viewMode_ = 0;
             return;
         }
         player.addSavings(-15);
+        game_logic_.addMessage("你乘坐计程车前往" + destination.name + "，花费了15元。");
     } else if (method == "walk") {
         player.addHunger(-5);
         player.addFatigue(-3);
+        game_logic_.addMessage("你选择步行前往" + destination.name + "。");
+    }
+
+    // 场景商品与价格信息
+    if (destination.id == "cafe") {  // 咖啡馆商品保持不变
+        game_logic_.addMessage("咖啡馆内飘着咖啡的香气，环境十分舒适。");
+        game_logic_.addMessage("【商品】咖啡（88元） | 巧克力可颂（38元） | 抹茶可颂（38元）");
+        game_logic_.addMessage("【商品】巧克力巴斯克（38元） | 抹茶巴斯克（38元）");
+    } else if (destination.id == "store") {  // 商店商品
+        game_logic_.addMessage("商店里商品琳琅满目，你可以在这里购买需要的物品。");
+        game_logic_.addMessage(" 【商品】鸡肉（饱食度+20 血量+5 价格12元）");
+        game_logic_.addMessage(" 【商品】猪肉（饱食度+20 血量+5 价格12元）");
+        game_logic_.addMessage(" 【商品】牛肉（饱食度+20 血量+5 价格12元）");
+        game_logic_.addMessage(" 【商品】牛肉（饱食度+20 血量+5 价格12元）");
+        game_logic_.addMessage("【商品】苏打水（饱食度+9 价格6元）");
+        game_logic_.addMessage("【商品】能量饮料（饱食度+5 体力+10 价格14元）");
+        game_logic_.addMessage("【商品】冷冻披萨（血量+10 饱食度+17 价格9元）");
+        game_logic_.addMessage("【提示】购买的食物将存放在冰箱中，每种食物上限为7个");
+    } else if (destination.id == "pharmacy") {  // 药店商品
+        game_logic_.addMessage("药店里很安静，药剂师正在整理药品。");
+        game_logic_.addMessage("【商品】创伤恢复包（战败受伤时直接恢复伤病状态 3个 价格50元）");
+        game_logic_.addMessage("【商品】力量属性强化剂（提升属性值+1 单价200元）");
+        game_logic_.addMessage("【商品】耐力属性强化剂（提升属性值+1 单价200元）");
+        game_logic_.addMessage("【商品】敏捷属性强化剂（提升属性值+1 单价200元）");
+        game_logic_.addMessage("【警告】使用属性强化剂会导致能力下降速度提升一倍（永久效果）");
+        game_logic_.addMessage("【商品】技能点药剂（获得1个技能点 价格100元）");
+    } else if (destination.id == "gym") {  // 健身房自动售货机
+        game_logic_.addMessage("拳击馆里充满了汗水的味道，许多人在刻苦训练。");
+        game_logic_.addMessage("角落里的自动售货机可以购买补充能量的物品：");
+        game_logic_.addMessage("【商品】能量饮料（饱食度+5 体力+10 价格18元）");
+        game_logic_.addMessage("【商品】巧克力棒（饱食度+5 体力+5 价格12元）");
+        game_logic_.addMessage("【商品】蛋白质棒（饱食度+15 价格18元）");
+    } else if (destination.id == "construction") {
+        game_logic_.addMessage("工地上机器声不断，工人们正在辛勤工作。");
+    } else if (destination.id == "arena") {
+        game_logic_.addMessage("比赛场地灯火通明，似乎即将有精彩的比赛。");
+    } else if (destination.id == "home") {
+        game_logic_.addMessage("回到家中，你感到一阵放松。");
+        game_logic_.addMessage("冰箱里存放着你购买的食物，打开看看吧。");
+    }
+
+    // 首次旅行帮助信息
+    if (player.isFirstTimeTravel()) {
+        game_logic_.addMessage("【系统提示】这是你第一次旅行！");
+        game_logic_.addMessage("【系统提示】在任意场景中输入/use可以获取该场景的使用帮助。");
+        game_logic_.addMessage("【系统提示】输入/buy [商品名] 可以购买物品，例如: /buy 肉");
+        player.setFirstTimeTravel(false);
     }
 
     player.setLocation(destination.name);
