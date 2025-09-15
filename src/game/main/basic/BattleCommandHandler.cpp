@@ -1,4 +1,3 @@
-// BattleCommandHandler.cpp
 #include "BattleCommandHandler.h"
 #include "Game.h"
 #include "../event/FightEvent.h"
@@ -13,8 +12,6 @@ void BattleCommandHandler::showEnemyInfo(Game& game, int enemyId) {
             return;
         }
         
-        std::cout << "DEBUG: Creating enemy with ID: " << enemyId << std::endl;
-        
         // 使用 FightEvent 的静态方法创建敌人
         auto enemy = FightEvent::createEnemyById(enemyId);
         
@@ -23,8 +20,6 @@ void BattleCommandHandler::showEnemyInfo(Game& game, int enemyId) {
             game.getDialog().addMessage("<SYSTEM>", "错误: 无法创建敌人");
             return;
         }
-        
-        std::cout << "DEBUG: Enemy created successfully" << std::endl;
         
         // 安全地获取敌人名称
         std::string enemyName;
@@ -86,61 +81,6 @@ void BattleCommandHandler::showEnemyInfo(Game& game, int enemyId) {
         std::cerr << "Unknown exception in showEnemyInfo" << std::endl;
     }
 }
-
-bool BattleCommandHandler::handleCommand(Game& game, const std::string& input) {
-    if (input == "/enemy attack pass") {
-        return handleSkipCommand(game);
-    } else if (input.rfind("/enemy attack skill ", 0) == 0) {
-        return handleAttackCommand(game, input);
-    }
-    return false;
-}
-
-bool BattleCommandHandler::handleAttackCommand(Game& game, const std::string& input) {
-    auto battle = game.getCurrentBattle();
-    if (!battle) {
-        game.getDialog().addMessage("<SYSTEM>", "错误：战斗状态异常");
-        game.clearCurrentBattle();
-        return false;
-    }
-    
-    std::string idStr = input.substr(20);
-    try {
-        int skillId = std::stoi(idStr);
-        auto& skills = game.getPlayer().getSkills();
-        int index = -1;
-        
-        for (int i = 0; i < skills.size(); i++) {
-            if (skills[i]->getId() == skillId && skills[i]->isAttackSkill()) {
-                index = i;
-                break;
-            }
-        }
-        
-        if (index != -1) {
-            battle->playerChooseAction(FIGHT_ACTION_SKILL, index);
-            return true;
-        } else {
-            game.getDialog().addMessage("<SYSTEM>", "无效的技能ID或这不是攻击技能");
-        }
-    } catch (const std::exception& e) {
-        game.getDialog().addMessage("<SYSTEM>", "错误: 无效的技能ID格式");
-    }
-    return false;
-}
-
-bool BattleCommandHandler::handleSkipCommand(Game& game) {
-    auto battle = game.getCurrentBattle();
-    if (!battle) {
-        game.getDialog().addMessage("<SYSTEM>", "错误：战斗状态异常");
-        game.clearCurrentBattle();
-        return false;
-    }
-    
-    battle->playerChooseAction(FIGHT_ACTION_SKIP);
-    return true;
-}
-
 
 void BattleCommandHandler::startBattle(Game& game, int enemyId) {
     if (enemyId > 11) {

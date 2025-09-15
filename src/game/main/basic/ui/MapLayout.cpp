@@ -117,6 +117,13 @@ void MapLayout::initializeLocations() {
 }
 
 void MapLayout::travelBy(const std::string& method) {
+
+    if (game_logic_.isInBattle()) {
+        game_logic_.getDialog().addMessage("<SYSTEM>", "在战斗中不能移动！");
+        isShowingFlag_ = false; // 关闭地图界面
+        return;
+    }
+    
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> distWalkTime(10, 25); // 步行时间10-20分钟
     std::uniform_int_distribution<int> distTaxiTime(4, 10);  // 计程车时间5-10分钟

@@ -4,6 +4,7 @@
 #include "InputProcess.h"
 #include "StoryController.h"
 #include "../event/TrainingEvent.h"
+#include "../event/FightEvent.h"
 #include "BattleCommandHandler.h" // 包含新的命令处理器
 #include "../GameStory/Scene/ShopScene.h"
 #include "../GameStory/Scene/PharmacyScene.h"
@@ -55,10 +56,51 @@ void Dialog::processPlayerInput(std::string& input) {
 
     //检查是否在战斗中
     if (game_logic_.isInBattle()) {
-        // 使用新的命令处理器处理战斗命令
-        if (BattleCommandHandler::handleCommand(game_logic_, input)) {
+        // 直接处理战斗命令
+        auto battle = game_logic_.getCurrentBattle();
+        if (!battle) {
+            addMessage("<SYSTEM>", "错误：战斗状态异常");
+            game_logic_.clearCurrentBattle();
+            return;
+        }
+
+        // 检查是否是玩家回合
+        if (!battle->isPlayerTurn()) {
+            addMessage("<SYSTEM>", "现在不是你的回合，请等待敌人行动");
+            return;
+        }
+
+        // 处理战斗命令
+        if (input == "/enemy attack pass") {
+            // 处理跳过回合
+            battle->playerChooseAction(1); // 1 表示跳过回合
+            return;
+        } else if (input.rfind("/enemy attack skill ", 0) == 0) {
+            // 处理技能攻击
+            std::string idStr = input.substr(20);
+            try {
+                int skillId = std::stoi(idStr);
+                auto& skills = game_logic_.getPlayer().getSkills();
+                int index = -1;
+                
+                for (int i = 0; i < skills.size(); i++) {
+                    if (skills[i]->getId() == skillId && skills[i]->isAttackSkill()) {
+                        index = i;
+                        break;
+                    }
+                }
+                
+                if (index != -1) {
+                    battle->playerChooseAction(0, index); // 0 表示技能攻击
+                } else {
+                    addMessage("<SYSTEM>", "无效的技能ID或这不是攻击技能");
+                }
+            } catch (const std::exception& e) {
+                addMessage("<SYSTEM>", "错误: 无效的技能ID格式");
+            }
             return;
         } else {
+            // 不是战斗命令，显示错误消息
             addMessage("<SYSTEM>", "在战斗中，请使用战斗命令: /enemy attack skill <id> 或 /enemy attack pass");
             return;
         }
@@ -80,6 +122,7 @@ void Dialog::processPlayerInput(std::string& input) {
             game_logic_.getDialog().addMessage("<SYSTEM>", "/use: 查看本场景下能够使用的指令");
             game_logic_.getDialog().addMessage("<SYSTEM>", "/skill: 查看技能点及帮助菜单");
             game_logic_.getDialog().addMessage("<SYSTEM>", "/train: 训练及帮助菜单");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy: 查看敌人相关操作");
             // game_logic_.getDialog().addMessage("<SYSTEM>", "/npc: 查看附加能够对话的NPC");
             // game_logic_.getDialog().addMessage("<SYSTEM>", "/chat: 与NPC对话，格式 /chat NPC名称"); 有时间再说
         } else if (input == "/clear") {
@@ -247,16 +290,20 @@ void Dialog::processPlayerInput(std::string& input) {
                 return;
             }
             game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::STAMINA, game_logic_);
-        } else if (input == "/enemy show") {
-            if (loc != "比赛场地") {
-                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地查看敌人！");
-                return;
-            }
+        } else if (input == "/enemy") {
+            game_logic_.getDialog().addMessage("<SYSTEM>", "敌人相关命令:");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy show: 显示下一个敌人的信息");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy battle: 开始与下一个敌人的战斗");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "在战斗中可使用:");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy attack skill <id>: 使用技能攻击");
+            game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy attack pass: 跳过回合");
+        }else if (input == "/enemy show") {
             int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
             BattleCommandHandler::showEnemyInfo(game_logic_, nextEnemyId);
         } else if (input == "/enemy battle") {
+            // 检查是否在比赛场地
             if (loc != "比赛场地") {
-                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地进行拳击比赛！");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地进行战斗！");
                 return;
             }
             int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
