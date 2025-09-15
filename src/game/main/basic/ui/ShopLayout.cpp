@@ -114,6 +114,8 @@ void ShopLayout::purchaseItem(int itemIndex) {
         // 可以在这里添加购买成功的提示
         // 暂时通过重置选择来表示购买完成
         selectedItemIndex_ = -1;
+
+        game_logic_.getDialog().addMessage("呜呜物流", "你好！你购买的" + item.name + "已经送达，请注意查收！");
     } else {
         // 金钱不足，暂时也重置选择
         selectedItemIndex_ = -1;

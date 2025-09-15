@@ -15,7 +15,10 @@ public:
         ENERGY_DRINK,   // 能量饮料
         FROZEN_PIZZA,   // 冷冻披萨
         CHOCOLATE_BAR,  // 巧克力棒
-        PROTEIN_BAR     // 蛋白质棒
+        PROTEIN_BAR,    // 蛋白质棒
+        COFFEE,         // 女仆咖啡
+        BREAD,          // 爱心面包
+        WAXUEDI,        // 瓦学弟蛋包饭
     };
 
     explicit Food(FoodType type);
@@ -23,7 +26,7 @@ public:
 
     // 实现抽象接口
     [[nodiscard]] int getPrice() const override;
-    void use(Player& user) override;
+    bool use(Player& user) override;
 
     // 获取食物类型
     [[nodiscard]] FoodType getFoodType() const;
@@ -34,11 +37,17 @@ public:
     // 静态方法：创建健身房食物
     static Food createGymFood(FoodType type);
 
+    // 静态方法：创建咖啡店食物
+    static Food createCofeFood(FoodType type);
+
     // 检查是否是商店专属食物
     static bool isStoreExclusive(FoodType type);
     
     // 检查是否是健身房专属食物
     static bool isGymExclusive(FoodType type);
+
+    // 检查是否是咖啡店专属食物
+    static bool isCofeExclusive(FoodType type);
 
     // get方法实现, 主要用于EatEvent的效果显示
     [[nodiscard]] double getHealthEffect() const;   // 健康值

@@ -166,19 +166,8 @@ void Dialog::processPlayerInput(std::string& input) {
             } else {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在家里睡觉！");
             }
-        } else if (input == "/buy") {
-            if (loc == "商店") {
-                // 调用商店购买场景
-                game_logic_.getStoryController().processNodeByID(10000001);
-            } else if (loc == "药店") {
-                // 调用药店购买场景
-                game_logic_.getStoryController().processNodeByID(11000001);
-            } else if (loc == "咖啡馆") {
-                // 调用咖啡馆购买场景
-                game_logic_.getStoryController().processNodeByID(12000001);
-            } else {
-                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在商店、药店或咖啡馆购买东西！");
-        }else if (input == "/work") {
+        } else if (input == "/work") {
+            
             if (loc == "工地") {
                 if (game_logic_.getPlayer().getFatigue() < 15) {
                     game_logic_.getDialog().addMessage("<SYSTEM>", "你太累了，无法工作！");
