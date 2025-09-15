@@ -41,10 +41,10 @@ namespace Chapter1 {
          */
         // 附加动作：清理对话历史
         ExecuteAction{
-            [](Game& game) {
-                game.getDialog().clearHistory();
-                game.getPlayer().setLocation("拳击馆外");
-                game.setGameState(GameState::InGame);
+            [](Game& game_logic_) {
+                game_logic_.getDialog().clearHistory();
+                game_logic_.getPlayer().setLocation("拳击馆外");
+                game_logic_.setGameState(GameState::InGame);
             }
         }
     });
@@ -80,8 +80,8 @@ namespace Chapter1 {
         SpeakAction{"", "第一章：初来乍到"},
 
         ExecuteAction{
-            [](Game& game) {
-                game.getPlayer().setLocation("家");
+            [](Game& game_logic_) {
+                game_logic_.getPlayer().setLocation("家");
             }
         },
         WaitAction{std::chrono::milliseconds(500)},
@@ -96,6 +96,7 @@ namespace Chapter1 {
         SpeakAction{"<SYSTEM>", "点击侧栏\"我的手机\"，然后点击\"网购平台\""},
         SpeakAction{"<SYSTEM>", "你的兜里初始有100元，如果不够的话，可以去工地打工"},
         SpeakAction{"<SYSTEM>", "打开手机里的地图，可以快捷的前往某个地点"},
+        SpeakAction{"<SYSTEM>", "如果有疑问，可以随时输入/help查看帮助"},
     });
 
     /**

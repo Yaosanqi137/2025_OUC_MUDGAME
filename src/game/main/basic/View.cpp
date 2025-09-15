@@ -3,6 +3,7 @@
 #include "View.h"
 #include "ui/GameLayout.h"
 #include "ui/SettingsLayout.h"
+#include "Configuration.h"
 
 #include "FTXUI/component/component.hpp"
 #include "FTXUI/component/screen_interactive.hpp"
@@ -219,15 +220,22 @@ void View::showGameScreen() {
     // 创建我们的自定义主组件
     auto gameLayout = Make<GameLayout>(game_logic_);
 
-    // 每20ms打印一个字
+    // 使用配置文件中的打字机速度
     std::atomic<bool> refreshRunning{true};
     std::thread refreshThread([&] {
         while (refreshRunning) {
-            using namespace std::chrono_literals;
             screen.PostEvent(Event::Custom);
-            std::this_thread::sleep_for(20ms);
+            // 从配置文件获取打字机速度
+            int typewriterSpeed = game_logic_.getConfig().getTypewriterSpeed();
+            std::this_thread::sleep_for(std::chrono::milliseconds(typewriterSpeed));
         }
     });
 
     screen.Loop(gameLayout); // 启动包含事件处理的循环
+
+    // 退出循环后停止刷新线程
+    refreshRunning = false;
+    if (refreshThread.joinable()) {
+        refreshThread.join();
+    }
 }

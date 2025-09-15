@@ -120,7 +120,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
             } else {
                 whoColor = Color::Cyan; // 其他消息为青色
             }
-
+            
             auto glyphs = Utf8ToGlyphs(msg.content);
             size_t contentSize = glyphs.size();
             size_t shownChars = 0;
