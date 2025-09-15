@@ -20,7 +20,11 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , st
                    exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0),
                    sustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),upperBodySustainDamageRate(1.0),
                    fatigueConsumeRate(1.0),exHitRate(0.0),
-                   gameDifficulty(2) {
+                   gameDifficulty(2),
+                   lastDecayYear(GameTime::getYear()),   // 初始化上次衰减年份
+                   lastDecayMonth(GameTime::getMonth()), // 初始化上次衰减月份
+                   lastDecayDay(GameTime::getDay())      // 初始化上次衰减日期
+                   {
     // 在构造函数中初始化背包
     initializeInventory();
 
@@ -529,7 +533,9 @@ std::shared_ptr<TrainingEvent> Player::getTrainingSystem() {
 }
 
 bool Player::train(TrainingType type) {
-    return trainingSystem->train(type, this->game_logic_);
+    bool result = trainingSystem->train(type, this->game_logic_);
+    checkAndApplyDailyDecay(getGameLogic()); // 训练后检查日期变化并应用衰减
+    return result;
 }
 
 bool Player::canTrain(TrainingType type) const {
@@ -629,4 +635,57 @@ int Player::getHighestUnlockedEnemy() const {
         }
     }
     return 0; // 如果没有解锁任何敌人，返回0
+}
+
+void Player::checkAndApplyDailyDecay(Game& game) {
+    unsigned int currentYear = GameTime::getYear();
+    unsigned int currentMonth = GameTime::getMonth();
+    unsigned int currentDay = GameTime::getDay();
+
+    // 检查日期是否变化（年、月、日任意一个变化）
+    if (currentYear != lastDecayYear || currentMonth != lastDecayMonth || currentDay != lastDecayDay) {
+        // 调用训练系统的每日经验衰减
+        trainingSystem->applyDailyExperienceDecay(game);
+        
+        // 更新记录日期
+        lastDecayYear = currentYear;
+        lastDecayMonth = currentMonth;
+        lastDecayDay = currentDay;
+        
+        // 可选：添加日志消息
+        game_logic_.getDialog().addMessage("<SYSTEM>", "已经经过了一天，训练经验有所衰减。");
+    }
+}
+
+// 急救系统实现
+void Player::triggerEmergencyRescue() {
+    // 输出急救信息
+    game_logic_.getDialog().addMessage("", "你晕了过去，有人拨打了急救电话，将你送去医院了...");
+
+    game_logic_.getDialog().addMessage("", "...");
+    game_logic_.getDialog().addMessage("", "...");
+    game_logic_.getDialog().addMessage("", "...");
+    game_logic_.getDialog().addMessage("", "...");
+
+    // 输出恢复信息
+    game_logic_.getDialog().addMessage("", "当你醒来时，医生已经将你治好，但是你还没有完全恢复，身体还很虚弱");
+
+    // 设置玩家状态
+    health = 10.0;    // 生命值设置为10
+    hunger = 50.0;    // 饥饿值设置为50
+    fatigue = 30.0;   // 体力设置为30
+
+    if (getSavings() < 180) {
+        game_logic_.getDialog().addMessage("医生", "小伙子，你并没有足够的钱医疗");
+        game_logic_.getDialog().addMessage("医生", "但是你的保险替你还清了剩下的医疗费");
+        game_logic_.getDialog().addMessage("医生", "下次可要注意身体啊");
+        addSavings(-getSavings()); // 钱包清零
+    } else {
+        game_logic_.getDialog().addMessage("医生", "小伙子，你醒啦？");
+        game_logic_.getDialog().addMessage("医生", "这次没受什么伤，但下次可要注意身体啊");
+        game_logic_.getDialog().addMessage("医生", "对了，医疗费 180 元，已经缴纳了");
+        addSavings(-180);
+    }
+    game_logic_.getDialog().addMessage("<PLAYER_NAME>", "我去，180块钱这就没了？");
+    game_logic_.getDialog().addMessage("", "你看你身上没什么事，于是又回去做刚刚做的事情了");
 }
