@@ -20,6 +20,9 @@ struct MapLocation {
     std::string nav_down;
     std::string nav_left;
     std::string nav_right;
+
+    // 是否第一次来到此地点
+    bool isFirstTo = true;
 };
 
 /**

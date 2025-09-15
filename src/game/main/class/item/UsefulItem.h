@@ -12,7 +12,8 @@ public:
     enum class ItemType {
         BOXING_GLOVES,      // 拳套
         BOXING_GYM_PASS,    // 拳击馆通行证
-        CARD                // 弗兰克的名片
+        CARD,               // 弗兰克的名片
+        BANNED_DRUG         // 禁药
     };
 
     UsefulItem(ItemType type);
@@ -27,6 +28,7 @@ public:
     static UsefulItem createBoxingGloves(bool isUsable = false);
     static UsefulItem createBoxingGymPass(bool isUsable = false);
     static UsefulItem createCard(bool isUsable = false);
+    static UsefulItem createBannedDrug(bool isUsable = true);
 
 private:
     ItemType type_;

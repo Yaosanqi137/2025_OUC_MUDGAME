@@ -92,7 +92,8 @@ void ShopLayout::initializeShopItems() {
     // 添加UsefulItem中的所有物品
     shopItems_ = {
         {"拳套", "一副基础的拳击手套，提供了基础的保护。", 50, "拳套"},
-        {"拳击馆通行证", "一张可以在拳击馆使用的通行证。", 500, "拳击馆通行证"}
+        {"拳击馆通行证", "一张可以在拳击馆使用的通行证。", 500, "拳击馆通行证"},
+        {"禁药", "可以提升你的体力上限与生命上限，没有副作用，就是特别贵", 1999, "禁药"},
     };
 }
 
@@ -184,7 +185,7 @@ Element ShopLayout::Render() {
         text("商品详情") | bold | center,
         separator(),
         paragraph(itemDetailName) | frame | flex,
-        paragraph(itemDetailDesc) | frame | flex,
+        paragraph(itemDetailDesc) | frame | flex | size(WIDTH, LESS_THAN, 50),
         paragraph(itemDetailPrice) | frame | flex | color(Color::Yellow),
         separator(),
         text(playerMoney) | center | color(Color::Cyan),
@@ -192,7 +193,7 @@ Element ShopLayout::Render() {
         itemSelected ?
             (canBuy ? buyButton_->Render() : text("金钱不足") | color(Color::Red)) | center :
             text("") | center
-    }) | border | size(WIDTH, EQUAL, 30);
+    }) | border | size(WIDTH, EQUAL, 55);
 
     // 分页控制
     int totalPages = getTotalPages();
