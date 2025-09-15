@@ -6,6 +6,9 @@
 #include "../event/TrainingEvent.h"
 #include "../event/FightEvent.h"
 #include "BattleCommandHandler.h" // 包含新的命令处理器
+#include "../GameStory/Scene/ShopScene.h"
+#include "../GameStory/Scene/PharmacyScene.h"
+#include "../GameStory/Scene/CafeScene.h"
 #include <random>
 
 Dialog::Dialog(Game& game_logic) : game_logic_(game_logic) {}
@@ -68,9 +71,9 @@ void Dialog::processPlayerInput(std::string& input) {
         }
 
         // 处理战斗命令
-        if (input == "/enemy attack pass") {
+        if (input.find("/enemy attack pass") != std::string::npos) {
             // 处理跳过回合
-            battle->playerChooseAction(1); // 1 表示跳过回合
+            battle->playerChooseAction(1, 0); // 1 表示跳过回合
             return;
         } else if (input.rfind("/enemy attack skill ", 0) == 0) {
             // 处理技能攻击
@@ -95,6 +98,11 @@ void Dialog::processPlayerInput(std::string& input) {
             } catch (const std::exception& e) {
                 addMessage("<SYSTEM>", "错误: 无效的技能ID格式");
             }
+            return;
+        } else if (input.find("/enemy kill") != std::string::npos){
+            // 设置敌人血量为1点 - 调试命令
+            battle->setEnemyHealthToLow();
+            addMessage("<SYSTEM>", "调试命令: 已将敌人血量设置为1点");
             return;
         } else {
             // 不是战斗命令，显示错误消息
@@ -131,8 +139,13 @@ void Dialog::processPlayerInput(std::string& input) {
             }
             if (loc == "工地") {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "/work: 工作，赚取微薄的收入");
-                game_logic_.getDialog().addMessage("<SYSTEM>", "每次工作赚取50-150元，消耗10点体力,10点饥饿值");
-                game_logic_.getDialog().addMessage("<SYSTEM>", "预计花费6-8小时");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "每次工作赚取40-80元，消耗15点体力,15点饥饿值");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "预计花费3-5小时");
+            }
+            if (loc == "商店" || loc == "药店" || loc == "咖啡馆") {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "/buy: 打开购买界面，购买食物、饮料、药品等");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "购买的物品会直接放入背包");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "但是买东西千万不要忘记带钱，否则...");
             }
         } else if (input == "/sleep") {
             if (loc == "家") {
@@ -153,16 +166,37 @@ void Dialog::processPlayerInput(std::string& input) {
             } else {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在家里睡觉！");
             }
-        } else if (input == "/work") {
+        } else if (input == "/buy") {
+            if (loc == "商店") {
+                // 调用商店购买场景
+                game_logic_.getStoryController().processNodeByID(10000001);
+            } else if (loc == "药店") {
+                // 调用药店购买场景
+                game_logic_.getStoryController().processNodeByID(11000001);
+            } else if (loc == "咖啡馆") {
+                // 调用咖啡馆购买场景
+                game_logic_.getStoryController().processNodeByID(12000001);
+            } else {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在商店、药店或咖啡馆购买东西！");
+        }else if (input == "/work") {
             if (loc == "工地") {
+                if (game_logic_.getPlayer().getFatigue() < 15) {
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "你太累了，无法工作！");
+                    return;
+                } else if (game_logic_.getPlayer().getHunger() < 15) {
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "你太饿了，无法工作！");
+                    return;
+                }
                 static std::mt19937 rng(std::random_device{}());
-                std::uniform_int_distribution<int> distMoney(40, 100);
+                std::uniform_int_distribution<int> distMoney(40, 80);
+                std::uniform_int_distribution<int> distHour(3, 5);
                 int earned = distMoney(rng);
                 game_logic_.getPlayer().addSavings(earned);
-                game_logic_.getPlayer().addFatigue(-10);
-                game_logic_.getPlayer().addHunger(-10);
+                game_logic_.getPlayer().addFatigue(-15);
+                game_logic_.getPlayer().addHunger(-15);
+                GameTime::addHour(distHour(rng));
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你在工地辛勤工作，赚取了 " + std::to_string(earned) + " 元");
-                game_logic_.getDialog().addMessage("<SYSTEM>", "但你也消耗了10点体力和10点饥饿值");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "但你也消耗了15点体力和15点饥饿值");
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你觉得你需要休息一下，吃点东西");
             } else {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在工地工作！");
@@ -268,12 +302,15 @@ void Dialog::processPlayerInput(std::string& input) {
             game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy attack skill <id>: 使用技能攻击");
             game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy attack pass: 跳过回合");
         }else if (input == "/enemy show") {
+            if (loc != "比赛场地") {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地查看敌人！");
+                return;
+            }
             int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
             BattleCommandHandler::showEnemyInfo(game_logic_, nextEnemyId);
         } else if (input == "/enemy battle") {
-            // 检查是否在比赛场地
             if (loc != "比赛场地") {
-                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地进行战斗！");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地进行拳击比赛！");
                 return;
             }
             int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
