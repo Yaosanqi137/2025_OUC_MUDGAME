@@ -19,7 +19,7 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , lo
                    maxFatigue(80), maxHealth(100), maxStamina(100), exMaxHunger(0),
                    exMaxFatigue(0), exMaxHealth(0), sustainDamageRate(1.0),
                    upperBodySustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),fatigueConsumeRate(1.0),
-                   exHitRate(0.0),money(100),
+                   exHitRate(0.0),money(1000),
                    skillPoints(5) {
     // 在构造函数中初始化背包
     initializeInventory();
@@ -110,18 +110,33 @@ void Player::addHunger(const double value) {
     hunger += value;
     hunger = std::max(0.0, hunger);
     hunger = std::min(maxHunger + exMaxHunger, hunger);
+
+    // 急救
+    if (hunger <= 0.0) {
+        triggerEmergencyRescue();
+    }
 }
 
 void Player::addFatigue(const double value) {
     fatigue += value;
     fatigue = std::max(0.0, fatigue);
     fatigue = std::min(maxFatigue + exMaxFatigue, fatigue);
+
+    // 急救
+    if (fatigue <= 0.0) {
+        triggerEmergencyRescue();
+    }
 }
 
 void Player::addHealth(double value) {
     health += value;
     health = std::max(0.0, health);
     health = std::min(health, maxHealth + exMaxHealth);
+
+    // 急救
+    if (health <= 0.0) {
+        triggerEmergencyRescue();
+    }
 }
 
 
@@ -290,6 +305,10 @@ void Player::addItemByType(const std::string& itemType, int amount) {
         auto item = std::make_shared<UsefulItem>(UsefulItem::ItemType::CARD);
         item->setAmount(amount);
         addItem(item);
+    } else if (itemType == "禁药") {
+        auto item = std::make_shared<UsefulItem>(UsefulItem::ItemType::BANNED_DRUG);
+        item->setAmount(amount);
+        addItem(item);
     } else if (itemType == "回生丹") {
         auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::REVIVAL_PILL);
         medicine->setAmount(amount);
@@ -408,12 +427,16 @@ void Player::initializeInventory() {
     inventory_.push_back(boxingGloves);
 
     auto gymPass = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GYM_PASS);
-    gymPass->setAmount(0);
+    gymPass->setAmount(1);
     inventory_.push_back(gymPass);
 
     auto card = std::make_shared<UsefulItem>(UsefulItem::ItemType::CARD);
-    card->setAmount(0);
+    card->setAmount(1);
     inventory_.push_back(card);
+
+    auto bannedDrug = std::make_shared<UsefulItem>(UsefulItem::ItemType::BANNED_DRUG);
+    bannedDrug->setAmount(0);
+    inventory_.push_back(bannedDrug);
 
     auto revivalPill = std::make_shared<Medicine>(Medicine::MedicineType::REVIVAL_PILL);
     revivalPill->setAmount(0);
@@ -668,4 +691,37 @@ int Player::getHighestUnlockedEnemy() const {
     }
     
     return 0; // 如果没有解锁任何敌人，返回0
+}
+
+// 急救系统实现
+void Player::triggerEmergencyRescue() {
+    // 输出急救信息
+    game_logic_.getDialog().addMessage("", "你晕了过去，有人拨打了急救电话，将你送去医院了...");
+
+    game_logic_.getDialog().addMessage("", "...");
+    game_logic_.getDialog().addMessage("", "...");
+    game_logic_.getDialog().addMessage("", "...");
+    game_logic_.getDialog().addMessage("", "...");
+
+    // 输出恢复信息
+    game_logic_.getDialog().addMessage("", "当你醒来时，医生已经将你治好，但是你还没有完全恢复，身体还很虚弱");
+
+    // 设置玩家状态
+    health = 10.0;    // 生命值设置为10
+    hunger = 50.0;    // 饥饿值设置为50
+    fatigue = 30.0;   // 体力设置为30
+
+    if (getSavings() < 180) {
+        game_logic_.getDialog().addMessage("医生", "小伙子，你并没有足够的钱医疗");
+        game_logic_.getDialog().addMessage("医生", "但是你的保险替你还清了剩下的医疗费");
+        game_logic_.getDialog().addMessage("医生", "下次可要注意身体啊");
+        addSavings(-getSavings()); // 钱包清零
+    } else {
+        game_logic_.getDialog().addMessage("医生", "小伙子，你醒啦？");
+        game_logic_.getDialog().addMessage("医生", "这次没受什么伤，但下次可要注意身体啊");
+        game_logic_.getDialog().addMessage("医生", "对了，医疗费 180 元，已经缴纳了");
+        addSavings(-180);
+    }
+    game_logic_.getDialog().addMessage("<PLAYER_NAME>", "我去，180块钱这就没了？");
+    game_logic_.getDialog().addMessage("", "你看你身上没什么事，于是又回去做刚刚做的事情了");
 }

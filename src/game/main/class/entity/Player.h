@@ -50,6 +50,9 @@ public:
     void addSavings(double value);                      // 积蓄
     void addHealth(double value);                       // 生命值
 
+    // 急救系统
+    void triggerEmergencyRescue();                      // 触发急救逻辑
+
     // 获取最低属性值
     [[nodiscard]] double getMinStrength() const;        // 最低力量
     [[nodiscard]] double getMinStamina() const;         // 最低耐力
