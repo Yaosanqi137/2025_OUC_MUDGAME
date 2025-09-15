@@ -1,21 +1,22 @@
 #include "Food.h"
 #include "../entity/Player.h"
 #include <stdexcept>
-#include <string>
+#include <string>  // 确保包含string头文件
 
 // 私有构造函数：整合两个版本的参数，初始化基类和成员变量
 Food::Food(FoodType type, double price, const std::string& name, const std::string& intro, 
            double healthEffect, double hungerEffect, double energyEffect)
     : AbstractItem(name, intro), type_(type), price_(price), 
-      healthEffect_(healthEffect), hungerEffect_(hungerEffect), energyEffect_(energyEffect) {
-    // 完善物品描述，补充效果信息
+      healthEffect_(healthEffect), hungerEffect_(hungerEffect), energyEffect_(energyEffect),
+      amount_(1) {  // 初始化物品数量
+    // 完善物品描述，补充效果信息，修复缺少的逗号
     intro_ += " 使用后恢复饱食度 " + std::to_string(static_cast<int>(hungerEffect_)) + " 点，" +
               "恢复体力 " + std::to_string(static_cast<int>(energyEffect_)) + " 点，" +
               "恢复生命值 " + std::to_string(static_cast<int>(healthEffect_)) + " 点";
 }
 
 // 公共构造函数：根据食物类型创建对应实例
-Food::Food(FoodType type) {
+Food::Food(FoodType type) : amount_(1) {  // 初始化物品数量
     switch (type) {
         case FoodType::MEAT:
             *this = createStoreFood(FoodType::MEAT);
@@ -35,6 +36,15 @@ Food::Food(FoodType type) {
         case FoodType::PROTEIN_BAR:
             *this = createGymFood(FoodType::PROTEIN_BAR);
             break;
+        case FoodType::COFFEE:
+            *this = createCofeFood(FoodType::COFFEE);
+            break;
+        case FoodType::BREAD:
+            *this = createCofeFood(FoodType::BREAD);
+            break;
+        case FoodType::WAXUEDI:
+            *this = createCofeFood(FoodType::WAXUEDI);
+            break;
         default:
             throw std::invalid_argument("未知食物类型");
     }
@@ -51,7 +61,13 @@ int Food::getPrice() const {
 }
 
 // 使用物品：整合两种效果计算方式，采用绝对值修改而非百分比
-void Food::use(Player& user) {
+bool Food::use(Player& user) {
+    // 检查是否有可用的物品
+    if (amount_ <= 0) {
+        return false;
+    }
+
+    // 应用食物效果
     if (healthEffect_ != 0) {
         user.addHealth(healthEffect_);  // 恢复绝对值血量
     }
@@ -64,10 +80,11 @@ void Food::use(Player& user) {
         user.addFatigue(energyEffect_);  // 恢复绝对值体力
     }
 
-    // 使用后减少物品数量
-    if (getAmount() > 0) {
-        addAmount(-1);
-    }
+    // 减少物品数量
+    amount_--;
+
+    // 返回true表示成功使用
+    return true;
 }
 
 Food::FoodType Food::getFoodType() const {
@@ -104,6 +121,19 @@ Food Food::createGymFood(FoodType type) {
     }
 }
 
+Food Food::createCofeFood(FoodType type) {
+    switch (type) {
+        case FoodType::COFFEE:
+            return {type, 60.0, "女仆咖啡", "一杯香浓的咖啡，上面有咖啡馆女仆亲自拉的花，喝了提神醒脑。", 12.0, 1.0, 30.0};
+        case FoodType::BREAD:
+            return {type, 70.0, "爱心面包", "女仆咖啡馆新鲜出炉的面包，简单美味。", 15.0, 30.0, 2.0};
+        case FoodType::WAXUEDI:
+            return {type, 150.0, "瓦学弟蛋包饭", "传说中的瓦学弟蛋包饭，吃了可以让你元气满满，精力充沛。", 30.0, 50.0, 30.0};
+        default:
+            throw std::invalid_argument("不是咖啡馆出售的食物类型");
+    }
+}
+
 // 判断是否为商店专属食物
 bool Food::isStoreExclusive(FoodType type) {
     return type == FoodType::MEAT || type == FoodType::SODA || type == FoodType::FROZEN_PIZZA;
@@ -112,6 +142,10 @@ bool Food::isStoreExclusive(FoodType type) {
 // 判断是否为健身房专属食物
 bool Food::isGymExclusive(FoodType type) {
     return type == FoodType::CHOCOLATE_BAR || type == FoodType::PROTEIN_BAR;
+}
+
+bool Food::isCofeExclusive(FoodType type) {
+    return type == FoodType::COFFEE || type == FoodType::BREAD || type == FoodType::WAXUEDI;
 }
 
 // 获取效果值的getter方法，用于外部显示效果
@@ -126,4 +160,14 @@ double Food::getHungerEffect() const {
 double Food::getEnergyEffect() const {
     return energyEffect_;
 }
-    
+
+// 添加amount_的getter方法
+int Food::getAmount() const {
+    return amount_;
+}
+
+// 添加修改amount_的方法
+void Food::addAmount(int delta) {
+    amount_ += delta;
+    if (amount_ < 0) amount_ = 0;  // 确保数量不会为负
+}

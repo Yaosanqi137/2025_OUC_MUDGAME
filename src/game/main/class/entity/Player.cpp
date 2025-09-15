@@ -20,7 +20,7 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , lo
                    exMaxFatigue(0), exMaxHealth(0), sustainDamageRate(1.0),
                    upperBodySustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),fatigueConsumeRate(1.0),
                    exHitRate(0.0),money(100),
-                   skillPoints(0) {
+                   skillPoints(20) {
     // 在构造函数中初始化背包
     initializeInventory();
 
@@ -204,7 +204,6 @@ std::shared_ptr<AbstractItem> Player::findItemByName(const std::string& name) {
     return nullptr;
 }
 
-
 // 销毁Item(Food; Medicine)函数
 /*
 template<typename T>
@@ -308,6 +307,18 @@ void Player::addItemByType(const std::string& itemType, int amount) {
         auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::SKILL_POINT_POTION);
         medicine->setAmount(amount);
         addItem(medicine);
+    } else if (itemType == "女仆咖啡") {
+        auto food = std::make_shared<Food>(Food::FoodType::COFFEE);
+        food->setAmount(amount);
+        addItem(food);
+    } else if (itemType == "爱心面包") {
+        auto food = std::make_shared<Food>(Food::FoodType::BREAD);
+        food->setAmount(amount);
+        addItem(food);
+    } else if (itemType == "瓦学弟蛋包饭") {
+        auto food = std::make_shared<Food>(Food::FoodType::WAXUEDI);
+        food->setAmount(amount);
+        addItem(food);
     }
 }
 
@@ -375,6 +386,18 @@ void Player::initializeInventory() {
     auto proteinBar = std::make_shared<Food>(Food::FoodType::PROTEIN_BAR);
     proteinBar->setAmount(0);
     inventory_.push_back(proteinBar);
+
+    auto coffee = std::make_shared<Food>(Food::FoodType::COFFEE);
+    coffee->setAmount(0);
+    inventory_.push_back(coffee);
+
+    auto bread = std::make_shared<Food>(Food::FoodType::BREAD);
+    bread->setAmount(0);
+    inventory_.push_back(bread);
+
+    auto waxuedi = std::make_shared<Food>(Food::FoodType::WAXUEDI);
+    waxuedi->setAmount(0);
+    inventory_.push_back(waxuedi);
 
     // 添加所有有用物品类型，数量为0
     auto boxingGloves = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GLOVES);
@@ -600,4 +623,17 @@ bool Player::learnSkillById(int skillId) {
     }
 
     return learnSkill(skillName);
+}
+
+// 返回游戏引用
+Game& Player::getGameLogic() {return game_logic_;}
+
+int Player::getHighestUnlockedEnemy() const {
+    // 从最高ID开始向下查找，找到第一个已解锁的敌人
+    for (int i = unlockedEnemies_.size() - 1; i >= 0; --i) {
+        if (unlockedEnemies_[i]) {
+            return i;
+        }
+    }
+    return 0; // 如果没有解锁任何敌人，返回0
 }

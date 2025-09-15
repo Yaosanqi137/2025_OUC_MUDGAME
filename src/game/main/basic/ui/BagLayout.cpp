@@ -174,13 +174,13 @@ Element BagLayout::Render() {
     auto detailPanel = vbox({
         text("物品详情") | bold | center,
         separator(),
-        paragraph(itemDetailName) | size(WIDTH, LESS_THAN, 30) | flex,
-        paragraph(itemDetailDesc) | size(WIDTH, LESS_THAN, 30) | flex | vscroll_indicator,
-        paragraph(itemDetailAmount) | size(WIDTH, LESS_THAN, 30) | flex,
-        paragraph(itemDetailClass) | size(WIDTH, LESS_THAN, 30) | flex,
+        paragraph(itemDetailName) | size(WIDTH, LESS_THAN, 40) | flex,
+        paragraph(itemDetailDesc) | size(WIDTH, LESS_THAN, 40) | flex,
+        paragraph(itemDetailAmount) | size(WIDTH, LESS_THAN, 40) | flex,
+        paragraph(itemDetailClass) | size(WIDTH, LESS_THAN, 40) | flex,
         separator(),
         (canUseItem && isUsable ? useButton_->Render() : text("无法使用") | color(Color::GrayDark)) | center
-    }) | border | size(WIDTH, EQUAL, 35) | size(HEIGHT, GREATER_THAN, 20);
+    }) | border | size(WIDTH, EQUAL, 45) | size(HEIGHT, GREATER_THAN, 20);
 
     int totalPages = getTotalPages();
     auto pageInfo = text("第 " + std::to_string(currentPage_ + 1) + " 页 / 共 " + std::to_string(totalPages) + " 页");

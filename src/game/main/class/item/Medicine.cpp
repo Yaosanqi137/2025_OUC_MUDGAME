@@ -29,7 +29,12 @@ int Medicine::getPrice() const {
 }
 
 // 实现抽象接口：使用物品
-void Medicine::use(Player& user) {
+bool Medicine::use(Player& user) {
+    // 检查是否有可用的物品
+    if (amount_ <= 0) {
+        return false;
+    }
+
     // 应用主要效果
     if (healthEffect > 0) {
         user.recoverAllWounds();      // 恢复所有伤病
@@ -60,9 +65,10 @@ void Medicine::use(Player& user) {
     }
     
     // 减少物品数量
-    if (amount_ > 0) {
-        amount_--;
-    }
+    amount_--;
+
+    // 返回true表示成功使用
+    return true;
 }
 
 // 获取药物类型

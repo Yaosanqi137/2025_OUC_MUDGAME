@@ -68,6 +68,10 @@ public:
     bool getHasSideEffect() const;
     void setHasSideEffect(bool flag);
 
+    // 训练费用倍数( 击败敌人4的特殊效果 )
+    double getMoneyCostRate() const;
+    void setMoneyCostRate(double rate);
+
 private:
     std::shared_ptr<Player> player;
 
@@ -81,11 +85,15 @@ private:
     double agilityExpRate;
     double staminaExpRate;
 
+    // 训练消耗的金币倍数
+    double moneyCostRate;
+
     // 训练等级
     int strengthLevel;
     int agilityLevel;
     int staminaLevel;
 
+    // 嗑药副作用
     bool hasSideEffect;
 
     // 计算升级所需经验

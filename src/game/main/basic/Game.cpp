@@ -4,11 +4,12 @@
 #include "View.h"
 #include "../class/entity/Player.h"
 #include "../GameStory/GameProcess.h"
+#include "../event/FightEvent.h" // 包含FightEvent头文件
 
 #include <iostream>
 #include <cstdlib>
 
-Game::Game() : currentState_(GameState::MainMenu)  {
+Game::Game() : currentState_(GameState::MainMenu), inBattle_(false) {
     config_ = Configuration::getInstance();
 
     dialog_ = std::make_unique<Dialog>(*this);
@@ -16,6 +17,9 @@ Game::Game() : currentState_(GameState::MainMenu)  {
     storyController_ = std::make_unique<StoryController>(*this);
 
     view_ = std::make_unique<View>(*this);
+    
+    // 初始化selfWeakPtr_
+    auto selfPtr = std::shared_ptr<Game>(this, [](Game*){});
 }
 
 Game::~Game() {
@@ -105,7 +109,6 @@ void Game::clearInputRequest() {
     setGameState(GameState::InGame);
 }
 
-
 // --- 输入请求接口实现 ---
 void Game::requestTextInput(const std::string& prompt, 
                             const std::vector<InputRule>& rules, 
@@ -127,4 +130,28 @@ void Game::requestChoice(const std::string& prompt,
         .onChoiceSelect = std::move(onSelect)
     };
     setGameState(GameState::AwaitingChoice);
+}
+
+// --- 战斗管理实现 ---
+void Game::setCurrentBattle(std::shared_ptr<FightEvent> battle) {
+    currentBattle_ = battle;
+    inBattle_ = (battle != nullptr);
+}
+
+void Game::clearCurrentBattle() {
+    currentBattle_ = nullptr;
+    inBattle_ = false;
+}
+
+bool Game::isInBattle() const {
+    return inBattle_;
+}
+
+std::shared_ptr<FightEvent> Game::getCurrentBattle() {
+    return currentBattle_;
+}
+
+std::shared_ptr<Player> Game::getPlayerSharedPtr() {
+    // 直接返回 Player 的共享指针，使用空删除器
+    return std::shared_ptr<Player>(&getPlayer(), [](Player*){});
 }

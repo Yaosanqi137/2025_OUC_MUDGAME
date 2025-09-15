@@ -1,10 +1,9 @@
-// file: AbstractItem.h
-
 #ifndef ABSTRACTITEM_H
 #define ABSTRACTITEM_H
 
 #include <string>
-#include "../entity/Player.h"  // 保留完整的引用，避免前向声明带来#include <cassert>             // 用于调试时的断言检查
+#include "../entity/Player.h"
+#include <cassert>             // 用于调试时的断言检查
 
 class AbstractItem {
 public:
@@ -12,35 +11,35 @@ public:
     AbstractItem() : amount_(0), name_(""), intro_(""), isUsable_(true) {}
     AbstractItem(const std::string& name, const std::string& intro) 
         : amount_(0), name_(name), intro_(intro), isUsable_(true) {
-        assert(!name.empty() && "物品名称不能为空");  // 调试断言，确保名称有效
+        assert(!name.empty() && "物品名称不能为空");  // 保留调试断言，确保名称有效
     }
     
     // 虚析构函数：确保派生类析构函数能正确调用
     virtual ~AbstractItem() = default;
 
-    // 获取物品名称：直接返回成员变量（避免派生类重复实现）
+    // 获取物品名称：直接返回成员变量
     const std::string& getName() const { return name_; }
     
-    // 获取物品描述：新增接口，支持物品详情展示
+    // 获取物品描述：保留非虚函数，因为不需要派生类重写
     const std::string& getIntro() const { return intro_; }
     
     // 获取物品价格：纯虚函数，强制派生类实现价格逻辑
     virtual int getPrice() const = 0;
     
-    // 使用物品：纯虚函数，强制派生类实现物品效果
-    virtual void use(Player& user) = 0;
+    // 使用物品：修改为返回bool类型，同时保留纯虚函数特性
+    virtual bool use(Player& user) = 0;
 
-    // 物品数量管理：支持物品堆叠逻辑
+    // 物品数量管理：恢复合法性检查
     [[nodiscard]] int getAmount() const { return amount_; }
     void setAmount(int amount) { 
-        assert(amount >= 0 && "物品数量不能为负数");  // 确保数量合法
+        assert(amount >= 0 && "物品数量不能为负数");  // 恢复断言检查
         amount_ = amount; 
     }
-    void addAmount(int amount_to_add) { 
-        setAmount(amount_ + amount_to_add);  // 复用setAmount的合法性检查
+    void addAmount(int amountToAdd) { 
+        setAmount(amount_ + amountToAdd);  // 复用setAmount的合法性检查
     }
     
-    // 物品可用性判断：支持"不可使用"类型物品
+    // 物品可用性判断
     bool isUsable() const { return isUsable_; }
 
 protected:

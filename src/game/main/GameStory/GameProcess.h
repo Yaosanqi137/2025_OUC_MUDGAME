@@ -19,7 +19,7 @@ public:
         // 显示第一句引导语
         game_logic_.getStoryController().processNodeByID(1);
 
-        auto default_name_handler = [](Game& game_logic_, std::string_view input) {
+        auto defaultNameHandler = [](Game& game_logic_, std::string_view input) {
             std::string name = trim(std::string(input));
 
             // 进行名字有效性验证
@@ -46,14 +46,14 @@ public:
                     .condition = [](std::string_view input){ return trim(std::string(input)) == "yaosanqi"; },
                     // action: 给予特殊回应
                     // 动作：先显示彩蛋消息，然后调用默认处理逻辑
-                    .action = [default_name_handler](Game& game_logic_, std::string_view input) {
+                    .action = [defaultNameHandler](Game& game_logic_, std::string_view input) {
                         game_logic_.getDialog().addMessage("<SYSTEM>", "你发现了一个彩蛋:)！");
-                        default_name_handler(game_logic_, input);
+                        defaultNameHandler(game_logic_, input);
                     }
                 }
             },
             // 参数3: on_submit_default - 默认动作 (当所有规则都不匹配时执行)
-            default_name_handler
+            defaultNameHandler
         );
         // 步骤 4: 启动游戏主界面和循环
         game_logic_.getView().showGameScreen();

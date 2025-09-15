@@ -13,15 +13,15 @@
 
 using namespace ftxui;
 
-// 修正：构造函数参数与头文件一致，移除 isShowingFlag 参数
+// 构造函数，参数与头文件一致，初始化成员变量
 MapLayout::MapLayout(Game& game_logic)
-    : game_logic_(game_logic), isShowing_(false) {  // 初始化 isShowing_ 成员
+    : game_logic_(game_logic), isShowing_(false), viewMode_(0) {
     initializeLocations();
 
     buttonTaxi_ = Button("计程车 (15元)", [this] { travelBy("taxi"); });
     buttonWalk_ = Button("步行", [this] { travelBy("walk"); });
     buttonCancelTravel_ = Button("取消", [this] { viewMode_ = 0; });
-    buttonExit_ = Button("[ 退出地图 ]", [this] { hide(); });  // 使用 hide() 方法
+    buttonExit_ = Button("[ 退出地图 ]", [this] { hide(); });
 
     dialogContainer_ = Container::Vertical({
         buttonTaxi_,
@@ -29,12 +29,11 @@ MapLayout::MapLayout(Game& game_logic)
         buttonCancelTravel_,
     });
 
-    // 修正：使用头文件中定义的 container_ 成员
     container_ = Container::Vertical({
         dialogContainer_,
         buttonExit_,
     });
-    Add(container_);  // 将容器添加到组件树
+    Add(container_);
 }
 
 void MapLayout::resetState() {
@@ -110,14 +109,12 @@ void MapLayout::initializeLocations() {
     locations_["pharmacy"]     = {"pharmacy",     "药店",     120, 22, "", "", "store", ""};
 }
 
-// 新增：处理购买命令的函数
 void MapLayout::processBuyCommand(const std::string& itemName) {
     Player& player = game_logic_.getPlayer();
     const std::string& currentLoc = player.getLocation();
     int price = 0;
     std::string itemDesc;
 
-    // 根据当前场景和商品名，匹配价格和描述
     if (currentLoc == "商店") {
         if (itemName == "鸡肉" || itemName == "猪肉" || itemName == "牛肉") {
             price = 12;
@@ -181,19 +178,22 @@ void MapLayout::processBuyCommand(const std::string& itemName) {
         return;
     }
 
-    // 检查积蓄是否足够
     if (player.getSavings() < price) {
         game_logic_.addMessage("钱不够买 " + itemName + " ，需要 " + std::to_string(price) + " 元，你只有 " + std::to_string(player.getSavings()) + " 元。");
         return;
     }
 
-    // 扣减积蓄并提示
     player.addSavings(-price);
     game_logic_.addMessage("成功购买 " + itemName + " " + itemDesc + "，花费 " + std::to_string(price) + " 元，剩余积蓄：" + std::to_string(player.getSavings()) + " 元。");
-    // （可选）这里可以添加“物品加入背包/冰箱”的逻辑
 }
 
 void MapLayout::travelBy(const std::string& method) {
+    if (game_logic_.isInBattle()) {
+        game_logic_.getDialog().addMessage("<SYSTEM>", "在战斗中不能移动！");
+        hide(); 
+        return;
+    }
+    
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> distWalkTime(10, 25);
     std::uniform_int_distribution<int> distTaxiTime(4, 10);
@@ -213,18 +213,17 @@ void MapLayout::travelBy(const std::string& method) {
             GameTime::addMinute(distTaxiTime(rng));
             game_logic_.getDialog().addMessage("", "你乘坐计程车前往了 " + destination.name + " ，花费了15元");
         } else {
-            game_logic_.getDialog().addMessage("你发现你没钱坐车了！", "你掏出钱包一看，发现只剩下 " + std::to_string(player.getSavings()) + " 元了");
+            game_logic_.getDialog().addMessage("", "你掏出钱包一看，发现只剩下 " + std::to_string(player.getSavings()) + " 元了");
             viewMode_ = 0;
             return;
         }
     } else if (method == "walk") {
-        player.addHunger(-5);
-        player.addFatigue(-3);
+        player.addHunger(5);
+        player.addFatigue(3);
         GameTime::addMinute(distWalkTime(rng));
         game_logic_.getDialog().addMessage("", "虽然有点累，但是你还是选择了步行前往了 " + destination.name);
     }
 
-    // 场景交互：进入场景后触发对话/商品提示
     if (destination.name == "家") {
         game_logic_.getDialog().addMessage("", "你回到了家，闻到家里的空气，让你感到放松");
         game_logic_.getDialog().addMessage("", "想吃点零食休息一下吗？");
@@ -237,28 +236,23 @@ void MapLayout::travelBy(const std::string& method) {
         game_logic_.getDialog().addMessage("教练", "准备练拳！赶紧输入/train指令吧！");
     }
     
-    // 旅行结束后更新玩家位置并隐藏地图
     player.setLocation(destination.name);
     hide();
 }
 
-// 实现头文件中声明的 Render 方法
 Element MapLayout::Render() {
     if (!isShowing()) {
         return text("");
     }
 
-    // 创建画布并绘制地图
     auto canvas = Canvas(160, 50);
     Color defaultColor = Color::White;
 
-    // 绘制所有地点
     for (const auto& [id, loc] : locations_) {
         bool isSelected = (id == selectedLocationId_);
         DrawLocationNode(canvas, loc, defaultColor, isSelected);
     }
 
-    // 绘制连接线（可选）
     for (const auto& [id, loc] : locations_) {
         if (!loc.nav_up.empty()) {
             auto& upLoc = locations_.at(loc.nav_up);
@@ -278,15 +272,12 @@ Element MapLayout::Render() {
         }
     }
 
-    // 构建地图元素
     auto mapElement = canvas.Render() | border;
 
-    // 构建对话框（当viewMode为1时显示）
     auto dialogElement = viewMode_ == 1 
         ? window(text("选择出行方式"), dialogContainer_->Render()) | size(WIDTH, LESS_THAN, 30)
         : emptyElement();
 
-    // 组合最终布局
     return vbox({
         text("游戏地图") | bold | hcenter,
         separator(),
@@ -299,10 +290,9 @@ Element MapLayout::Render() {
     }) | border | clear_under;
 }
 
-// 实现头文件中声明的显示/隐藏方法
 void MapLayout::show() {
     isShowing_ = true;
-    resetState();  // 显示时重置状态
+    resetState();
 }
 
 void MapLayout::hide() {

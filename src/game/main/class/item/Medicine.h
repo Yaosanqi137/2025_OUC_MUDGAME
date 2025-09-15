@@ -31,12 +31,12 @@ Medicine::Medicine(MedicineType type) : AbstractItem("", "") {
 }
 
 // 获取价格
-int Medicine::getPrice() const {
+int Medicine::getPrice() const override {  // 添加override关键字
     return static_cast<int>(price);
 }
 
-// 使用药物
-void Medicine::use(Player& user) {
+// 使用药物 - 修正返回值为bool
+bool Medicine::use(Player& user) override {  // 添加override关键字并修改返回类型
     // 应用主要效果
     if (healthEffect > 0) {
         user.increaseHealth(healthEffect);
@@ -67,6 +67,8 @@ void Medicine::use(Player& user) {
                 break;
         }
     }
+    
+    return true;  // 返回使用成功
 }
 
 // 获取药物类型

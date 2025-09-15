@@ -1,31 +1,121 @@
-/*
-
-Changed on 9-14 2:23 by Anyeling
-回合制战斗机制未完成
-特殊奖励未处理
-系统提示未完成
-时间流逝未完成
-战败属性降低未完成
-
-*/
-
-
 #include "FightEvent.h"
+#include "../basic/Dialog.h"
 #include <iostream>
 #include <random>
 #include <algorithm>
-bool humanHummerRecover = false;
-FightEvent::FightEvent(std::shared_ptr<Player> player, std::shared_ptr<Enemy> enemy)
-    : player_(player), enemy_(enemy), battleOver_(false), playerWon_(false),
-      playerTurn_(false), currentRound_(0) {
+#include <cmath>
+#include <thread>
+#include <chrono>
 
-    humanHummerRecover = false;
+// 初始化敌人工厂
+std::map<int, std::function<std::shared_ptr<Enemy>()>> FightEvent::enemyFactory;
 
-    // 配置敌人技能
-    configureEnemySkills();
+FightEvent::FightEvent(std::shared_ptr<Player> player, std::shared_ptr<Enemy> enemy, Game& game)
+    : player_(player), enemy_(enemy), game_(game), battleOver_(false), playerWon_(false),
+      currentRound_(0), battleState_(BATTLE_STATE_INITIALIZING) {
     
-    // 初始化随机数种子
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    // 检查 player 和 enemy 是否有效
+    if (!player_) {
+        throw std::invalid_argument("无效的玩家指针");
+    }
+    
+    if (!enemy_) {
+        throw std::invalid_argument("无效的敌人指针");
+    }
+    
+    try {
+        // 配置敌人技能
+        configureEnemySkills();
+        
+        // 初始化随机数种子
+        std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception in FightEvent constructor: " << e.what() << std::endl;
+        throw; // 重新抛出异常
+    }
+    catch (...) {
+        std::cerr << "Unknown exception in FightEvent constructor" << std::endl;
+        throw std::runtime_error("未知异常在 FightEvent 构造函数中");
+    }
+}
+
+// 初始化敌人工厂
+void FightEvent::initializeEnemyFactory() {
+    if (!enemyFactory.empty()) return;
+    
+    enemyFactory[1] = []() {
+        return std::make_shared<Enemy>(1, "业余拳手", 1.0, 2.0, 1.0);
+    };
+    
+    enemyFactory[2] = []() {
+        return std::make_shared<Enemy>(2, "健身房常客", 3.0, 4.0, 2.0);
+    };
+    
+    enemyFactory[3] = []() {
+        return std::make_shared<Enemy>(3, "街头拳手", 4.0, 3.0, 3.0);
+    };
+    
+    enemyFactory[4] = []() {
+        return std::make_shared<Enemy>(4, "健身房教练", 6.0, 5.0, 4.0);
+    };
+    
+    enemyFactory[5] = []() {
+        return std::make_shared<Enemy>(5, "职业新人", 7.0, 6.0, 5.0);
+    };
+    
+    enemyFactory[6] = []() {
+        return std::make_shared<Enemy>(6, "速度型选手", 2.0, 6.0, 8.0);
+    };
+    
+    enemyFactory[7] = []() {
+        return std::make_shared<Enemy>(7, "耐力型选手", 8.0, 10.0, 6.0);
+    };
+    
+    enemyFactory[8] = []() {
+        return std::make_shared<Enemy>(8, "技巧型拳手", 4.0, 8.0, 13.0);
+    };
+    
+    enemyFactory[9] = []() {
+        return std::make_shared<Enemy>(9, "力量型拳手", 15.0, 12.0, 7.0);
+    };
+    
+    enemyFactory[10] = []() {
+        return std::make_shared<Enemy>(10, "冠军挑战者", 18.0, 15.0, 14.0);
+    };
+    
+    enemyFactory[11] = []() {
+        return std::make_shared<Enemy>(11, "世界拳王", 25.0, 20.0, 25.0);
+    };
+}
+
+std::shared_ptr<Enemy> FightEvent::createEnemyById(int enemyId) {
+    try {
+        if (enemyFactory.empty()) {
+            initializeEnemyFactory();
+        }
+        
+        auto it = enemyFactory.find(enemyId);
+        if (it != enemyFactory.end()) {
+            auto enemy = it->second();
+            if (!enemy) {
+                std::cerr << "Warning: Enemy factory returned null for ID: " << enemyId << std::endl;
+                return std::make_shared<Enemy>(enemyId, "默认敌人", 5.0, 5.0, 5.0);
+            }
+            return enemy;
+        }
+        
+        // 默认敌人
+        return std::make_shared<Enemy>(enemyId, "未知对手", 5.0, 5.0, 5.0);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception in createEnemyById: " << e.what() << std::endl;
+        return std::make_shared<Enemy>(enemyId, "错误敌人", 5.0, 5.0, 5.0);
+    }
+    catch (...) {
+        std::cerr << "Unknown exception in createEnemyById" << std::endl;
+        return std::make_shared<Enemy>(enemyId, "错误敌人", 5.0, 5.0, 5.0);
+    }
 }
 
 void FightEvent::configureEnemySkills() {
@@ -101,71 +191,89 @@ void FightEvent::configureEnemySkills() {
     }
 }
 
-void FightEvent::startBattle(Game& game) {
-    battleOver_ = false;
-    playerWon_ = false;
-    currentRound_ = 0;
-    
-    // 特殊技能34 人身重锤
-    for (auto& skill : player_->getSkills()) {
-        if (skill->getSkillName() == "人身重锤") {
-            int roll_ = std::rand() % 100; 
-            if(roll_ < 25)
-                enemy_ -> addFatigue(-10.0);
+void FightEvent::startBattle() {
+    try {
+        battleState_ = BATTLE_STATE_INITIALIZING;
+        battleOver_ = false;
+        playerWon_ = false;
+        currentRound_ = 1;
+        
+        game_.getDialog().addMessage("<SYSTEM>", "战斗开始了，对手是" + enemy_->getName());
+        
+        // 显示敌人信息
+        game_.getDialog().addMessage("<SYSTEM>", "敌人属性: 力量 " + std::to_string((int)enemy_->getStrength()) +
+                                    ", 耐力 " + std::to_string((int)enemy_->getStamina()) +
+                                    ", 敏捷 " + std::to_string((int)enemy_->getAgility()));
+        
+        // 显示玩家可用攻击技能
+        auto& playerSkills = player_->getSkills();
+        game_.getDialog().addMessage("<SYSTEM>", "你的可用攻击技能:");
+        for (int i = 0; i < playerSkills.size(); i++) {
+            if (playerSkills[i]->isAttackSkill()) {
+                game_.getDialog().addMessage("<SYSTEM>", "ID: " + std::to_string(playerSkills[i]->getId()) + 
+                    " - " + playerSkills[i]->getSkillName() + ": " + playerSkills[i]->getDescription());
             }
-    }
-    for (auto& skill : enemy_->getSkills()) {
-        if (skill->getSkillName() == "人身重锤") {
-            int roll_ = std::rand() % 100; 
-            if(roll_ < 25)
-                player_ -> addFatigue(-10.0);
-                humanHummerRecover = true;
-            }
-    }
+        }
+        
+        game_.getDialog().addMessage("<SYSTEM>", "战斗命令: /enemy attack skill <id> 或 /enemy attack pass");
 
-    // 决定先手：比较玩家和敌人的速度
-    double playerSpeed = player_->getSpeed();
-    double enemySpeed = enemy_->getSpeed();
-    
-    playerTurn_ = (playerSpeed > enemySpeed);
-    if(playerSpeed == enemySpeed) {
-        int roll = std::rand() % 2;
-        playerTurn_ = (roll == 0);
+        // 决定先手：比较玩家和敌人的速度
+        double playerSpeed = player_->getSpeed();
+        double enemySpeed = enemy_->getSpeed();
+        
+        bool playerFirst = (playerSpeed > enemySpeed);
+        if(playerSpeed == enemySpeed) {
+            int roll = std::rand() % 2;
+            playerFirst = (roll == 0);
+        }
+        
+        if(playerFirst){
+            game_.getDialog().addMessage("<SYSTEM>", player_->getName() + "先手行动");
+            battleState_ = BATTLE_STATE_PLAYER_TURN;
+            game_.getDialog().addMessage("<SYSTEM>", "轮到了你的回合，请选择行动");
+        } else {
+            game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "先手行动");
+            battleState_ = BATTLE_STATE_ENEMY_TURN;
+            // 延迟一下让玩家看到消息
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            processEnemyTurn();
+        }
     }
-    
-    // 开始第一回合
-    currentRound_ = 1;
-
-    
-    if(playerTurn_){
-        game.getDialog().addMessage("<SYSTEM>", "轮到了你的回合，请选择你要做出的选择");
-        std::string input ;
-        playerChooseAction(TurnAction::SKILL, 0);
+    catch (const std::exception& e) {
+        game_.getDialog().addMessage("<SYSTEM>", "战斗开始错误: " + std::string(e.what()));
+        std::cerr << "Exception in FightEvent::startBattle: " << e.what() << std::endl;
+        battleState_ = BATTLE_STATE_BATTLE_OVER;
+        battleOver_ = true;
     }
-    else{
-
+    catch (...) {
+        game_.getDialog().addMessage("<SYSTEM>", "战斗开始未知错误");
+        std::cerr << "Unknown exception in FightEvent::startBattle" << std::endl;
+        battleState_ = BATTLE_STATE_BATTLE_OVER;
+        battleOver_ = true;
     }
 }
 
 void FightEvent::endBattle() {
     battleOver_ = true;
+    battleState_ = BATTLE_STATE_BATTLE_OVER;
     
-    // 确定胜利者
     if (player_->getHealth() <= 0) {
         playerWon_ = false;
+        game_.getDialog().addMessage("<SYSTEM>", "你被击败了！");
+        // 战败属性下降
+        player_->addStrength(-1);
+        player_->addStamina(-1);
+        player_->addAgility(-1);
+        game_.getDialog().addMessage("<SYSTEM>", "身体和信心都受到打击，感觉身体有些生疏了……");
     } else if (enemy_->getHealth() <= 0) {
         playerWon_ = true;
+        game_.getDialog().addMessage("<SYSTEM>", "你获胜了！");
         applyBattleRewards();
     }
 }
 
 bool FightEvent::isBattleOver() const {
-    if(battleOver_ || player_->getHealth() <= 0 || enemy_->getHealth() <= 0){
-        if(humanHummerRecover)
-            player_ -> addFatigue(10);
-        return true;
-    }
-    return false;
+    return battleOver_ || player_->getHealth() <= 0 || enemy_->getHealth() <= 0;
 }
 
 bool FightEvent::isPlayerWinner() const {
@@ -177,105 +285,140 @@ bool FightEvent::isEnemyWinner() const {
 }
 
 bool FightEvent::isPlayerTurn() const {
-    return playerTurn_;
+    return battleState_ == BATTLE_STATE_PLAYER_TURN;
 }
 
 int FightEvent::getCurrentRound() const {
     return currentRound_;
 }
 
-void FightEvent::playerChooseAction(TurnAction action, int skillIndex) {
-    if (battleOver_ || !playerTurn_) {
-        return;
-    }
-    
-    switch (action) {
-        case TurnAction::SKILL:
-            if (skillIndex >= 0 && skillIndex < static_cast<int>(player_->getSkills().size())) {
-                processPlayerSkill(skillIndex);
-            }
-            break;
-            
-        case TurnAction::SKIP:
-            processPlayerSkip();
-            break;
-            
-        case TurnAction::NONE:
-            // 不做任何操作
-            break;
-    }
-    
-    // 检查战斗是否结束
-    if (isBattleOver()) {
-        endBattle();
-        return;
-    }
-    
-    // 切换到敌人回合
-    playerTurn_ = false;
-    processEnemyTurn();
-    
-    // 检查战斗是否结束
-    if (isBattleOver()) {
-        endBattle();
-        return;
-    }
-    
-    // 切换到下一回合玩家回合
-    playerTurn_ = true;
-    currentRound_++;
+int FightEvent::getBattleState() const {
+    return battleState_;
 }
+
+void FightEvent::playerChooseAction(int action, int skillIndex) {
+    if (battleOver_ || battleState_ != BATTLE_STATE_PLAYER_TURN) {
+        game_.getDialog().addMessage("<SYSTEM>", "现在不是你的回合或战斗已结束");
+        return;
+    }
+    
+    battleState_ = BATTLE_STATE_PROCESSING;
+    
+    try {
+        switch (action) {
+            case 0: // 技能攻击
+                if (skillIndex >= 0 && skillIndex < static_cast<int>(player_->getSkills().size())) {
+                    processPlayerSkill(skillIndex);
+                } else {
+                    game_.getDialog().addMessage("<SYSTEM>", "无效的技能选择");
+                    battleState_ = BATTLE_STATE_PLAYER_TURN; // 回到玩家回合
+                }
+                break;
+                
+            case 1: // 跳过回合
+                processPlayerSkip();
+                break;
+                
+            default:
+                game_.getDialog().addMessage("<SYSTEM>", "无效的战斗行动");
+                battleState_ = BATTLE_STATE_PLAYER_TURN; // 回到玩家回合
+                break;
+        }
+        
+        // 只有在成功处理行动后才推进战斗状态
+        if (battleState_ == BATTLE_STATE_PROCESSING) {
+            advanceBattleState();
+        }
+    }
+    catch (const std::exception& e) {
+        game_.getDialog().addMessage("<SYSTEM>", "处理玩家行动时出错: " + std::string(e.what()));
+        std::cerr << "Exception in playerChooseAction: " << e.what() << std::endl;
+        battleState_ = BATTLE_STATE_PLAYER_TURN; // 回到玩家回合
+    }
+    catch (...) {
+        game_.getDialog().addMessage("<SYSTEM>", "处理玩家行动时发生未知错误");
+        std::cerr << "Unknown exception in playerChooseAction" << std::endl;
+        battleState_ = BATTLE_STATE_PLAYER_TURN; // 回到玩家回合
+    }
+}
+
+
 
 void FightEvent::processEnemyTurn() {
-    if (battleOver_ || playerTurn_) {
+    if (battleOver_ || battleState_ != BATTLE_STATE_ENEMY_TURN) {
         return;
     }
     
-    // 敌人AI：可以选择使用技能或跳过
-    // 简单策略：70%概率使用技能，30%概率跳过
-    auto& enemySkills = enemy_->getSkills();
-    if (!enemySkills.empty() && (std::rand() % 100) < 70) {
-        // 随机选择一个技能
-        int skillIndex = std::rand() % enemySkills.size();
-        auto skill = enemySkills[skillIndex];
-        if(skill -> canUse(*enemy_)) {
-            skill -> execute(*enemy_, *player_);
-            return;
-        }
-        else 
-        {
-            processEnemySkip();
-            return;
-        }
-        // 计算伤害
-        double damage = skill->calculateDamage(enemy_->getStrength());
-        double hitRate = skill->calculateHitRate(enemy_->getAgility(), 
-                                               enemy_->getStrength(), 
-                                               enemy_->getStamina());
-        
-        if (checkHit(hitRate)) {
-            applyDamageToPlayer(damage);
+    try {
+        // 敌人AI：可以选择使用技能或跳过
+        auto& enemySkills = enemy_->getSkills();
+        if (!enemySkills.empty() && (std::rand() % 100) < 70) {
+            // 随机选择一个技能
+            int skillIndex = std::rand() % enemySkills.size();
+            auto skill = enemySkills[skillIndex];
             
-            // 检查玩家是否被击倒（耐力透支）
-            double staminaCost = skill->calculateStaminaCost(enemy_->getStrength());
-            if (player_->getFatigue() < staminaCost) {
-                processKnockdown(player_, 20.0); // 玩家被击倒，恢复20%体力
+            if(skill->canUse(*enemy_)) {
+                game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "使用了" + skill->getSkillName());
+                
+                // 计算伤害
+                double damage = skill->calculateDamage(enemy_->getStrength());
+                double hitRate = skill->calculateHitRate(enemy_->getAgility(), 
+                                                       enemy_->getStrength(), 
+                                                       enemy_->getStamina());
+                
+                if (checkHit(hitRate)) {
+                    applyDamageToPlayer(damage);
+                    game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "造成了" + std::to_string((int)damage) + "点伤害");
+                    
+                    // 检查玩家是否被击倒（耐力透支）
+                    double staminaCost = skill->calculateStaminaCost(enemy_->getStrength());
+                    if (player_->getFatigue() < staminaCost) {
+                        processKnockdown(player_, 20.0); // 玩家被击倒，恢复20%体力
+                    }
+                } else {
+                    game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "的攻击未命中!");
+                }
+                
+                // 消耗敌人体力
+                double staminaCost = skill->calculateStaminaCost(enemy_->getStrength());
+                enemy_->addFatigue(-staminaCost);
+            } else {
+                processEnemySkip();
             }
+        } else {
+            // 敌人跳过回合，恢复20%体力
+            processEnemySkip();
         }
         
-        // 消耗敌人体力
-        double staminaCost = skill->calculateStaminaCost(enemy_->getStrength());
-        enemy_->addFatigue(-staminaCost);
-    } else {
-        // 敌人跳过回合，恢复20%体力
-        processEnemySkip();
+        // 显示状态更新
+        game_.getDialog().addMessage("<SYSTEM>", "你的状态: 生命值 " + std::to_string((int)player_->getHealth()) + 
+                                    "/" + std::to_string((int)player_->getMaxHealth()) +
+                                    ", 体力 " + std::to_string((int)player_->getFatigue()) + 
+                                    "/" + std::to_string((int)player_->getMaxFatigue()));
+        game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "的状态: 生命值 " + 
+                                    std::to_string((int)enemy_->getHealth()) + "/" + 
+                                    std::to_string((int)enemy_->getMaxHealth()) +
+                                    ", 体力 " + std::to_string((int)enemy_->getFatigue()) + 
+                                    "/" + std::to_string((int)enemy_->getMaxFatigue()));
+        
+        // 推进战斗状态
+        advanceBattleState();
     }
-    
-    // 检查敌人是否被击倒（在玩家回合中处理）
+    catch (const std::exception& e) {
+        game_.getDialog().addMessage("<SYSTEM>", "处理敌人行动时出错: " + std::string(e.what()));
+        std::cerr << "Exception in processEnemyTurn: " << e.what() << std::endl;
+        battleState_ = BATTLE_STATE_PLAYER_TURN; // 回到玩家回合
+    }
+    catch (...) {
+        game_.getDialog().addMessage("<SYSTEM>", "处理敌人行动时发生未知错误");
+        std::cerr << "Unknown exception in processEnemyTurn" << std::endl;
+        battleState_ = BATTLE_STATE_PLAYER_TURN; // 回到玩家回合
+    }
 }
 
+
 bool FightEvent::checkHit(double hitRate) const {
-    double roll = (std::rand() % 10000) / 10000.0; // 0.0 到 100.0
+    double roll = (std::rand() % 10000) / 10000.0;
     return roll <= hitRate;
 }
 
@@ -290,6 +433,7 @@ void FightEvent::applyDamageToPlayer(double damage) {
 void FightEvent::processPlayerSkill(int skillIndex) {
     auto& playerSkills = player_->getSkills();
     if (skillIndex < 0 || skillIndex >= static_cast<int>(playerSkills.size())) {
+        game_.getDialog().addMessage("<SYSTEM>", "无效的技能选择");
         return;
     }
     
@@ -297,99 +441,131 @@ void FightEvent::processPlayerSkill(int skillIndex) {
     
     // 检查技能是否可用
     if (!skill->canUse(*player_)) {
-        /*
-        
-        提示技能不可用
-        
-        */
+        game_.getDialog().addMessage("<SYSTEM>", "技能不可用，可能体力不足");
         return;
     }
     
-
-
+    game_.getDialog().addMessage("<SYSTEM>", "你使用了" + skill->getSkillName());
+    
     // 计算伤害
     double damage = skill->calculateDamage(player_->getStrength());
+    double hitRate = skill->calculateHitRate(player_->getAgility(), 
+                                           player_->getStrength(), 
+                                           player_->getStamina());
+    
+    // 特殊技能效果
     for(auto& skill__ : player_->getSkills()){
-        // 查找玩家是否有这个特殊技能
         if(skill__ -> getSkillName() == "千手不破"){
             std::set<int> upperSkillIndex = {1,4,5,6,7,8,11,12,13,14,15};
             std::set<int> lowerSkillIndex = {2,3,9,10};
-            // 上肢伤害乘受伤倍数
             if(upperSkillIndex.find(skillIndex) != upperSkillIndex.end())
                 damage *= enemy_ -> getUpperBodySustainDamageRate();
-            // 下肢伤害乘受伤倍数
             else if(lowerSkillIndex.find(skillIndex) != lowerSkillIndex.end())
                 damage *= enemy_ -> getLowerBodySustainDamageRate();
         }
     }
-    double hitRate = skill->calculateHitRate(player_->getAgility(), 
-                                           player_->getStrength(), 
-                                           player_->getStamina());
-    // ExHitRate 由特殊技能而得
+    
     hitRate += player_ -> getExHitRate();
-    hitRate = std::max(0.0,hitRate);
-    hitRate = std::min(1.0,hitRate); 
+    hitRate = std::max(0.0, hitRate);
+    hitRate = std::min(1.0, hitRate);
+    
     if (checkHit(hitRate)) {
         applyDamageToEnemy(damage);
+        game_.getDialog().addMessage("<SYSTEM>", "你造成了" + std::to_string((int)damage) + "点伤害");
         
         // 特殊技能 31号技能"闪击"
         for(auto& skill__ : enemy_->getSkills()){
             if(skill__ -> getSkillName() == "闪击"){
                 double roll = std::rand() % 100;
                 if(roll < 25){
-                    applyDamageToPlayer(damage * 0.25);
+                    double reflectDamage = damage * 0.25;
+                    applyDamageToPlayer(reflectDamage);
+                    game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "的闪击效果反弹了" + 
+                                                std::to_string((int)reflectDamage) + "点伤害");
                 }
             }
         }
-
         
+        // 检查敌人是否被击倒（耐力透支）
         double staminaCost = skill->calculateStaminaCost(player_->getStrength());
-        if (enemy_-> getFatigue() < staminaCost) {
-            processKnockdown(enemy_, 20.0); // 敌人被击倒，恢复20%体力(后面这个参数其实没用)
+        if (enemy_->getFatigue() < staminaCost) {
+            processKnockdown(enemy_, 20.0);
+        }
+    } else {
+        game_.getDialog().addMessage("<SYSTEM>", "你的攻击未命中!");
+    }
+    
+    // 计算玩家体力消耗
+    double staminaCost = skill->calculateStaminaCost(player_->getStrength());
+    
+    // 特殊技能效果
+    for(auto& skill__ : player_->getSkills()){
+        if(skill__ -> getSkillName() == "无限能量"){
+            if(player_ -> getHealth() < (player_ -> getMaxHealth() + player_ -> getExMaxHealth()))
+                staminaCost *= (1 - 0.15);
         }
     }
     
-    // 计算玩家体力
-    double staminaCost = skill->calculateStaminaCost(player_->getStrength());
+    // 消耗玩家体力
+    player_->addFatigue(-staminaCost);
     
-
-    // 36 是 "无限能量"
+    // 执行技能效果
     if((19 <= skillIndex && skillIndex <= 30) || skillIndex == 36){
-        if(skillIndex == 36 && player_ -> getHealth() < (player_ -> getMaxHealth() + player_ -> getExMaxHealth()))
-            staminaCost *= (1 - 0.15);
-        // 消耗玩家体力
-        player_->addFatigue(-staminaCost);
-        skill->execute(*player_, *player_); 
+        skill->execute(*player_, *player_);
+    } else {
+        skill->execute(*player_, *enemy_);
     }
-    else {
-        // 消耗玩家体力
-        player_->addFatigue(-staminaCost);
-        skill->execute(*player_, *enemy_); 
-    }
+    
+    // 显示状态更新
+    game_.getDialog().addMessage("<SYSTEM>", "你的状态: 生命值 " + std::to_string((int)player_->getHealth()) + 
+                                "/" + std::to_string((int)player_->getMaxHealth()) +
+                                ", 体力 " + std::to_string((int)player_->getFatigue()) + 
+                                "/" + std::to_string((int)player_->getMaxFatigue()));
+    game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "的状态: 生命值 " + 
+                                std::to_string((int)enemy_->getHealth()) + "/" + 
+                                std::to_string((int)enemy_->getMaxHealth()) +
+                                ", 体力 " + std::to_string((int)enemy_->getFatigue()) + 
+                                "/" + std::to_string((int)enemy_->getMaxFatigue()));
 }
 
 void FightEvent::processPlayerSkip() {
     // 跳过回合恢复20%体力
     double recoveryAmount = player_->getMaxFatigue() * 0.2;
     player_->addFatigue(recoveryAmount);
+    game_.getDialog().addMessage("<SYSTEM>", "你选择跳过回合，恢复了" + std::to_string((int)recoveryAmount) + "点体力");
 }
 
 void FightEvent::processEnemySkip() {
     // 敌人跳过回合恢复20%体力
-    double recoveryAmount = enemy_->getMaxFatigue() * 0.2; 
+    double recoveryAmount = enemy_->getMaxFatigue() * 0.2;
     enemy_->addFatigue(recoveryAmount);
+    game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "选择跳过回合，恢复了" + 
+                                std::to_string((int)recoveryAmount) + "点体力");
 }
 
 void FightEvent::processKnockdown(std::shared_ptr<Player> target, double recoveryPercent) {
     // 玩家被击倒：损失20%血量，恢复一定百分比体力
-    target->addHealth(-target->getHealth() * 0.2);
-    target->addFatigue(target->getFatigue() * 0.2);
+    double healthLoss = target->getHealth() * 0.2;
+    double fatigueRecovery = target->getMaxFatigue() * (recoveryPercent / 100.0);
+    
+    target->addHealth(-healthLoss);
+    target->addFatigue(fatigueRecovery);
+    
+    game_.getDialog().addMessage("<SYSTEM>", "你被击倒了! 损失" + std::to_string((int)healthLoss) + 
+                                "点生命值，恢复" + std::to_string((int)fatigueRecovery) + "点体力");
 }
 
 void FightEvent::processKnockdown(std::shared_ptr<Enemy> target, double recoveryPercent) {
     // 敌人被击倒：损失20%血量，恢复一定百分比体力
-    target->addHealth(-target->getHealth() * 0.2);
-    target->addFatigue(target->getFatigue() * 0.2); 
+    double healthLoss = target->getHealth() * 0.2;
+    double fatigueRecovery = target->getMaxFatigue() * (recoveryPercent / 100.0);
+    
+    target->addHealth(-healthLoss);
+    target->addFatigue(fatigueRecovery);
+    
+    game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "被击倒了! 损失" + 
+                                std::to_string((int)healthLoss) + "点生命值，恢复" + 
+                                std::to_string((int)fatigueRecovery) + "点体力");
 }
 
 void FightEvent::applyBattleRewards() {
@@ -403,6 +579,7 @@ void FightEvent::applyBattleRewards() {
     switch (enemyId) {
         case 1: // 业余拳手
             player_->addSavings(0); // 教学战无奖励
+            game_.getDialog().addMessage("<SYSTEM>", "看来你还有很多要学呢。");
             break;
             
         case 2: // 健身房常客
@@ -418,7 +595,9 @@ void FightEvent::applyBattleRewards() {
         case 4: // 健身房教练
             player_->addSavings(50);
             player_->addSkillPoints(2);
-            applySpecialRewards(enemyId);
+            player_->getTrainingSystem()->setMoneyCostRate(0.5);
+            game_.getDialog().addMessage("<SYSTEM>", "呼…呼…不错，你真的变强了。拿着，这是我的VIP卡，以后来训练给你打折。");
+            game_.getDialog().addMessage("<SYSTEM>", "获得健身房VIP卡！训练费用减半！");
             break;
             
         case 5: // 职业新人
@@ -434,7 +613,9 @@ void FightEvent::applyBattleRewards() {
         case 7: // 耐力型选手
             player_->addSavings(100);
             player_->addSkillPoints(2);
-            applySpecialRewards(enemyId);
+            player_->getTrainingSystem()->setStaminaExpRate(player_->getTrainingSystem()->getStaminaExpRate() + 0.2);
+            game_.getDialog().addMessage("<SYSTEM>", "怎么可能…我的耐力竟然…输了…");
+            game_.getDialog().addMessage("<SYSTEM>", "获得耐力训练器！耐力训练效率+20%！");
             break;
             
         case 8: // 技巧型拳手
@@ -450,12 +631,18 @@ void FightEvent::applyBattleRewards() {
         case 10: // 冠军挑战者
             player_->addSavings(500);
             player_->addSkillPoints(3);
-            applySpecialRewards(enemyId);
+            player_->addStrength(2);
+            player_->addStamina(2);
+            player_->addAgility(2);
+            game_.getDialog().addMessage("<SYSTEM>", "呃啊……世界级的舞台……果然……深不可测……");
+            game_.getDialog().addMessage("<SYSTEM>", "获得冠军腰带！全属性+2！");
             break;
             
         case 11: // 世界拳王
             player_->addSavings(1000);
             player_->addSkillPoints(5);
+            game_.getDialog().addMessage("<SYSTEM>", "不可思议……新的王者……诞生了……这座王冠……是你的了……");
+            game_.getDialog().addMessage("<SYSTEM>", "女士们先生们！让我们欢呼吧！一位新的、无可争议的世界拳王！");
             break;
             
         default:
@@ -466,6 +653,10 @@ void FightEvent::applyBattleRewards() {
     
     // 解锁下一个敌人
     player_->unlockNextEnemy(enemyId);
+    
+    // 显示奖励信息
+    game_.getDialog().addMessage("<SYSTEM>", "获得奖金: $" + std::to_string((int)player_->getSavings()));
+    game_.getDialog().addMessage("<SYSTEM>", "当前技能点: " + std::to_string((int)player_->getSkillPoints()));
 }
 
 void FightEvent::applySpecialRewards(int enemyId) {
@@ -489,3 +680,28 @@ void FightEvent::applySpecialRewards(int enemyId) {
             break;
     }
 }
+
+void FightEvent::advanceBattleState() {
+    if (isBattleOver()) {
+        endBattle();
+        return;
+    }
+    
+    // 切换回合
+    if (battleState_ == BATTLE_STATE_PROCESSING) {
+        // 根据当前状态确定下一步
+        // 如果刚刚处理完玩家行动，切换到敌人回合
+        battleState_ = BATTLE_STATE_ENEMY_TURN;
+        
+        // 延迟一下让玩家看到消息
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        processEnemyTurn();
+    } else if (battleState_ == BATTLE_STATE_ENEMY_TURN) {
+        // 敌人回合结束后，切换到玩家回合
+        currentRound_++;
+        battleState_ = BATTLE_STATE_PLAYER_TURN;
+        game_.getDialog().addMessage("<SYSTEM>", "轮到了你的回合，请选择行动");
+    }
+}
+
+

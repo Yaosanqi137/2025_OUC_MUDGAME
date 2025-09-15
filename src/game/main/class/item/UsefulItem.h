@@ -19,8 +19,8 @@ public:
     ~UsefulItem() override = default;
 
     int getPrice() const override;
-    void use(Player& user) override; // 注意：use方法现在需要一个Player引用
-
+    bool use(Player& user) override;
+    const std::string& getIntro() const override;
     ItemType getItemType() const;
     int getDurability() const;
 
