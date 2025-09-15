@@ -231,3 +231,5 @@ std::string Skill::idToSkillName(int id) {
     }
     return "未知技能";
 }
+
+int Skill::getSkillPointCost() const{return unlockCost;}
