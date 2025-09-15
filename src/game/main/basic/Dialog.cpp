@@ -308,10 +308,10 @@ void Dialog::processPlayerInput(std::string& input) {
             }
             int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
             BattleCommandHandler::startBattle(game_logic_, nextEnemyId);
-        } else {
-            // 对话，将其添加到历史记录中
-            addMessage(game_logic_.getPlayer().getName(), input);
         }
+    } else {
+        // 对话，将其添加到历史记录中
+        addMessage(game_logic_.getPlayer().getName(), input);
     }
 }
 
