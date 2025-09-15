@@ -204,7 +204,6 @@ std::shared_ptr<AbstractItem> Player::findItemByName(const std::string& name) {
     return nullptr;
 }
 
-
 // 销毁Item(Food; Medicine)函数
 /*
 template<typename T>
@@ -308,6 +307,18 @@ void Player::addItemByType(const std::string& itemType, int amount) {
         auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::SKILL_POINT_POTION);
         medicine->setAmount(amount);
         addItem(medicine);
+    } else if (itemType == "女仆咖啡") {
+        auto food = std::make_shared<Food>(Food::FoodType::COFFEE);
+        food->setAmount(amount);
+        addItem(food);
+    } else if (itemType == "爱心面包") {
+        auto food = std::make_shared<Food>(Food::FoodType::BREAD);
+        food->setAmount(amount);
+        addItem(food);
+    } else if (itemType == "瓦学弟蛋包饭") {
+        auto food = std::make_shared<Food>(Food::FoodType::WAXUEDI);
+        food->setAmount(amount);
+        addItem(food);
     }
 }
 
@@ -375,6 +386,18 @@ void Player::initializeInventory() {
     auto proteinBar = std::make_shared<Food>(Food::FoodType::PROTEIN_BAR);
     proteinBar->setAmount(0);
     inventory_.push_back(proteinBar);
+
+    auto coffee = std::make_shared<Food>(Food::FoodType::COFFEE);
+    coffee->setAmount(0);
+    inventory_.push_back(coffee);
+
+    auto bread = std::make_shared<Food>(Food::FoodType::BREAD);
+    bread->setAmount(0);
+    inventory_.push_back(bread);
+
+    auto waxuedi = std::make_shared<Food>(Food::FoodType::WAXUEDI);
+    waxuedi->setAmount(0);
+    inventory_.push_back(waxuedi);
 
     // 添加所有有用物品类型，数量为0
     auto boxingGloves = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GLOVES);

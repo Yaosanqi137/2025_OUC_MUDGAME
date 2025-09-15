@@ -129,8 +129,9 @@ void MapLayout::travelBy(const std::string& method) {
             player.addSavings(-15);
             GameTime::addMinute(distTaxiTime(rng));
             game_logic_.getDialog().addMessage("", "你乘坐计程车前往了 " + destination.name + " ，花费了15元");
+        } else {
+            game_logic_.getDialog().addMessage("", "你掏出钱包一看，发现只剩下 " + std::to_string((int)player.getSavings()) + " 元了");
         }
-        game_logic_.getDialog().addMessage("你发现你没钱坐车了！", "你掏出钱包一看，发现只剩下 " + std::to_string(player.getSavings()) + " 元了");
     } else if (method == "walk") {
         player.addHunger(-5);
         player.addFatigue(-3);
@@ -217,13 +218,13 @@ Element MapLayout::Render() {
         travelDialog = vbox({
             text("前往 " + dest.name) | bold | color(Color::Yellow),
             hbox({
-                buttonTaxi_->Render() | size(WIDTH, LESS_THAN, 20),
+                buttonTaxi_->Render() | size(WIDTH, LESS_THAN, 22),
                 text(" "),
                 buttonWalk_->Render() | size(WIDTH, LESS_THAN, 20),
                 text(" "),
                 buttonCancelTravel_->Render() | size(WIDTH, LESS_THAN, 20)
             })
-        }) | border | size(WIDTH, LESS_THAN, 35) | size(HEIGHT, LESS_THAN, 10);
+        }) | border | size(WIDTH, LESS_THAN, 65) | size(HEIGHT, LESS_THAN, 10);
     }
 
     auto mapElement = vbox({

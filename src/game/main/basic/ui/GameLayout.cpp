@@ -111,7 +111,16 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
             }
 
             const auto& msg = messages[i];
-            auto whoColor = (msg.who == game_logic_.getPlayer().getName()) ? Color::Green : Color::Cyan;
+            // 设置消息发送者的颜色
+            Color whoColor;
+            if (msg.who == game_logic_.getPlayer().getName()) {
+                whoColor = Color::Green; // 玩家消息为绿色
+            } else if (msg.who == "系统") {
+                whoColor = Color::Magenta; // 系统消息为紫色
+            } else {
+                whoColor = Color::Cyan; // 其他消息为青色
+            }
+
             auto glyphs = Utf8ToGlyphs(msg.content);
             size_t contentSize = glyphs.size();
             size_t shownChars = 0;
@@ -241,11 +250,11 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
                 leftChildren.push_back(
                     window(text(" 玩家状态 "),
                            hbox({
-                               text("生命值: " + std::to_string(game_logic_.getPlayer().getHealth())) | color(Color::Green) | flex,
+                               text("生命值: " + std::to_string((int)game_logic_.getPlayer().getHealth())) | color(Color::Green) | flex,
                                separator(),
-                               text("体力: " + std::to_string(game_logic_.getPlayer().getFatigue())) | color(Color::Yellow) | flex,
+                               text("体力: " + std::to_string((int)game_logic_.getPlayer().getFatigue())) | color(Color::Yellow) | flex,
                                separator(),
-                               text("饥饿值: " + std::to_string(game_logic_.getPlayer().getHunger())) | color(Color::RedLight) | flex
+                               text("饱食度: " + std::to_string((int)game_logic_.getPlayer().getHunger())) | color(Color::RedLight) | flex
                            }))
                 );
             }

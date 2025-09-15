@@ -22,7 +22,7 @@ public:
 
     // 实现抽象接口
     [[nodiscard]] int getPrice() const override;
-    void use(Player& user) override;
+    bool use(Player& user) override;
 
     // 获取药物类型
     [[nodiscard]] MedicineType getMedicineType() const;

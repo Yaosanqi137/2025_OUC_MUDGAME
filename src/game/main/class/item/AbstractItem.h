@@ -16,15 +16,15 @@ public:
 	// 获取物品名称 - 现在直接返回成员变量
 	const std::string& getName() const { return name_; }
 	// 获取物品描述 - 现在直接返回成员变量
-	const std::string& getIntro() const { return intro_; }
+	virtual const std::string& getIntro() const { return intro_; }
 	// 获取物品价格
 	virtual int getPrice() const = 0;
-	// 使用物品
-	virtual void use(Player& user) = 0;
+	// 使用物品 - 修改返回类型为bool
+	virtual bool use(Player& user) = 0;
 
 	[[nodiscard]] int getAmount() const { return amount_; }
 	void setAmount(int amount) { amount_ = amount; }
-	void addAmount(int amount_to_add) { amount_ += amount_to_add; }
+	void addAmount(int amountToAdd) { amount_ += amountToAdd; }
 	bool isUsable() const { return isUsable_; }
 
 protected:
