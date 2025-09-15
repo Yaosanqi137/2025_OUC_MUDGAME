@@ -107,13 +107,13 @@ bool MapLayout::OnEvent(Event event) {
 }
 
 void MapLayout::initializeLocations() {
-    locations_["home"]         = {"家",         "家",         80, 42, "cafe", "", "", ""};
-    locations_["cafe"]         = {"咖啡馆",         "咖啡馆",     80, 32, "store", "home", "", ""};
-    locations_["store"]        = {"商店",        "商店",       80, 22, "arena", "cafe", "gym", "pharmacy"};
-    locations_["gym"]          = {"拳击馆",          "拳击馆",     40, 22, "construction", "", "", "store"};
-    locations_["construction"] = {"工地", "工地",       40, 12, "", "gym", "", ""};
-    locations_["arena"]        = {"比赛场地",        "比赛场地",   80,  5, "", "store", "", ""};
-    locations_["pharmacy"]     = {"药店",     "药店", 120, 22, "", "", "store", ""};
+    locations_["home"]         = {"家",         "家",         80, 42, "cafe", "", "", "", false}; // 家不是第一次来
+    locations_["cafe"]         = {"咖啡馆",         "咖啡馆",     80, 32, "store", "home", "", "", true};
+    locations_["store"]        = {"商店",        "商店",       80, 22, "arena", "cafe", "gym", "pharmacy", true};
+    locations_["gym"]          = {"拳击馆",          "拳击馆",     40, 22, "construction", "", "", "store", true};
+    locations_["construction"] = {"工地", "工地",       40, 12, "", "gym", "", "", true};
+    locations_["arena"]        = {"比赛场地",        "比赛场地",   80,  5, "", "store", "", "", true};
+    locations_["pharmacy"]     = {"药店",     "药店", 120, 22, "", "", "store", "", true};
 }
 
 void MapLayout::travelBy(const std::string& method) {
@@ -129,50 +129,136 @@ void MapLayout::travelBy(const std::string& method) {
     std::uniform_int_distribution<int> distTaxiTime(4, 10);  // 计程车时间5-10分钟
 
     Player& player = game_logic_.getPlayer();
-    const auto& destination = locations_.at(selectedLocationId_);
+    auto& destination = locations_.at(selectedLocationId_); // 使用引用以便修改
 
+    // 执行移动逻辑
+    bool moveSuccessful = false;
     if (method == "taxi") {
         if (player.getSavings() >= 15) {
             player.addSavings(-15);
             GameTime::addMinute(distTaxiTime(rng));
             game_logic_.getDialog().addMessage("", "你乘坐计程车前往了 " + destination.name + " ，花费了15元");
+            moveSuccessful = true;
         } else {
             game_logic_.getDialog().addMessage("", "你掏出钱包一看，发现只剩下 " + std::to_string((int)player.getSavings()) + " 元了");
+            viewMode_ = 0; // 回到地图浏览模式
+            return;
         }
     } else if (method == "walk") {
         player.addHunger(-5);
         player.addFatigue(-3);
         GameTime::addMinute(distWalkTime(rng));
         game_logic_.getDialog().addMessage("", "虽然有点累，但是你还是选择了步行前往了 " + destination.name);
+        moveSuccessful = true;
     }
 
+    if (!moveSuccessful) {
+        return;
+    }
+
+    // 检查是否是第一次来到这个地点
+    bool isFirstVisit = destination.isFirstTo;
+
+    // 根据地点显示对应的对话和引导
     if (destination.name == "家") {
-        game_logic_.getDialog().addMessage("", "你回到了家，闻到家里的空气，让你感到放松");
-        game_logic_.getDialog().addMessage("", "想吃点零食休息一下吗？");
+        if (isFirstVisit) {
+            game_logic_.getDialog().addMessage("", "这里是你的家，你最熟悉的地方");
+            game_logic_.getDialog().addMessage("", "在家里你可以通过 /sleep 指令睡觉来恢复体力和生命值");
+            game_logic_.getDialog().addMessage("", "也可以通过 /eat 指令吃零食来恢复一点饱食度");
+        } else {
+            game_logic_.getDialog().addMessage("", "你回到了家，闻到家里的空气，让你感到放松");
+            game_logic_.getDialog().addMessage("", "想吃点零食休息一下吗？");
+        }
     } else if (destination.name == "工地") {
-        game_logic_.getDialog().addMessage("", "你来到了工地，这里有很多体力活可以做");
-        game_logic_.getDialog().addMessage("包工头", "喂！小子，看什么呢，你也想搬砖吗？");
-        game_logic_.getDialog().addMessage("包工头", "如果你想打工，可以试试/work命令");
+        if (isFirstVisit) {
+            game_logic_.getDialog().addMessage("", "你第一次来到了工地，这里尘土飞扬，机器轰鸣");
+            game_logic_.getDialog().addMessage("", "工地是赚钱的好地方，虽然辛苦但是收入还算可以");
+            game_logic_.getDialog().addMessage("包工头", "新来的？看起来不错啊，想打工吗？");
+            game_logic_.getDialog().addMessage("包工头", "我们这里按次计费，每次工作能赚40-80元");
+            game_logic_.getDialog().addMessage("包工头", "不过会消耗你的体力和饱食度，要做好准备");
+            game_logic_.getDialog().addMessage("包工头", "如果你想打工，可以试试 /work 命令");
+        } else {
+            game_logic_.getDialog().addMessage("", "你来到了工地，这里有很多体力活可以做");
+            game_logic_.getDialog().addMessage("包工头", "喂！小子，看什么呢，你也想搬砖吗？");
+            game_logic_.getDialog().addMessage("包工头", "如果你想打工，可以试试/work命令");
+        }
     } else if (destination.name == "拳击馆") {
-        game_logic_.getDialog().addMessage("", "你来到了拳击馆，看到几个拳击手正在挥汗如雨的训练");
-        game_logic_.getDialog().addMessage("教练", "准备练拳！赶紧输入/train指令吧！");
+        if (isFirstVisit) {
+            game_logic_.getDialog().addMessage("", "你第一次踏进拳击馆，空气中弥漫着汗水和激情的味道");
+            game_logic_.getDialog().addMessage("", "各种训练器材整齐排列，拳击手们正在刻苦训练");
+            game_logic_.getDialog().addMessage("教练", "新面孔？看起来很有潜力啊！");
+            game_logic_.getDialog().addMessage("教练", "想要成为强者就必须经过刻苦的训练");
+            game_logic_.getDialog().addMessage("教练", "我们这里有三种训练：力量、敏捷和耐力训练");
+            game_logic_.getDialog().addMessage("教练", "使用 /train 命令查看训练帮助，用 /train str、/train ag、/train sta 开始训练");
+            game_logic_.getDialog().addMessage("教练", "记住，训练需要消耗金钱、体力和饱食度，但会让你变得更强！");
+        } else {
+            game_logic_.getDialog().addMessage("", "你来到了拳击馆，看到几个拳击手正在挥汗如雨的训练");
+            game_logic_.getDialog().addMessage("教练", "准备练拳！赶紧输入/train指令吧！");
+        }
     } else if (destination.name == "比赛场地") {
-        game_logic_.getDialog().addMessage("", "你来到了比赛场地，这里经常举办各种拳击比赛");
-        game_logic_.getDialog().addMessage("", "看着上面面的擂台，你不由得心潮澎湃");
+        if (isFirstVisit) {
+            game_logic_.getDialog().addMessage("", "你第一次来到比赛场地，这里是职业拳击手的战场");
+            game_logic_.getDialog().addMessage("", "巨大的擂台矗立在中央，周围是观众席");
+            game_logic_.getDialog().addMessage("", "你可以感受到这里曾经发生过的激烈战斗");
+            game_logic_.getDialog().addMessage("裁判", "新来的选手？想要参加比赛吗？");
+            game_logic_.getDialog().addMessage("裁判", "这里有各种级别的对手等着你挑战");
+            game_logic_.getDialog().addMessage("裁判", "使用 /enemy show 查看下一个对手，/enemy battle 开始战斗");
+            game_logic_.getDialog().addMessage("裁判", "记住，只有足够强大才能在这里生存！");
+        } else {
+            game_logic_.getDialog().addMessage("", "你来到了比赛场地，这里经常举办各种拳击比赛");
+            game_logic_.getDialog().addMessage("", "看着上面面的擂台，你不由得心潮澎湃");
+        }
     } else if (destination.name == "商店") {
-        game_logic_.getDialog().addMessage("", "你来到了商店，这里可以买到各种生活用品和食物");
-        game_logic_.getDialog().addMessage("商店老板", "欢迎光临，有什么需要的吗？吃的喝的都可以在这里买哦");
+        if (isFirstVisit) {
+            game_logic_.getDialog().addMessage("", "你第一次走进这家商店，货架上摆满了各种商品");
+            game_logic_.getDialog().addMessage("", "从食物到生活用品，这里应有尽有");
+            game_logic_.getDialog().addMessage("商店老板", "欢迎来到我的小店！第一次来吧？");
+            game_logic_.getDialog().addMessage("商店老板", "我们这里有各种食物：烤肉、苏打水、能量饮料、冷冻披萨");
+            game_logic_.getDialog().addMessage("商店老板", "价格实惠，质量保证！");
+            game_logic_.getDialog().addMessage("商店老板", "使用 /buy 指令可以打开购买界面");
+            game_logic_.getDialog().addMessage("商店老板", "记得带够钱哦~");
+        } else {
+            game_logic_.getDialog().addMessage("", "你来到了商店，这里可以买到各种生活用品和食物");
+            game_logic_.getDialog().addMessage("商店老板", "欢迎光临，有什么需要的吗？吃的喝的都可以在这里买哦");
+        }
     } else if (destination.name == "药店") {
-        game_logic_.getDialog().addMessage("", "你来到了药店，这里可以买到药品和营养品");
-        game_logic_.getDialog().addMessage("药店小姐", "你好呀，请问哪里不舒服呢？");
+        if (isFirstVisit) {
+            game_logic_.getDialog().addMessage("", "你第一次来到药店，整洁的环境给人专业的感觉");
+            game_logic_.getDialog().addMessage("", "各种药品整齐地摆放在货架上");
+            game_logic_.getDialog().addMessage("药店小姐", "欢迎光临！第一次来我们药店吗？");
+            game_logic_.getDialog().addMessage("药店小姐", "我们这里有各种功效的药品");
+            game_logic_.getDialog().addMessage("药店小姐", "回生丹可以恢复生命值，各种药水可以提升属性");
+            game_logic_.getDialog().addMessage("药店小姐", "不过要注意，一些药水可能有副作用哦");
+            game_logic_.getDialog().addMessage("药店小姐", "使用 /buy 指令可以查看并购买药品");
+        } else {
+            game_logic_.getDialog().addMessage("", "你来到了药店，这里可以买到药品和营养品");
+            game_logic_.getDialog().addMessage("药店小姐", "你好呀，请问哪里不舒服呢？");
+        }
     } else if (destination.name == "咖啡馆") {
-        game_logic_.getDialog().addMessage("", "你来到了咖啡馆，这里有各种美味的饮品和甜点");
-        game_logic_.getDialog().addMessage("","此时，一个可爱的，穿着女仆装的少女走了过来");
-        game_logic_.getDialog().addMessage("女仆", "你好呀，欢迎来到女仆咖啡馆，请问需要点什么吗？");
-        game_logic_.getDialog().addMessage("女仆", "我们这里有这里最好吃最好喝的甜点和饮品哦~");
+        if (isFirstVisit) {
+            game_logic_.getDialog().addMessage("", "你第一次踏进这家女仆咖啡馆，温馨的装饰让人眼前一亮");
+            game_logic_.getDialog().addMessage("", "空气中弥漫着咖啡的香味和甜点的诱人气息");
+            game_logic_.getDialog().addMessage("", "此时，一个可爱的，穿着女仆装的少女走了过来");
+            game_logic_.getDialog().addMessage("女仆", "欢迎来到女仆咖啡馆！第一次光临吗？");
+            game_logic_.getDialog().addMessage("女仆", "我们这里有最特别的女仆咖啡、爱心面包");
+            game_logic_.getDialog().addMessage("女仆", "还有我们的招牌——瓦学弟蛋包饭！");
+            game_logic_.getDialog().addMessage("女仆", "每一样都是用爱心制作的呢~");
+            game_logic_.getDialog().addMessage("女仆", "使用 /buy 指令可以查看菜单并点餐");
+            game_logic_.getDialog().addMessage("女仆", "记得要说'请'和'谢谢'哦~");
+        } else {
+            game_logic_.getDialog().addMessage("", "你来到了咖啡馆，这里有各种美味的饮品和甜点");
+            game_logic_.getDialog().addMessage("","此时，一个可爱的，穿着女仆装的少女走了过来");
+            game_logic_.getDialog().addMessage("女仆", "你好呀，欢迎来到女仆咖啡馆，请问需要点什么吗？");
+            game_logic_.getDialog().addMessage("女仆", "我们这里有这里最好吃最好喝的甜点和饮品哦~");
+        }
     }
 
+    // 移动成功后，设置玩家位置并标记不再是第一次访问
     player.setLocation(destination.name);
+    if (isFirstVisit) {
+        destination.isFirstTo = false;
+    }
+
     isShowingFlag_ = false;
 }
 

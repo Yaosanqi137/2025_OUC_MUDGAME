@@ -225,6 +225,7 @@ void Dialog::processPlayerInput(std::string& input) {
             addMessage("<SYSTEM>", "/skill learn <id>    - 学习指定ID的技能");
         }else if (input == "/skill show all") {
             // 显示所有技能
+            game_logic_.getDialog().clearHistory();
             auto allSkills = game_logic_.getPlayer().getAllSkillsInfo();
             addMessage("<SYSTEM>", "=== 所有技能列表 ===");
             for (const auto& skillInfo : allSkills) {

@@ -74,6 +74,13 @@ BagLayout::BagLayout(Game& game_logic, bool& isShowingFlag, std::vector<std::sha
             // 判断物品是否可用
             if (selectedItem->isUsable()) {
                 player_.useItem(selectedItem->getName());
+                if (selectedItem->getName() == "禁药") {
+                    player_.setExMaxHealth(20 + player_.getExMaxHealth());
+                    player_.addHealth(10000);
+                    player_.setExMaxFatigue(player_.getExMaxFatigue() + 20);
+                    player_.addFatigue(10000);
+                    game_logic_.getDialog().addMessage("<SYSTEM>", "你使用了禁药，最大生命值和体力提升了20点！");
+                }
                 refreshItems(); // 使用后刷新物品列表
                 // 如果物品用完了，重置选择
                 if (selectedItemIndex_ >= static_cast<int>(displayableItems_.size())) {

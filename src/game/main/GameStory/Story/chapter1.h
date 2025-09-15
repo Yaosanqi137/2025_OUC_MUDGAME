@@ -44,7 +44,7 @@ namespace Chapter1 {
             [](Game& game_logic_) {
                 game_logic_.getDialog().clearHistory();
                 game_logic_.getPlayer().setLocation("拳击馆外");
-                game_logic_.setGameState(GameState::InGame);
+                game_logic_.setGameState(GameState::InStory);
             }
         }
     });

@@ -13,26 +13,16 @@ Bug to fix: not link to BagLayout(ui) yet
 #include "../../event/TrainingEvent.h"
 #include "../item/Medicine.h"
 
-Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , location("???"),
-                   gameDifficulty(2), strength(1), stamina(1), agility(1), hunger(80), fatigue(80), health(100),
-                   minStrength(0), minStamina(0), minAgility(0), maxHunger(80),
-                   maxFatigue(80), maxHealth(100), maxStamina(100), exMaxHunger(0),
-                   exMaxFatigue(0), exMaxHealth(0), sustainDamageRate(1.0),
-                   upperBodySustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),fatigueConsumeRate(1.0),
-                   exHitRate(0.0),money(100),
-                   skillPoints(5) {
+Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
+                   stamina(1), agility(1), hunger(80), fatigue(80), money(100), location("???"), health(100),
+                   minStrength(0), minStamina(0), minAgility(0), skillPoints(0),
+                   maxHunger(80), maxFatigue(80), maxHealth(100),
+                   exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0),
+                   sustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),upperBodySustainDamageRate(1.0),
+                   fatigueConsumeRate(1.0),exHitRate(0.0),
+                   gameDifficulty(2) {
     // 在构造函数中初始化背包
     initializeInventory();
-
-    // 初始化敌人解锁列表
-    unlockedEnemies_.resize(12, false);
-    unlockedEnemies_[0] = true;
-    unlockedEnemies_[1] = true;
-
-    // 初始化上次衰减日期为当前游戏日期
-    lastDecayYear = GameTime::getYear();
-    lastDecayMonth = GameTime::getMonth();
-    lastDecayDay = GameTime::getDay();
 
     // 初始化技能树（可以初始化已学技能，暂时留个端口）
     // skillTreeManager_.addLearnedSkill("直拳");
@@ -92,10 +82,6 @@ double Player::getHealth() const {
     return health;
 }
 
-double Player::getMaxStamina() const {
-    return maxStamina;
-}
-
 
 void Player::addStrength(const double value) {
     strength += value;
@@ -105,7 +91,6 @@ void Player::addStrength(const double value) {
 void Player::addStamina(const double value) {
     stamina += value;
     stamina = std::max(stamina, minStamina);    // 确保不低于最低耐力值
-    stamina = std::min(stamina, maxStamina);    // 确保不超过最大耐力值
 }
 
 void Player::addAgility(const double value) {
@@ -117,18 +102,33 @@ void Player::addHunger(const double value) {
     hunger += value;
     hunger = std::max(0.0, hunger);
     hunger = std::min(maxHunger + exMaxHunger, hunger);
+
+    // 急救
+    if (hunger <= 0.0) {
+        triggerEmergencyRescue();
+    }
 }
 
 void Player::addFatigue(const double value) {
     fatigue += value;
     fatigue = std::max(0.0, fatigue);
     fatigue = std::min(maxFatigue + exMaxFatigue, fatigue);
+
+    // 急救
+    if (fatigue <= 0.0) {
+        triggerEmergencyRescue();
+    }
 }
 
 void Player::addHealth(double value) {
     health += value;
     health = std::max(0.0, health);
     health = std::min(health, maxHealth + exMaxHealth);
+
+    // 急救
+    if (health <= 0.0) {
+        triggerEmergencyRescue();
+    }
 }
 
 
@@ -173,7 +173,7 @@ double Player::getMaxHealth() const {
     return maxHealth;
 }
 
-// 设置最高属性值(饱食度，体力，生命值，耐力)
+// 设置最高属性值(饱食度，体力，生命值)
 void Player::setMaxHunger(double value) {
     maxHunger = value;
 }
@@ -184,10 +184,6 @@ void Player::setMaxFatigue(double value) {
 
 void Player::setMaxHealth(double value) {
     maxHealth = value;
-}
-
-void Player::setMaxStamina(double value) {
-    maxStamina = value;
 }
 
 
@@ -213,6 +209,8 @@ std::shared_ptr<AbstractItem> Player::findItemByName(const std::string& name) {
     }
     return nullptr;
 }
+
+
 
 // 销毁Item(Food; Medicine)函数
 /*
@@ -249,6 +247,7 @@ std::vector<std::shared_ptr<AbstractItem>> Player::getDisplayableItems() const {
 }
 
 void Player::addItem(std::shared_ptr<AbstractItem> item) {
+    // 检查背包中是否已经有同名物品
     auto existingItem = findItemByName(item->getName());
     if (existingItem) {
         // 如果已存在，增加数量
@@ -297,6 +296,10 @@ void Player::addItemByType(const std::string& itemType, int amount) {
         auto item = std::make_shared<UsefulItem>(UsefulItem::ItemType::CARD);
         item->setAmount(amount);
         addItem(item);
+    } else if (itemType == "禁药") {
+        auto item = std::make_shared<UsefulItem>(UsefulItem::ItemType::BANNED_DRUG);
+        item->setAmount(amount);
+        addItem(item);
     } else if (itemType == "回生丹") {
         auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::REVIVAL_PILL);
         medicine->setAmount(amount);
@@ -317,18 +320,6 @@ void Player::addItemByType(const std::string& itemType, int amount) {
         auto medicine = std::make_shared<Medicine>(Medicine::MedicineType::SKILL_POINT_POTION);
         medicine->setAmount(amount);
         addItem(medicine);
-    } else if (itemType == "女仆咖啡") {
-        auto food = std::make_shared<Food>(Food::FoodType::COFFEE);
-        food->setAmount(amount);
-        addItem(food);
-    } else if (itemType == "爱心面包") {
-        auto food = std::make_shared<Food>(Food::FoodType::BREAD);
-        food->setAmount(amount);
-        addItem(food);
-    } else if (itemType == "瓦学弟蛋包饭") {
-        auto food = std::make_shared<Food>(Food::FoodType::WAXUEDI);
-        food->setAmount(amount);
-        addItem(food);
     }
 }
 
@@ -397,30 +388,22 @@ void Player::initializeInventory() {
     proteinBar->setAmount(0);
     inventory_.push_back(proteinBar);
 
-    auto coffee = std::make_shared<Food>(Food::FoodType::COFFEE);
-    coffee->setAmount(0);
-    inventory_.push_back(coffee);
-
-    auto bread = std::make_shared<Food>(Food::FoodType::BREAD);
-    bread->setAmount(0);
-    inventory_.push_back(bread);
-
-    auto waxuedi = std::make_shared<Food>(Food::FoodType::WAXUEDI);
-    waxuedi->setAmount(0);
-    inventory_.push_back(waxuedi);
-
     // 添加所有有用物品类型，数量为0
     auto boxingGloves = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GLOVES);
     boxingGloves->setAmount(0);
     inventory_.push_back(boxingGloves);
 
     auto gymPass = std::make_shared<UsefulItem>(UsefulItem::ItemType::BOXING_GYM_PASS);
-    gymPass->setAmount(0);
+    gymPass->setAmount(1);
     inventory_.push_back(gymPass);
 
     auto card = std::make_shared<UsefulItem>(UsefulItem::ItemType::CARD);
-    card->setAmount(0);
+    card->setAmount(1);
     inventory_.push_back(card);
+
+    auto bannedDrug = std::make_shared<UsefulItem>(UsefulItem::ItemType::BANNED_DRUG);
+    bannedDrug->setAmount(0);
+    inventory_.push_back(bannedDrug);
 
     auto revivalPill = std::make_shared<Medicine>(Medicine::MedicineType::REVIVAL_PILL);
     revivalPill->setAmount(0);
@@ -458,32 +441,10 @@ void Player::unlockEnemy(int enemyId) {
 
 void Player::unlockNextEnemy(int currentEnemyId) {
     int nextEnemyId = currentEnemyId + 1;
-    
     if (nextEnemyId > 0 && nextEnemyId < unlockedEnemies_.size()) {
         unlockedEnemies_[nextEnemyId] = true;
-        // std::cout << "DEBUG: Successfully unlocked enemy ID: " << nextEnemyId << std::endl;
-        // getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Successfully unlocked enemy ID:" + std::to_string(nextEnemyId));
-        
-        // 调试输出：打印所有已解锁的敌人
-        // std::cout << "DEBUG: Currently unlocked enemies: ";
-        // getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Currently unlocked enemies:");
-        std::string temp_s = "";
-        for (int i = 0; i < unlockedEnemies_.size(); i++) {
-            if (unlockedEnemies_[i]) {
-                temp_s += std::to_string(i);
-                temp_s += " ";
-            }
-        }
-        // getGameLogic().getDialog().addMessage("<SYSTEM>", temp_s);
-    } else {
-        /*
-        std::cout << "DEBUG: Cannot unlock enemy ID: " << nextEnemyId 
-                  << " (out of range, max size: " << unlockedEnemies_.size() << ")" << std::endl;
-        */
-       // getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Cannot unlock enemy ID:" + std::to_string(nextEnemyId));
     }
 }
-
 
 
 double Player::getSkillPoints() const {
@@ -602,48 +563,40 @@ void Player::setExMaxHunger(double value) {exMaxHunger = value;}
 std::vector<std::string> Player::getAllSkillsInfo() const {
     std::vector<std::string> result;
     auto allSkillNames = SkillFactory::getAllSkillNames();
-
+    
     for (const auto& skillName : allSkillNames) {
         auto skill = SkillFactory::createSkillByName(skillName);
         if (skill) {
-            if(skill -> getSkillPointCost() != 0){
-                std::string info = "[" + std::to_string(skill->getId()) + "] " +
-                                skillName + " - " + skill->getDescription() +
-                                " (消耗:" + std::to_string(skill->getUnlockCost()) + "技能点)";
-                result.push_back(info);
-            }
-            else {
-                std::string info = "[" + std::to_string(skill->getId()) + "] " +
-                                skillName + " - " + skill->getDescription() +
-                                " (不可学习)";
-                result.push_back(info);
-            }
+            std::string info = "[" + std::to_string(skill->getId()) + "] " + 
+                              skillName + " - " + skill->getDescription() + 
+                              " (消耗:" + std::to_string(skill->getUnlockCost()) + "技能点)";
+            result.push_back(info);
         }
     }
-
+    
     return result;
 }
 
 std::vector<std::string> Player::getLearnableSkillsInfo() const {
     std::vector<std::string> result;
     auto availableSkills = skillTreeManager.getAvailableSkills();
-
+    
     for (const auto& skillName : availableSkills) {
         auto skill = SkillFactory::createSkillByName(skillName);
         if (skill) {
             std::string status = "可学习";
             if (skillPoints < skill->getUnlockCost()) {
-                status = "技能点不足 (需要:" + std::to_string(skill->getUnlockCost()) +
+                status = "技能点不足 (需要:" + std::to_string(skill->getUnlockCost()) + 
                         ", 当前:" + std::to_string((int)skillPoints) + ")";
             }
-
-            std::string info = "[" + std::to_string(skill->getId()) + "] " +
-                              skillName + " - " + skill->getDescription() +
+            
+            std::string info = "[" + std::to_string(skill->getId()) + "] " + 
+                              skillName + " - " + skill->getDescription() + 
                               " (" + status + ")";
             result.push_back(info);
         }
     }
-
+    
     return result;
 }
 
@@ -657,11 +610,11 @@ bool Player::learnSkillById(int skillId) {
             break;
         }
     }
-
+    
     if (skillName.empty()) {
         return false;
     }
-
+    
     return learnSkill(skillName);
 }
 
@@ -675,27 +628,5 @@ int Player::getHighestUnlockedEnemy() const {
             return i;
         }
     }
-    
     return 0; // 如果没有解锁任何敌人，返回0
-}
-
-void Player::checkAndApplyDailyDecay(Game& game) {
-    unsigned int currentYear = GameTime::getYear();
-    unsigned int currentMonth = GameTime::getMonth();
-    unsigned int currentDay = GameTime::getDay();
-
-    // 检查日期是否变化（年、月、日任意一个变化）
-    if (currentYear != lastDecayYear || currentMonth != lastDecayMonth || currentDay != lastDecayDay) {
-        // 训练系统每日经验衰减信息
-        game_logic_.getDialog().addMessage("<SYSTEM>", "时间过了一天，你的训练经验有所衰减。");
-
-        // 调用训练系统的每日经验衰减
-        trainingSystem->applyDailyExperienceDecay(game);
-        
-        // 更新记录日期
-        lastDecayYear = currentYear;
-        lastDecayMonth = currentMonth;
-        lastDecayDay = currentDay;
-        
-    }
 }

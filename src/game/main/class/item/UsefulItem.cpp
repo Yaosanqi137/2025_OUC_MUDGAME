@@ -21,6 +21,9 @@ UsefulItem::UsefulItem(ItemType type) {
         case ItemType::CARD:
             *this = createCard();
             break;
+        case ItemType::BANNED_DRUG:
+            *this = createBannedDrug();
+            break;
         default:
             throw std::invalid_argument("Unknown useful item type");
     }
@@ -57,6 +60,11 @@ bool UsefulItem::use(Player& user) {
                         break;
                     case ItemType::CARD:
                         durability_ = 1;
+                        break;
+                    case ItemType::BANNED_DRUG:
+                        durability_ = 1;
+                        break;
+                    default:
                         break;
                 }
                 return true;
@@ -100,12 +108,17 @@ UsefulItem UsefulItem::createBoxingGloves(bool isUsable) {
 }
 
 UsefulItem UsefulItem::createBoxingGymPass(bool isUsable) {
-    return {ItemType::BOXING_GYM_PASS, "拳击馆通行证", "", 500, 15, isUsable};
+    return {ItemType::BOXING_GYM_PASS, "拳击馆通行证", "一张可以在拳击馆使用的通行证。一张能用15次，没了这个，就进不去拳击馆了，现在还剩" + std::to_string(15) + "次使用次数", 500, 15, isUsable};
 }
 
 UsefulItem UsefulItem::createCard(bool isUsable) {
     return {ItemType::CARD, "弗兰克的名片", "一张闪闪发光的名片，上面写着弗兰克，拳击手经纪人", 5, 1, isUsable};
 }
+
+UsefulItem UsefulItem::createBannedDrug(bool isUsable) {
+    return {ItemType::BANNED_DRUG, "禁药", "可以提升你的体力上限与生命上限，没有副作用，就是特别贵", 1999, 1, isUsable};
+}
+
 
 // 辅助函数，减少耐久度
 bool UsefulItem::decreaseDurability() {

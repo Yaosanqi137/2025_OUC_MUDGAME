@@ -10,17 +10,17 @@ namespace CafeScene {
     // 女仆咖啡购买成功对话
     inline const DialogNode _12000010(12000010, "女仆", "好喝魔法变变变！希里希里，哗啦哗啦", {}, 12000011);
     inline const DialogNode _12000011(12000011, "女仆", "好喝的咖啡来了~");
-
+    
     // 女仆咖啡钱不够对话
     inline const DialogNode _12000012(12000012, "女仆", "小哥哥，您身上的钱似乎不太够呢");
-
+    
     // 爱心面包购买成功对话
-    inline const DialogNode _12000020(12000020, "女仆", "跟我一起念咒语：希里希里，哗啦哗啦", {}, 12000021);
+    inline const DialogNode _12000020(12000020, "女仆", "跟我一起念咒语：���里希里，哗啦哗啦", {}, 12000021);
     inline const DialogNode _12000021(12000021, "女仆", "好吃魔法变变变！爱心面包来了~");
-
+    
     // 爱心面包钱不够对话
     inline const DialogNode _12000022(12000022, "女仆", "小哥哥，您身上的钱似乎不太够呢");
-
+    
     // 瓦学弟蛋包饭购买成功对话序列
     inline const DialogNode _12000030(12000030, "女仆", "极柔极柔，浓香浓香", {}, 12000031);
     inline const DialogNode _12000031(12000031, "女仆", "惊奇的心动魔法", {}, 12000032);
@@ -30,13 +30,13 @@ namespace CafeScene {
     inline const DialogNode _12000035(12000035, "<PLAYER_NAME>", "番茄酱恰到好处的酸味", {}, 12000036);
     inline const DialogNode _12000036(12000036, "<PLAYER_NAME>", "和酱汁的甘甜融合为一", {}, 12000037);
     inline const DialogNode _12000037(12000037, "<PLAYER_NAME>", "摇身一变，成为暖心的家常风味，滑润顺口！");
-
+    
     // 瓦学弟蛋包饭钱不够对话
     inline const DialogNode _12000038(12000038, "女仆", "小哥哥，您身上的钱似乎不太够呢");
-
+    
     // 退出对话
     inline const DialogNode _12000040(12000040, "女仆", "感谢光临！期待您下次品尝我们的精品！");
-
+    
     // 主菜单对话节点
     inline const DialogNode _12000001(12000001, "女仆", "菜单来咯，等一下让我来施展魔法哦",{
         Choice("女仆咖啡 - 60元", 0, [](const Game& game_logic_) {
