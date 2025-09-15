@@ -21,7 +21,12 @@ int Medicine::getPrice() const {
     return price;
 }
 
-void Medicine::use(Player& user) {
+bool Medicine::use(Player& user) {
+    // 检查是否有可用的物品
+    if (amount_ <= 0) {
+        return false;
+    }
+
     // 应用主要效果
     if (healthEffect != 0) {
         user.addHealth(user.getMaxHealth() + user.getExMaxHealth());
@@ -48,9 +53,11 @@ void Medicine::use(Player& user) {
         user.getTrainingSystem() -> setHasSideEffect(true);
     }
     
-    if (amount_ > 0) {
-        amount_--;
-    }
+    // 减少物品数量
+    amount_--;
+
+    // 返回true表示成功使用
+    return true;
 }
 
 Medicine::MedicineType Medicine::getMedicineType() const {
