@@ -19,7 +19,7 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , lo
                    maxFatigue(80), maxHealth(100), maxStamina(100), exMaxHunger(0),
                    exMaxFatigue(0), exMaxHealth(0), sustainDamageRate(1.0),
                    upperBodySustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),fatigueConsumeRate(1.0),
-                   exHitRate(0.0),money(1000),
+                   exHitRate(0.0),money(100),
                    skillPoints(5) {
     // 在构造函数中初始化背包
     initializeInventory();
