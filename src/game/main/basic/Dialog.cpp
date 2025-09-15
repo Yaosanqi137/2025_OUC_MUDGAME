@@ -71,9 +71,9 @@ void Dialog::processPlayerInput(std::string& input) {
         }
 
         // 处理战斗命令
-        if (input == "/enemy attack pass") {
+        if (input.find("/enemy attack pass") != std::string::npos) {
             // 处理跳过回合
-            battle->playerChooseAction(1); // 1 表示跳过回合
+            battle->playerChooseAction(1, 0); // 1 表示跳过回合
             return;
         } else if (input.rfind("/enemy attack skill ", 0) == 0) {
             // 处理技能攻击
@@ -98,6 +98,11 @@ void Dialog::processPlayerInput(std::string& input) {
             } catch (const std::exception& e) {
                 addMessage("<SYSTEM>", "错误: 无效的技能ID格式");
             }
+            return;
+        } else if (input.find("/enemy kill") != std::string::npos){
+            // 设置敌人血量为1点 - 调试命令
+            battle->setEnemyHealthToLow();
+            addMessage("<SYSTEM>", "调试命令: 已将敌人血量设置为1点");
             return;
         } else {
             // 不是战斗命令，显示错误消息
@@ -161,20 +166,8 @@ void Dialog::processPlayerInput(std::string& input) {
             } else {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在家里睡觉！");
             }
-        } else if (input == "/buy") {
-            if (loc == "商店") {
-                // 调用商店购买场景
-                game_logic_.getStoryController().processNodeByID(10000001);
-            } else if (loc == "药店") {
-                // 调用药店购买场景
-                game_logic_.getStoryController().processNodeByID(11000001);
-            } else if (loc == "咖啡馆") {
-                // 调用咖啡馆购买场景
-                game_logic_.getStoryController().processNodeByID(12000001);
-            } else {
-                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在商店、药店或咖啡馆购买东西！");
-            }
-        }else if (input == "/work") {
+        } else if (input == "/work") {
+
             if (loc == "工地") {
                 if (game_logic_.getPlayer().getFatigue() < 15) {
                     game_logic_.getDialog().addMessage("<SYSTEM>", "你太累了，无法工作！");
@@ -298,20 +291,23 @@ void Dialog::processPlayerInput(std::string& input) {
             game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy attack skill <id>: 使用技能攻击");
             game_logic_.getDialog().addMessage("<SYSTEM>", "/enemy attack pass: 跳过回合");
         }else if (input == "/enemy show") {
-            int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
-            BattleCommandHandler::showEnemyInfo(game_logic_, nextEnemyId);
-        } else if (input == "/enemy battle") {
-            // 检查是否在比赛场地
             if (loc != "比赛场地") {
-                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地进行战斗！");
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地查看敌人！");
                 return;
             }
             int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
-            BattleCommandHandler::startBattle(game_logic_, nextEnemyId);
-        } else {
-            // 对话，将其添加到历史记录中
-            addMessage(game_logic_.getPlayer().getName(), input);
+            BattleCommandHandler::showEnemyInfo(game_logic_, nextEnemyId);
+        } else if (input == "/enemy battle") {
+            if (loc != "比赛场地") {
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地进行拳击比赛！");
+                return;
+            }
+            int EnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy();
+            BattleCommandHandler::startBattle(game_logic_, EnemyId);
         }
+    } else {
+        // 对话，将其添加到历史记录中
+        addMessage(game_logic_.getPlayer().getName(), input);
     }
 }
 

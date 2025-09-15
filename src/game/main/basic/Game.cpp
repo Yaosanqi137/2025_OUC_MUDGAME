@@ -141,6 +141,16 @@ void Game::setCurrentBattle(std::shared_ptr<FightEvent> battle) {
 void Game::clearCurrentBattle() {
     currentBattle_ = nullptr;
     inBattle_ = false;
+    
+    // 确保游戏状态回到正常状态
+    if (currentState_ == GameState::InGame) {
+        // 如果已经是游戏状态，不需要改变
+    } else {
+        setGameState(GameState::InGame);
+    }
+    
+    // 清除输入请求
+    clearInputRequest();
 }
 
 bool Game::isInBattle() const {

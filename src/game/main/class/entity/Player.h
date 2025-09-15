@@ -160,7 +160,6 @@ public:
     bool learnSkillById(int skillId);
 
     Game& getGameLogic();
-
 protected:
     Game& game_logic_;
 

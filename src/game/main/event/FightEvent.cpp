@@ -257,6 +257,9 @@ void FightEvent::endBattle() {
     battleOver_ = true;
     battleState_ = BATTLE_STATE_BATTLE_OVER;
     
+    // 清除当前战斗
+    game_.clearCurrentBattle();
+    
     if (player_->getHealth() <= 0) {
         playerWon_ = false;
         game_.getDialog().addMessage("<SYSTEM>", "你被击败了！");
@@ -268,9 +271,17 @@ void FightEvent::endBattle() {
     } else if (enemy_->getHealth() <= 0) {
         playerWon_ = true;
         game_.getDialog().addMessage("<SYSTEM>", "你获胜了！");
+        
+        // 解锁下一个敌人
+        int enemyId = enemy_->getId();
+        // std::cout << "DEBUG: endBattle - enemy ID: " << enemyId << std::endl;
+        game_.getDialog().addMessage("<SYSTEM>", "DEBUG: endBattle - enemy ID: " + std::to_string(enemyId));
+        player_->unlockNextEnemy(enemyId);
+        
         applyBattleRewards();
     }
 }
+
 
 bool FightEvent::isBattleOver() const {
     return battleOver_ || player_->getHealth() <= 0 || enemy_->getHealth() <= 0;
@@ -326,7 +337,7 @@ void FightEvent::playerChooseAction(int action, int skillIndex) {
         }
         
         // 只有在成功处理行动后才推进战斗状态
-        if (battleState_ == BATTLE_STATE_PROCESSING) {
+        if (battleState_ == BATTLE_STATE_PROCESSING && !battleOver_) {
             advanceBattleState();
         }
     }
@@ -402,7 +413,9 @@ void FightEvent::processEnemyTurn() {
                                     "/" + std::to_string((int)enemy_->getMaxFatigue()));
         
         // 推进战斗状态
-        advanceBattleState();
+        if (!battleOver_) {
+            advanceBattleState();
+        }
     }
     catch (const std::exception& e) {
         game_.getDialog().addMessage("<SYSTEM>", "处理敌人行动时出错: " + std::string(e.what()));
@@ -423,11 +436,55 @@ bool FightEvent::checkHit(double hitRate) const {
 }
 
 void FightEvent::applyDamageToEnemy(double damage) {
+    // 确保伤害不为负
+    if (damage < 0) {
+        damage = 0;
+    }
+    
+    // 保存当前血量
+    double currentHealth = enemy_->getHealth();
+    
+    // 应用伤害
     enemy_->addHealth(-damage);
+    
+    // 确保生命值不低于0
+    if (enemy_->getHealth() < 0) {
+        enemy_->addHealth(-enemy_->getHealth()); // 设置为0
+    }
+    
+    // 检查敌人是否被击败
+    if (currentHealth > 0 && enemy_->getHealth() <= 0) {
+        // 敌人被击败，结束战斗
+        battleOver_ = true;
+        playerWon_ = true;
+        endBattle();
+    }
 }
 
 void FightEvent::applyDamageToPlayer(double damage) {
+    // 确保伤害不为负
+    if (damage < 0) {
+        damage = 0;
+    }
+    
+    // 保存当前血量
+    double currentHealth = player_->getHealth();
+    
+    // 应用伤害
     player_->addHealth(-damage);
+    
+    // 确保生命值不低于0
+    if (player_->getHealth() < 0) {
+        player_->addHealth(-player_->getHealth()); // 设置为0
+    }
+    
+    // 检查玩家是否被击败
+    if (currentHealth > 0 && player_->getHealth() <= 0) {
+        // 玩家被击败，结束战斗
+        battleOver_ = true;
+        playerWon_ = false;
+        endBattle();
+    }
 }
 
 void FightEvent::processPlayerSkill(int skillIndex) {
@@ -532,7 +589,7 @@ void FightEvent::processPlayerSkip() {
     // 跳过回合恢复20%体力
     double recoveryAmount = player_->getMaxFatigue() * 0.2;
     player_->addFatigue(recoveryAmount);
-    game_.getDialog().addMessage("<SYSTEM>", "你选择跳过回合，恢复了" + std::to_string((int)recoveryAmount) + "点体力");
+    player_->getGameLogic().getDialog().addMessage("<SYSTEM>", "你选择跳过回合，恢复了" + std::to_string((int)recoveryAmount) + "点体力");
 }
 
 void FightEvent::processEnemySkip() {
@@ -574,12 +631,12 @@ void FightEvent::applyBattleRewards() {
     }
     
     int enemyId = enemy_->getId();
-    
+    std::string enemyName = enemy_ -> getName();
     // 基础奖励
     switch (enemyId) {
         case 1: // 业余拳手
             player_->addSavings(0); // 教学战无奖励
-            game_.getDialog().addMessage("<SYSTEM>", "看来你还有很多要学呢。");
+            game_.getDialog().addMessage(enemyName, "看来你还有很多要学呢。");
             break;
             
         case 2: // 健身房常客
@@ -596,7 +653,7 @@ void FightEvent::applyBattleRewards() {
             player_->addSavings(50);
             player_->addSkillPoints(2);
             player_->getTrainingSystem()->setMoneyCostRate(0.5);
-            game_.getDialog().addMessage("<SYSTEM>", "呼…呼…不错，你真的变强了。拿着，这是我的VIP卡，以后来训练给你打折。");
+            game_.getDialog().addMessage(enemyName, "呼…呼…不错，你真的变强了。拿着，这是我的VIP卡，以后来训练给你打折。");
             game_.getDialog().addMessage("<SYSTEM>", "获得健身房VIP卡！训练费用减半！");
             break;
             
@@ -614,7 +671,7 @@ void FightEvent::applyBattleRewards() {
             player_->addSavings(100);
             player_->addSkillPoints(2);
             player_->getTrainingSystem()->setStaminaExpRate(player_->getTrainingSystem()->getStaminaExpRate() + 0.2);
-            game_.getDialog().addMessage("<SYSTEM>", "怎么可能…我的耐力竟然…输了…");
+            game_.getDialog().addMessage(enemyName, "怎么可能…我的耐力竟然…输了…");
             game_.getDialog().addMessage("<SYSTEM>", "获得耐力训练器！耐力训练效率+20%！");
             break;
             
@@ -634,14 +691,14 @@ void FightEvent::applyBattleRewards() {
             player_->addStrength(2);
             player_->addStamina(2);
             player_->addAgility(2);
-            game_.getDialog().addMessage("<SYSTEM>", "呃啊……世界级的舞台……果然……深不可测……");
+            game_.getDialog().addMessage(enemyName, "呃啊……世界级的舞台……果然……深不可测……");
             game_.getDialog().addMessage("<SYSTEM>", "获得冠军腰带！全属性+2！");
             break;
             
         case 11: // 世界拳王
             player_->addSavings(1000);
             player_->addSkillPoints(5);
-            game_.getDialog().addMessage("<SYSTEM>", "不可思议……新的王者……诞生了……这座王冠……是你的了……");
+            game_.getDialog().addMessage(enemyName, "不可思议……新的王者……诞生了……这座王冠……是你的了……");
             game_.getDialog().addMessage("<SYSTEM>", "女士们先生们！让我们欢呼吧！一位新的、无可争议的世界拳王！");
             break;
             
@@ -655,7 +712,7 @@ void FightEvent::applyBattleRewards() {
     player_->unlockNextEnemy(enemyId);
     
     // 显示奖励信息
-    game_.getDialog().addMessage("<SYSTEM>", "获得奖金: $" + std::to_string((int)player_->getSavings()));
+    game_.getDialog().addMessage("<SYSTEM>", "当前金钱: $" + std::to_string((int)player_->getSavings()));
     game_.getDialog().addMessage("<SYSTEM>", "当前技能点: " + std::to_string((int)player_->getSkillPoints()));
 }
 
@@ -705,3 +762,18 @@ void FightEvent::advanceBattleState() {
 }
 
 
+void FightEvent::setEnemyHealthToLow() {
+    // 设置敌人血量为1点
+    enemy_->addHealth(-(enemy_->getHealth() - 1));
+    
+    // 显示状态更新
+    game_.getDialog().addMessage("<SYSTEM>", "你的状态: 生命值 " + std::to_string((int)player_->getHealth()) + 
+                                "/" + std::to_string((int)player_->getMaxHealth()) +
+                                ", 体力 " + std::to_string((int)player_->getFatigue()) + 
+                                "/" + std::to_string((int)player_->getMaxFatigue()));
+    game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "的状态: 生命值 " + 
+                                std::to_string((int)enemy_->getHealth()) + "/" + 
+                                std::to_string((int)enemy_->getMaxHealth()) +
+                                ", 体力 " + std::to_string((int)enemy_->getFatigue()) + 
+                                "/" + std::to_string((int)enemy_->getMaxFatigue()));
+}
