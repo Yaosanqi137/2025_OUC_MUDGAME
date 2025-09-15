@@ -160,6 +160,9 @@ public:
     bool learnSkillById(int skillId);
 
     Game& getGameLogic();
+
+    // 检查日期变化并应用衰减
+    void checkAndApplyDailyDecay(Game& game);
 protected:
     Game& game_logic_;
 
@@ -217,6 +220,11 @@ private:
     // ATTENTION: 每日训练经验减少调用
     // player->getTrainingSystem()->applyDailyExperienceDecay();
     std::shared_ptr<TrainingEvent> trainingSystem; // 训练系统
+
+    // 用于训练系统计算是否衰减经验的属性
+    unsigned int lastDecayYear;  // 上次应用衰减的年份
+    unsigned int lastDecayMonth; // 上次应用衰减的月份
+    unsigned int lastDecayDay;   // 上次应用衰减的日期
 };
 
 #endif // PLAYER_H

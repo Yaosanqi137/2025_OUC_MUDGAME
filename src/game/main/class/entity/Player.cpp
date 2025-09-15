@@ -29,6 +29,11 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , lo
     unlockedEnemies_[0] = true;
     unlockedEnemies_[1] = true;
 
+    // 初始化上次衰减日期为当前游戏日期
+    lastDecayYear = GameTime::getYear();
+    lastDecayMonth = GameTime::getMonth();
+    lastDecayDay = GameTime::getDay();
+
     // 初始化技能树（可以初始化已学技能，暂时留个端口）
     // skillTreeManager_.addLearnedSkill("直拳");
 
@@ -454,19 +459,14 @@ void Player::unlockEnemy(int enemyId) {
 void Player::unlockNextEnemy(int currentEnemyId) {
     int nextEnemyId = currentEnemyId + 1;
     
-    // 调试输出
-    std::cout << "DEBUG: unlockNextEnemy - current: " << currentEnemyId 
-              << ", next: " << nextEnemyId 
-              << ", vector size: " << unlockedEnemies_.size() << std::endl;
-    
     if (nextEnemyId > 0 && nextEnemyId < unlockedEnemies_.size()) {
         unlockedEnemies_[nextEnemyId] = true;
         // std::cout << "DEBUG: Successfully unlocked enemy ID: " << nextEnemyId << std::endl;
-        getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Successfully unlocked enemy ID:" + std::to_string(nextEnemyId));
+        // getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Successfully unlocked enemy ID:" + std::to_string(nextEnemyId));
         
         // 调试输出：打印所有已解锁的敌人
         // std::cout << "DEBUG: Currently unlocked enemies: ";
-        getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Currently unlocked enemies:");
+        // getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Currently unlocked enemies:");
         std::string temp_s = "";
         for (int i = 0; i < unlockedEnemies_.size(); i++) {
             if (unlockedEnemies_[i]) {
@@ -474,13 +474,13 @@ void Player::unlockNextEnemy(int currentEnemyId) {
                 temp_s += " ";
             }
         }
-        getGameLogic().getDialog().addMessage("<SYSTEM>", temp_s);
+        // getGameLogic().getDialog().addMessage("<SYSTEM>", temp_s);
     } else {
         /*
         std::cout << "DEBUG: Cannot unlock enemy ID: " << nextEnemyId 
                   << " (out of range, max size: " << unlockedEnemies_.size() << ")" << std::endl;
         */
-       getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Cannot unlock enemy ID:" + std::to_string(nextEnemyId));
+       // getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Cannot unlock enemy ID:" + std::to_string(nextEnemyId));
     }
 }
 
@@ -606,10 +606,18 @@ std::vector<std::string> Player::getAllSkillsInfo() const {
     for (const auto& skillName : allSkillNames) {
         auto skill = SkillFactory::createSkillByName(skillName);
         if (skill) {
-            std::string info = "[" + std::to_string(skill->getId()) + "] " +
-                              skillName + " - " + skill->getDescription() +
-                              " (消耗:" + std::to_string(skill->getUnlockCost()) + "技能点)";
-            result.push_back(info);
+            if(skill -> getSkillPointCost() != 0){
+                std::string info = "[" + std::to_string(skill->getId()) + "] " +
+                                skillName + " - " + skill->getDescription() +
+                                " (消耗:" + std::to_string(skill->getUnlockCost()) + "技能点)";
+                result.push_back(info);
+            }
+            else {
+                std::string info = "[" + std::to_string(skill->getId()) + "] " +
+                                skillName + " - " + skill->getDescription() +
+                                " (不可学习)";
+                result.push_back(info);
+            }
         }
     }
 
@@ -669,4 +677,25 @@ int Player::getHighestUnlockedEnemy() const {
     }
     
     return 0; // 如果没有解锁任何敌人，返回0
+}
+
+void Player::checkAndApplyDailyDecay(Game& game) {
+    unsigned int currentYear = GameTime::getYear();
+    unsigned int currentMonth = GameTime::getMonth();
+    unsigned int currentDay = GameTime::getDay();
+
+    // 检查日期是否变化（年、月、日任意一个变化）
+    if (currentYear != lastDecayYear || currentMonth != lastDecayMonth || currentDay != lastDecayDay) {
+        // 训练系统每日经验衰减信息
+        game_logic_.getDialog().addMessage("<SYSTEM>", "时间过了一天，你的训练经验有所衰减。");
+
+        // 调用训练系统的每日经验衰减
+        trainingSystem->applyDailyExperienceDecay(game);
+        
+        // 更新记录日期
+        lastDecayYear = currentYear;
+        lastDecayMonth = currentMonth;
+        lastDecayDay = currentDay;
+        
+    }
 }
