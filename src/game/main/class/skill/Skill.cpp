@@ -104,7 +104,7 @@ bool Skill::canUse(const Player& user) const {
 }
 
 bool Skill::canUse(const Enemy& user) const {
-    if (isLocked) return false;
+    // if (isLocked) return false;
     
     double requiredStamina = calculateStaminaCost(user.getStrength());
     if (user.getFatigue() < requiredStamina) return false;

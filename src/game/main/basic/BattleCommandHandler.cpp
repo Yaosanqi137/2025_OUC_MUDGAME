@@ -13,7 +13,7 @@ void BattleCommandHandler::showEnemyInfo(Game& game, int enemyId) {
         }
         
         // 使用 FightEvent 的静态方法创建敌人
-        auto enemy = FightEvent::createEnemyById(enemyId);
+        auto enemy = FightEvent::createEnemyById(enemyId - 1);
         
         // 检查 enemy 是否有效
         if (!enemy) {

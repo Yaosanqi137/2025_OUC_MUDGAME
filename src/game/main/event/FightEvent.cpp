@@ -199,7 +199,13 @@ void FightEvent::startBattle() {
         currentRound_ = 1;
         
         game_.getDialog().addMessage("<SYSTEM>", "战斗开始了，对手是" + enemy_->getName());
-        
+        game_.getDialog().addMessage("<SYSTEM>", "他的攻击技能是:");
+        for (int i = 0; i < enemy_ -> getSkills().size(); i++) {
+            if (enemy_->getSkills()[i]->isAttackSkill()) {
+                game_.getDialog().addMessage("<SYSTEM>", "ID: " + std::to_string(enemy_->getSkills()[i]->getId()) + 
+                    " - " + enemy_->getSkills()[i]->getSkillName() + ": " + enemy_->getSkills()[i]->getDescription());
+            }
+        }
         // 显示敌人信息
         game_.getDialog().addMessage("<SYSTEM>", "敌人属性: 力量 " + std::to_string((int)enemy_->getStrength()) +
                                     ", 耐力 " + std::to_string((int)enemy_->getStamina()) +
@@ -275,7 +281,7 @@ void FightEvent::endBattle() {
         // 解锁下一个敌人
         int enemyId = enemy_->getId();
         // std::cout << "DEBUG: endBattle - enemy ID: " << enemyId << std::endl;
-        game_.getDialog().addMessage("<SYSTEM>", "DEBUG: endBattle - enemy ID: " + std::to_string(enemyId));
+        // game_.getDialog().addMessage("<SYSTEM>", "DEBUG: endBattle - enemy ID: " + std::to_string(enemyId));
         player_->unlockNextEnemy(enemyId);
         
         applyBattleRewards();

@@ -54,7 +54,6 @@ public:
     void setFatigueConsumeRate(double rate);
     void setExHitRate(double rate);
     // 上面是特殊技能效果函数
-
 private:
     int id;
     std::string name;

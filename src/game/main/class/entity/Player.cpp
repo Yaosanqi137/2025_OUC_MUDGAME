@@ -26,6 +26,8 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , lo
 
     // 初始化敌人解锁列表
     unlockedEnemies_.resize(12, false);
+    unlockedEnemies_[0] = true;
+    unlockedEnemies_[1] = true;
 
     // 初始化技能树（可以初始化已学技能，暂时留个端口）
     // skillTreeManager_.addLearnedSkill("直拳");
@@ -662,7 +664,6 @@ int Player::getHighestUnlockedEnemy() const {
     // 从最高ID开始向下查找，找到第一个已解锁的敌人
     for (int i = unlockedEnemies_.size() - 1; i >= 0; --i) {
         if (unlockedEnemies_[i]) {
-            std::cout << "DEBUG: Highest unlocked enemy ID: " << i << std::endl;
             return i;
         }
     }
