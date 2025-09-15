@@ -169,6 +169,7 @@ Element ShopLayout::Render() {
     std::string itemDetailPrice;
     std::string playerMoney = "您的金钱: " + std::to_string(static_cast<int>(player_.getSavings())) + " 元";
     bool canBuy = false;
+    bool itemSelected = false;
 
     if (selectedItemIndex_ >= 0 && selectedItemIndex_ < static_cast<int>(shopItems_.size())) {
         const auto& item = shopItems_[selectedItemIndex_];
@@ -176,6 +177,7 @@ Element ShopLayout::Render() {
         itemDetailDesc = "描述: " + item.description;
         itemDetailPrice = "价格: " + std::to_string(item.price) + " 元";
         canBuy = player_.getSavings() >= item.price;
+        itemSelected = true;
     }
 
     auto detailPanel = vbox({
@@ -187,7 +189,9 @@ Element ShopLayout::Render() {
         separator(),
         text(playerMoney) | center | color(Color::Cyan),
         separator(),
-        (canBuy ? buyButton_->Render() : text("金钱不足") | color(Color::Red)) | center
+        itemSelected ?
+            (canBuy ? buyButton_->Render() : text("金钱不足") | color(Color::Red)) | center :
+            text("") | center
     }) | border | size(WIDTH, EQUAL, 30);
 
     // 分页控制
