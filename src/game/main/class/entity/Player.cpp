@@ -15,7 +15,7 @@ Bug to fix: not link to BagLayout(ui) yet
 
 Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , strength(1),
                    stamina(1), agility(1), hunger(80), fatigue(80), money(100), location("???"), health(100),
-                   minStrength(0), minStamina(0), minAgility(0), skillPoints(0),
+                   minStrength(0), minStamina(0), minAgility(0), skillPoints(5),
                    maxHunger(80), maxFatigue(80), maxHealth(100),
                    exMaxHunger(0), exMaxFatigue(0), exMaxHealth(0),
                    sustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),upperBodySustainDamageRate(1.0),
@@ -30,7 +30,9 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , st
 
     // 初始化技能树（可以初始化已学技能，暂时留个端口）
     // skillTreeManager_.addLearnedSkill("直拳");
-
+    unlockedEnemies_.resize(12);
+    unlockedEnemies_[0] = true;
+    unlockedEnemies_[1] = true;
     // 初始化训练系统
     trainingSystem = std::make_shared<TrainingEvent>(std::shared_ptr<Player>(this, [](Player*){}));
 }
