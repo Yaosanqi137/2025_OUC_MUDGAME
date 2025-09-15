@@ -20,9 +20,12 @@ Player::Player(Game& game_logic) : game_logic_(game_logic), name("NOT_SET") , lo
                    exMaxFatigue(0), exMaxHealth(0), sustainDamageRate(1.0),
                    upperBodySustainDamageRate(1.0),lowerBodySustainDamageRate(1.0),fatigueConsumeRate(1.0),
                    exHitRate(0.0),money(100),
-                   skillPoints(20) {
+                   skillPoints(5) {
     // 在构造函数中初始化背包
     initializeInventory();
+
+    // 初始化敌人解锁列表
+    unlockedEnemies_.resize(12, false);
 
     // 初始化技能树（可以初始化已学技能，暂时留个端口）
     // skillTreeManager_.addLearnedSkill("直拳");
@@ -448,10 +451,37 @@ void Player::unlockEnemy(int enemyId) {
 
 void Player::unlockNextEnemy(int currentEnemyId) {
     int nextEnemyId = currentEnemyId + 1;
+    
+    // 调试输出
+    std::cout << "DEBUG: unlockNextEnemy - current: " << currentEnemyId 
+              << ", next: " << nextEnemyId 
+              << ", vector size: " << unlockedEnemies_.size() << std::endl;
+    
     if (nextEnemyId > 0 && nextEnemyId < unlockedEnemies_.size()) {
         unlockedEnemies_[nextEnemyId] = true;
+        // std::cout << "DEBUG: Successfully unlocked enemy ID: " << nextEnemyId << std::endl;
+        getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Successfully unlocked enemy ID:" + std::to_string(nextEnemyId));
+        
+        // 调试输出：打印所有已解锁的敌人
+        // std::cout << "DEBUG: Currently unlocked enemies: ";
+        getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Currently unlocked enemies:");
+        std::string temp_s = "";
+        for (int i = 0; i < unlockedEnemies_.size(); i++) {
+            if (unlockedEnemies_[i]) {
+                temp_s += std::to_string(i);
+                temp_s += " ";
+            }
+        }
+        getGameLogic().getDialog().addMessage("<SYSTEM>", temp_s);
+    } else {
+        /*
+        std::cout << "DEBUG: Cannot unlock enemy ID: " << nextEnemyId 
+                  << " (out of range, max size: " << unlockedEnemies_.size() << ")" << std::endl;
+        */
+       getGameLogic().getDialog().addMessage("<SYSTEM>", "DEBUG: Cannot unlock enemy ID:" + std::to_string(nextEnemyId));
     }
 }
+
 
 
 double Player::getSkillPoints() const {
@@ -632,8 +662,10 @@ int Player::getHighestUnlockedEnemy() const {
     // 从最高ID开始向下查找，找到第一个已解锁的敌人
     for (int i = unlockedEnemies_.size() - 1; i >= 0; --i) {
         if (unlockedEnemies_[i]) {
+            std::cout << "DEBUG: Highest unlocked enemy ID: " << i << std::endl;
             return i;
         }
     }
+    
     return 0; // 如果没有解锁任何敌人，返回0
 }
