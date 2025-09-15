@@ -167,7 +167,7 @@ void Dialog::processPlayerInput(std::string& input) {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在家里睡觉！");
             }
         } else if (input == "/work") {
-            
+
             if (loc == "工地") {
                 if (game_logic_.getPlayer().getFatigue() < 15) {
                     game_logic_.getDialog().addMessage("<SYSTEM>", "你太累了，无法工作！");
@@ -302,8 +302,8 @@ void Dialog::processPlayerInput(std::string& input) {
                 game_logic_.getDialog().addMessage("<SYSTEM>", "你只能在比赛场地进行拳击比赛！");
                 return;
             }
-            int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
-            BattleCommandHandler::startBattle(game_logic_, nextEnemyId);
+            int EnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy();
+            BattleCommandHandler::startBattle(game_logic_, EnemyId);
         } else {
             // 对话，将其添加到历史记录中
             addMessage(game_logic_.getPlayer().getName(), input);

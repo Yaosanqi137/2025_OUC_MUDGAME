@@ -53,6 +53,9 @@ public:
     // 敌人创建工厂方法
     static std::shared_ptr<Enemy> createEnemyById(int enemyId);
 
+    // 战斗调试
+    void setEnemyHealthToLow();
+
 private:
     std::shared_ptr<Player> player_;
     std::shared_ptr<Enemy> enemy_;
@@ -91,6 +94,7 @@ private:
     
     // 战斗流程控制
     void advanceBattleState();
+
 };
 
 #endif // FIGHTEVENT_H
