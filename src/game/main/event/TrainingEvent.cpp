@@ -2,13 +2,14 @@
 #include "../class/entity/Player.h"
 #include <cmath>
 #include <algorithm>
+#include <utility>
 #include "../basic/Game.h"
 #include "../basic/Dialog.h"
 TrainingEvent::TrainingEvent(std::shared_ptr<Player> player_)
-    : player(player_), strengthExp(0), agilityExp(0), staminaExp(0),
-      strengthLevel(1), agilityLevel(1), staminaLevel(1),
+    : player(std::move(player_)), strengthExp(0), agilityExp(0), staminaExp(0),
       strengthExpRate(1.0), agilityExpRate(1.0), staminaExpRate(1.0),
-      hasSideEffect(false), moneyCostRate(1.0) {}
+      moneyCostRate(1.0), strengthLevel(1), agilityLevel(1),
+      staminaLevel(1), hasSideEffect(false) {}
 
 
 std::string TrainingEvent::getTrainingStatus() const {
@@ -25,9 +26,9 @@ std::string TrainingEvent::getTrainingStatus() const {
 std::string TrainingEvent::getTrainingHelp() {
     return "=== 训练指令帮助 ===\n"
            "/train status - 查看训练状态\n"
-           "/train strength - 进行力量训练\n"
-           "/train agility - 进行敏捷训练\n"
-           "/train stamina - 进行耐力训练\n"
+           "/train str - 进行力量训练\n"
+           "/train ag - 进行敏捷训练\n"
+           "/train sta - 进行耐力训练\n"
            "训练消耗: 10金币, 25体力, 25饱食度\n"
            "训练收益: 300对应属性经验";
 }

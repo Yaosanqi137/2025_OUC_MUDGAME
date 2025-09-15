@@ -190,6 +190,7 @@ Element BagLayout::Render() {
         pageInfo | center,
         filler(),
         pageNextButton_->Render(),
+        pageNextButton_->Render(),
         separator(),
         exitButton_->Render()
     });

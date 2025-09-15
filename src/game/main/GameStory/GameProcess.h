@@ -4,6 +4,9 @@
 #include "../basic/Game.h"
 #include "../basic/InputProcess.h"
 #include "Story/chapter1.h"
+#include "../GameStory/Scene/CafeScene.h"
+#include "../GameStory/Scene/PharmacyScene.h"
+#include "../GameStory/Scene/ShopScene.h"
 
 /**
  * @class GameProcess
