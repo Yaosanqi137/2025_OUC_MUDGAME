@@ -15,6 +15,13 @@
 #include <functional>
 #include <set>
 
+// 战斗状态定义
+#define BATTLE_STATE_INITIALIZING 0    // 战斗初始化
+#define BATTLE_STATE_PLAYER_TURN 1     // 玩家回合
+#define BATTLE_STATE_ENEMY_TURN 2      // 敌人回合
+#define BATTLE_STATE_PROCESSING 3      // 处理行动结果
+#define BATTLE_STATE_BATTLE_OVER 4     // 战斗结束
+
 // 战斗动作常量
 const int FIGHT_ACTION_SKILL = 0;
 const int FIGHT_ACTION_SKIP = 1;
@@ -38,6 +45,7 @@ public:
     bool isEnemyWinner() const;
     bool isPlayerTurn() const;
     int getCurrentRound() const;
+    int getBattleState() const;
     
     // 战斗奖励和应用
     void applyBattleRewards();
@@ -52,9 +60,9 @@ private:
     
     bool battleOver_;
     bool playerWon_;
-    bool playerTurn_;
     int currentRound_;
-    
+    int battleState_; // 战斗状态
+
     // 战斗辅助方法
     void configureEnemySkills();
     bool checkHit(double hitRate) const;
@@ -80,6 +88,9 @@ private:
     
     // 初始化敌人工厂
     static void initializeEnemyFactory();
+    
+    // 战斗流程控制
+    void advanceBattleState();
 };
 
 #endif // FIGHTEVENT_H
