@@ -4,6 +4,7 @@
 #include "InputProcess.h"
 #include "StoryController.h"
 #include "../event/TrainingEvent.h"
+#include "BattleCommandHandler.h" // 包含新的命令处理器
 #include <random>
 
 Dialog::Dialog(Game& game_logic) : game_logic_(game_logic) {}
@@ -48,6 +49,18 @@ void Dialog::processPlayerInput(std::string& input) {
     if (input.empty()) {
         return;
     }
+
+    //检查是否在战斗中
+    if (game_logic_.isInBattle()) {
+        // 使用新的命令处理器处理战斗命令
+        if (BattleCommandHandler::handleCommand(game_logic_, input)) {
+            return;
+        } else {
+            addMessage("<SYSTEM>", "在战斗中，请使用战斗命令: /enemy attack skill <id> 或 /enemy attack pass");
+            return;
+        }
+    }
+
 
     // 命令与对话
     if (input[0] == '/') {
@@ -204,7 +217,13 @@ void Dialog::processPlayerInput(std::string& input) {
                 return;
             }
             game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::STAMINA, game_logic_);
-        }else {
+        } else if (input == "/enemy show") {
+            int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
+            BattleCommandHandler::showEnemyInfo(game_logic_, nextEnemyId);
+        } else if (input == "/enemy battle") {
+            int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
+            BattleCommandHandler::startBattle(game_logic_, nextEnemyId);
+        } else {
             // 对话，将其添加到历史记录中
             addMessage(game_logic_.getPlayer().getName(), input);
         }
