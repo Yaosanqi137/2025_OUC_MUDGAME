@@ -13,14 +13,15 @@
 
 using namespace ftxui;
 
-MapLayout::MapLayout(Game& game_logic, bool& isShowingFlag)
-    : game_logic_(game_logic), isShowingFlag_(isShowingFlag) {
+// 修正：构造函数参数与头文件一致，移除 isShowingFlag 参数
+MapLayout::MapLayout(Game& game_logic)
+    : game_logic_(game_logic), isShowing_(false) {  // 初始化 isShowing_ 成员
     initializeLocations();
 
     buttonTaxi_ = Button("计程车 (15元)", [this] { travelBy("taxi"); });
     buttonWalk_ = Button("步行", [this] { travelBy("walk"); });
     buttonCancelTravel_ = Button("取消", [this] { viewMode_ = 0; });
-    buttonExit_ = Button("[ 退出地图 ]", [this] { isShowingFlag_ = false; });
+    buttonExit_ = Button("[ 退出地图 ]", [this] { hide(); });  // 使用 hide() 方法
 
     dialogContainer_ = Container::Vertical({
         buttonTaxi_,
@@ -28,17 +29,18 @@ MapLayout::MapLayout(Game& game_logic, bool& isShowingFlag)
         buttonCancelTravel_,
     });
 
-    Add(Container::Vertical({
+    // 修正：使用头文件中定义的 container_ 成员
+    container_ = Container::Vertical({
         dialogContainer_,
         buttonExit_,
-    }));
+    });
+    Add(container_);  // 将容器添加到组件树
 }
 
 void MapLayout::resetState() {
     viewMode_ = 0;
-    // 找到玩家当前位置对应的地图ID
     const std::string& player_loc_name = game_logic_.getPlayer().getLocation();
-    std::string start_id = "home"; // 默认值
+    std::string start_id = "home";
     for (const auto& [id, loc] : locations_) {
         if (loc.name == player_loc_name) {
             start_id = id;
@@ -63,20 +65,10 @@ void DrawLocationNode(Canvas& canvas, const MapLocation& loc, Color color, bool 
         tl = "┌"; tr = "┐"; bl = "└"; br = "┘"; h = "─"; v = "│";
     }
 
-    // 1. 绘制空心方框
-    // 1.1 构造顶部和底部边框线
-    std::string horizontalLine;
-    for (int i = 0; i < boxWidth - 2; ++i) {
-        horizontalLine += h;
-    }
-    canvas.DrawText(startX, startY, std::string(tl) + horizontalLine + std::string(tr), color);
-    canvas.DrawText(startX, startY + 2, std::string(bl) + horizontalLine + std::string(br), color);
-
-    // 1.2 绘制侧边框
-    canvas.DrawText(startX, startY + 1, v, color);
-    canvas.DrawText(startX + boxWidth - 1, startY + 1, v, color);
-
-    // 2. 在方框内部的正确位置单独绘制地名文本
+    canvas.DrawText(startX, startY, std::string(tl) + std::string(boxWidth - 2, *h) + std::string(tr), color);
+    canvas.DrawText(startX, startY + 2, std::string(bl) + std::string(boxWidth - 2, *h) + std::string(br), color);
+    canvas.DrawText(startX, startY + 1, *v, color);
+    canvas.DrawText(startX + boxWidth - 1, startY + 1, *v, color);
     canvas.DrawText(startX + 2, startY + 1, displayName, color);
 }
 
@@ -109,16 +101,16 @@ bool MapLayout::OnEvent(Event event) {
 }
 
 void MapLayout::initializeLocations() {
-    locations_["home"]         = {"家",         "家",         80, 42, "cafe", "", "", ""};
-    locations_["cafe"]         = {"咖啡馆",     "咖啡馆",     80, 32, "store", "home", "", ""};
-    locations_["store"]        = {"商店",       "商店",       80, 22, "arena", "cafe", "gym", "pharmacy"};
-    locations_["gym"]          = {"拳击馆",     "拳击馆",     40, 22, "construction", "", "", "store"};
-    locations_["construction"] = {"工地",       "工地",       40, 12, "", "gym", "", ""};
-    locations_["arena"]        = {"比赛场地",   "比赛场地",   80,  5, "", "store", "", ""};
-    locations_["pharmacy"]     = {"药店",       "药店",     120, 22, "", "", "store", ""};
+    locations_["home"]         = {"home",         "家",         80, 42, "cafe", "", "", ""};
+    locations_["cafe"]         = {"cafe",         "咖啡馆",     80, 32, "store", "home", "", ""};
+    locations_["store"]        = {"store",        "商店",       80, 22, "arena", "cafe", "gym", "pharmacy"};
+    locations_["gym"]          = {"gym",          "拳击馆",     40, 22, "construction", "", "", "store"};
+    locations_["construction"] = {"construction", "工地",       40, 12, "", "gym", "", ""};
+    locations_["arena"]        = {"arena",        "比赛场地",   80,  5, "", "store", "", ""};
+    locations_["pharmacy"]     = {"pharmacy",     "药店",     120, 22, "", "", "store", ""};
 }
 
-// 处理购买命令的函数
+// 新增：处理购买命令的函数
 void MapLayout::processBuyCommand(const std::string& itemName) {
     Player& player = game_logic_.getPlayer();
     const std::string& currentLoc = player.getLocation();
@@ -243,137 +235,80 @@ void MapLayout::travelBy(const std::string& method) {
     } else if (destination.name == "拳击馆") {
         game_logic_.getDialog().addMessage("", "你来到了拳击馆，看到几个拳击手正在挥汗如雨的训练");
         game_logic_.getDialog().addMessage("教练", "准备练拳！赶紧输入/train指令吧！");
-        game_logic_.getDialog().addMessage("", "角落里的自动售货机可以购买补充能量的物品：");
-        game_logic_.getDialog().addMessage("", "【商品】能量饮料（饱食度+5 体力+10 价格18元）");
-        game_logic_.getDialog().addMessage("", "【商品】巧克力棒（饱食度+5 体力+5 价格12元）");
-        game_logic_.getDialog().addMessage("", "【商品】蛋白质棒（饱食度+15 价格18元）");
-    } else if (destination.name == "比赛场地") {
-        game_logic_.getDialog().addMessage("", "你来到了比赛场地，这里经常举办各种拳击比赛");
-        game_logic_.getDialog().addMessage("", "看着上面的擂台，你不由得心潮澎湃");
-    } else if (destination.name == "商店") {
-        game_logic_.getDialog().addMessage("", "你来到了商店，这里可以买到各种生活用品和食物");
-        game_logic_.getDialog().addMessage("商店老板", "欢迎光临，有什么需要的吗？吃的喝的都可以在这里买哦");
-        game_logic_.getDialog().addMessage("", "【商品】鸡肉（饱食度+20 血量+5 价格12元）");
-        game_logic_.getDialog().addMessage("", "【商品】猪肉（饱食度+20 血量+5 价格12元）");
-        game_logic_.getDialog().addMessage("", "【商品】牛肉（饱食度+20 血量+5 价格12元）");
-        game_logic_.getDialog().addMessage("", "【商品】苏打水（饱食度+9 价格6元）");
-        game_logic_.getDialog().addMessage("", "【商品】能量饮料（饱食度+5 体力+10 价格14元）");
-        game_logic_.getDialog().addMessage("", "【商品】冷冻披萨（血量+10 饱食度+17 价格9元）");
-        game_logic_.getDialog().addMessage("", "【提示】购买的食物将存放在冰箱中，每种食物上限为7个");
-    } else if (destination.name == "药店") {
-        game_logic_.getDialog().addMessage("", "你来到了药店，这里可以买到药品和营养品");
-        game_logic_.getDialog().addMessage("药店小姐", "你好呀，请问哪里不舒服呢？");
-        game_logic_.getDialog().addMessage("", "【商品】创伤恢复包（战败受伤时直接恢复伤病状态 3个 价格50元）");
-        game_logic_.getDialog().addMessage("", "【商品】力量属性强化剂（提升属性值+1 单价200元）");
-        game_logic_.getDialog().addMessage("", "【商品】耐力属性强化剂（提升属性值+1 单价200元）");
-        game_logic_.getDialog().addMessage("", "【商品】敏捷属性强化剂（提升属性值+1 单价200元）");
-        game_logic_.getDialog().addMessage("", "【警告】使用属性强化剂会导致能力下降速度提升一倍（永久效果）");
-        game_logic_.getDialog().addMessage("", "【商品】技能点药剂（获得1个技能点 价格100元）");
-    } else if (destination.name == "咖啡馆") {
-        game_logic_.getDialog().addMessage("", "你来到了咖啡馆，这里有各种美味的饮品和甜点");
-        game_logic_.getDialog().addMessage("", "此时，一个可爱的，穿着女仆装的少女走了过来");
-        game_logic_.getDialog().addMessage("女仆", "你好呀，欢迎来到女仆咖啡馆，请问需要点什么吗？");
-        game_logic_.getDialog().addMessage("女仆", "我们这里有这里最好吃最好喝的甜点和饮品哦~");
-        game_logic_.getDialog().addMessage("", "【商品】咖啡（88元） | 巧克力可颂（38元） | 抹茶可颂（38元）");
-        game_logic_.getDialog().addMessage("", "【商品】巧克力巴斯克（38元） | 抹茶巴斯克（38元）");
     }
-
-    // 首次旅行帮助信息
-    if (player.isFirstTimeTravel()) {
-        game_logic_.getDialog().addMessage("【系统提示】", "这是你第一次旅行！");
-        game_logic_.getDialog().addMessage("【系统提示】", "在任意场景中输入/use可以获取该场景的使用帮助。");
-        game_logic_.getDialog().addMessage("【系统提示】", "输入/buy [商品名] 可以购买物品，例如: /buy 鸡肉");
-        player.setFirstTimeTravel(false);
-    }
-
+    
+    // 旅行结束后更新玩家位置并隐藏地图
     player.setLocation(destination.name);
-    isShowingFlag_ = false;
+    hide();
 }
 
+// 实现头文件中声明的 Render 方法
 Element MapLayout::Render() {
-    auto legend = hbox({
-        text("图例: "),
-        text("■") | color(Color::Green) | bold, text(" 已选择  "),
-        text("■") | color(Color::Yellow) | bold, text(" 当前位置  "),
-        text("■") | color(Color::GrayLight), text(" 其他地点"),
-    });
+    if (!isShowing()) {
+        return text("");
+    }
 
-    // 显著增大画布尺寸
-    auto canvas = Canvas(160, 45);
-    const std::string& player_loc_name = game_logic_.getPlayer().getLocation();
-    std::string player_loc_id = "home";
+    // 创建画布并绘制地图
+    auto canvas = Canvas(160, 50);
+    Color defaultColor = Color::White;
+
+    // 绘制所有地点
     for (const auto& [id, loc] : locations_) {
-        if (loc.name == player_loc_name) {
-            player_loc_id = id;
-            break;
-        }
+        bool isSelected = (id == selectedLocationId_);
+        DrawLocationNode(canvas, loc, defaultColor, isSelected);
     }
 
-    // 先绘制所有连接线，让它们作为背景
+    // 绘制连接线（可选）
     for (const auto& [id, loc] : locations_) {
-        for (const auto& navId : {loc.nav_up, loc.nav_down, loc.nav_left, loc.nav_right}) {
-            if (!navId.empty() && locations_.contains(navId)) {
-                const auto& neighbor = locations_.at(navId);
-                // 使用更暗的颜色绘制连接线，以突出节点
-                canvas.DrawPointLine(loc.x, loc.y, neighbor.x, neighbor.y, Color::GrayDark);
-            }
+        if (!loc.nav_up.empty()) {
+            auto& upLoc = locations_.at(loc.nav_up);
+            canvas.DrawLine(loc.x, loc.y, upLoc.x, upLoc.y, '-', defaultColor);
+        }
+        if (!loc.nav_down.empty()) {
+            auto& downLoc = locations_.at(loc.nav_down);
+            canvas.DrawLine(loc.x, loc.y, downLoc.x, downLoc.y, '-', defaultColor);
+        }
+        if (!loc.nav_left.empty()) {
+            auto& leftLoc = locations_.at(loc.nav_left);
+            canvas.DrawLine(loc.x, loc.y, leftLoc.x, leftLoc.y, '|', defaultColor);
+        }
+        if (!loc.nav_right.empty()) {
+            auto& rightLoc = locations_.at(loc.nav_right);
+            canvas.DrawLine(loc.x, loc.y, rightLoc.x, rightLoc.y, '|', defaultColor);
         }
     }
 
-    // 在连接线之上绘制所有地点节点
-    for (const auto& [id, loc] : locations_) {
-        Color nodeColor = Color::GrayLight; // 普通地点的默认颜色
-        std::string extraText;
+    // 构建地图元素
+    auto mapElement = canvas.Render() | border;
 
-        if (id == player_loc_id) {
-            nodeColor = Color::Yellow;
-            extraText = " (你)";
-        }
-        // 如果当前地点被选中，绿色会覆盖黄色
-        if (id == selectedLocationId_) {
-            nodeColor = Color::Green;
-        }
+    // 构建对话框（当viewMode为1时显示）
+    auto dialogElement = viewMode_ == 1 
+        ? window(text("选择出行方式"), dialogContainer_->Render()) | size(WIDTH, LESS_THAN, 30)
+        : emptyElement();
 
-        // 调用节点绘制函数
-        DrawLocationNode(canvas, loc, nodeColor, (id == selectedLocationId_), extraText);
-    }
-
-    // 创建右下角的出行方式选择区域
-    Element travelDialog = text("");
-    if (viewMode_ == 1) {
-        auto& dest = locations_.at(selectedLocationId_);
-        travelDialog = vbox({
-            text("前往 " + dest.name) | bold | color(Color::Yellow),
-            hbox({
-                buttonTaxi_->Render() | size(WIDTH, LESS_THAN, 20),
-                text(" "),
-                buttonWalk_->Render() | size(WIDTH, LESS_THAN, 20),
-                text(" "),
-                buttonCancelTravel_->Render() | size(WIDTH, LESS_THAN, 20)
-            })
-        }) | border | size(WIDTH, LESS_THAN, 35) | size(HEIGHT, LESS_THAN, 10);
-    }
-
-    auto mapElement = vbox({
-        legend | center,
+    // 组合最终布局
+    return vbox({
+        text("游戏地图") | bold | hcenter,
         separator(),
         hbox({
-            ftxui::canvas(std::move(canvas)) | flex_grow,
-            viewMode_ == 1 ? vbox({
-                filler(),
-                travelDialog
-            }) : filler()
+            mapElement | flex,
+            dialogElement
         }) | flex,
         separator(),
-        vbox({
-            text("使用 [↑↓←→] 移动选择, [Home] 确认, [↑↓]键选择出行方式或退选") | color(Color::GrayLight),
-            text("如果选择[计程车]出行，则需要花费15元并流逝4~10分钟") | color(Color::GrayLight),
-            text("选择[步行]则不花钱但流逝10~25分钟，并消耗5点饥饿值和3点体力") | color(Color::GrayLight),
-            text("注：如果没有足够的钱打车，则只能选择步行") | color(Color::GrayLight),
-            separator(),
-            buttonExit_->Render() | center
-        })
-    });
+        buttonExit_->Render() | hcenter
+    }) | border | clear_under;
+}
 
-    return window(text(" 地图 ") | bold, mapElement) | clear_under;
+// 实现头文件中声明的显示/隐藏方法
+void MapLayout::show() {
+    isShowing_ = true;
+    resetState();  // 显示时重置状态
+}
+
+void MapLayout::hide() {
+    isShowing_ = false;
+}
+
+bool MapLayout::isShowing() const {
+    return isShowing_;
 }
