@@ -140,6 +140,15 @@ void Player::addHealth(double value) {
 
 void Player::addSavings(const double value) {
     money += value;
+    money = std::max(0.0, money); // 确保积蓄不为负
+
+    if (money <= 0.0) {
+        game_logic_.getDialog().addMessage("支付包", "亲亲，这里检测到你快没钱了哦");
+        game_logic_.getDialog().addMessage("支付包", "支付包最近有新活动，赠送钱包为空的用户5元现金哦");
+        game_logic_.getDialog().addMessage("<PLAYER_NAME>", "我去，这么好的事？太棒了");
+        game_logic_.getDialog().addMessage("", "支付包到账   五   元");
+        money += 5.0;
+    }
 }
 
 // 设置最低属性值(力量，耐力，敏捷)
