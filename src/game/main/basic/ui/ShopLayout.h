@@ -6,7 +6,6 @@
 #include <memory>
 #include <array>
 
-// Forward declaration
 class Game;
 class Player;
 class UsefulItem;
@@ -15,7 +14,7 @@ struct ShopItem {
     std::string name;
     std::string description;
     int price;
-    std::string itemType; // 用于创建物品实例
+    std::string itemType;
 };
 
 class ShopLayout : public ftxui::ComponentBase {

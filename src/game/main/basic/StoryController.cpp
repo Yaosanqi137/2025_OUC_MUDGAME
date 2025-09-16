@@ -66,11 +66,11 @@ void StoryController::processNode(const DialogNode* node) {
             }
         );
     } else {
-        pending_next_node_id_ = node->nextNodeID;   // 记录跳转ID
+        pendingNextNodeId_ = node->nextNodeID;   // 记录跳转ID
         // --- 线性节点：启动序列，然后计划跳转 ---
         if (!node->sequence.empty()) {
-            active_sequence_ = node->sequence;      // 将节点的序列复制到活动队列
-            sequence_step_ = 0;                     // 从第一步开始
+            activeSequence_ = node->sequence;      // 将节点的序列复制到活动队列
+            sequenceStep_ = 0;                     // 从第一步开始
             waitUntil_ = {};                       // 清理上一个等待计时器
         } else {
             // 如果没有序列，立即尝试跳转
@@ -85,19 +85,19 @@ void StoryController::update() {
         return; // 等待时间未到，直接返回
     }
 
-    if (active_sequence_.empty() || sequence_step_ >= active_sequence_.size()) {
+    if (activeSequence_.empty() || sequenceStep_ >= activeSequence_.size()) {
         // 序列为空或已执行完毕，检查是否有待处理的跳转
-        if (pending_next_node_id_ != 0) {
-            unsigned int next_id = pending_next_node_id_;
-            pending_next_node_id_ = 0; // 清理，防止重复跳转
+        if (pendingNextNodeId_ != 0) {
+            unsigned int next_id = pendingNextNodeId_;
+            pendingNextNodeId_ = 0; // 清理，防止重复跳转
             processNodeByID(next_id);
         }
         return;
     }
 
     // 循环处理，直到遇到一个需要等待的步骤
-    while (sequence_step_ < active_sequence_.size()) {
-        const auto& step = active_sequence_[sequence_step_];
+    while (sequenceStep_ < activeSequence_.size()) {
+        const auto& step = activeSequence_[sequenceStep_];
         bool shouldWait = false;
 
         std::visit([&](auto&& arg) {
@@ -127,7 +127,7 @@ void StoryController::update() {
             }
         }, step);
 
-        sequence_step_++; // 移动到下一步
+        sequenceStep_++; // 移动到下一步
 
         if (shouldWait) {
             return; // 如果是等待步骤或刚说完话，则退出update循环，等待下一帧
@@ -135,12 +135,12 @@ void StoryController::update() {
     }
 
     // 如果循环自然结束（即序列中最后一个动作是不需要等待的 ExecuteAction）
-    if (sequence_step_ >= active_sequence_.size()) {
-        active_sequence_.clear();
+    if (sequenceStep_ >= activeSequence_.size()) {
+        activeSequence_.clear();
         // 再次检查跳转，确保序列最后一步执行完后能立即跳转
-        if (pending_next_node_id_ != 0) {
-            unsigned int next_id = pending_next_node_id_;
-            pending_next_node_id_ = 0;
+        if (pendingNextNodeId_ != 0) {
+            unsigned int next_id = pendingNextNodeId_;
+            pendingNextNodeId_ = 0;
             processNodeByID(next_id);
         }
     }

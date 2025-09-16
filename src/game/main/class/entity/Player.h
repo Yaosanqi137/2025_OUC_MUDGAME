@@ -2,6 +2,7 @@
 #define PLAYER_H
 
 #include <iostream>
+#include <set>
 #include "../../basic/Game.h"
 #include "../../basic/Dialog.h"
 #include "../item/AbstractItem.h"
@@ -166,12 +167,45 @@ public:
 
     // 检查日期变化并应用衰减
     void checkAndApplyDailyDecay(Game& game);
+
+    // 获取上次应用衰减的年份
+    [[nodiscard]] unsigned int getLastDecayYear() const;
+
+    // 获取上次应用衰减的月份
+    [[nodiscard]] unsigned int getLastDecayMonth() const;
+
+    // 获取上次应用衰减的日期
+    [[nodiscard]] unsigned int getLastDecayDay() const;
+
+    // (用于加载存档) 设置上次应用衰减的时间戳
+    void setLastDecayTimestamp(unsigned int year, unsigned int month, unsigned int day);
+
+    // 已访问地点的管理方法
+    void addVisitedLocation(const std::string& location_id);
+    [[nodiscard]] bool hasVisitedLocation(const std::string& location_id) const;
+    std::set<std::string>& getVisitedLocations();
+
+    // 专用于加载存档的 Setter 方法
+    void setStrength(double value);
+    void setStamina(double value);
+    void setAgility(double value);
+    void setHunger(double value);
+    void setFatigue(double value);
+    void setHealth(double value);
+    void setSavings(double value);
+    void setSkillPoints(double value);
+
+    // 根据当前技能列表同步技能树管理器的状态
+    void resyncSkillTreeManager();
+
 protected:
     Game& game_logic_;
 
 private:
     std::string name;       // 玩家名
     std::string location;   // 位置
+
+    std::set<std::string> visitedLocationIds_;      // 已访问过的地点
 
     int gameDifficulty;      // 玩家的游戏难度 ( 1是简单, 2是普通, 3是困难 )
 

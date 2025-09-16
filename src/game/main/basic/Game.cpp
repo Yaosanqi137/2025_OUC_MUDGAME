@@ -2,14 +2,17 @@
 #include "Dialog.h"
 #include "StoryController.h"
 #include "View.h"
+#include "SaveClass.h"
 #include "../class/entity/Player.h"
 #include "../GameStory/GameProcess.h"
-#include "../event/FightEvent.h" // 包含FightEvent头文件
+#include "../event/FightEvent.h"
 
 #include <iostream>
 #include <cstdlib>
 
 Game::Game() : currentState_(GameState::MainMenu), inBattle_(false) {
+    isFirstNewGame = !SaveClass::getInstance()->doesSaveExist();
+
     config_ = Configuration::getInstance();
 
     dialog_ = std::make_unique<Dialog>(*this);
@@ -48,14 +51,43 @@ void Game::startNewGame() {
     }
 }
 
-void Game::loadGame() const {
-    std::string saveName = "default";
-    if (view_) {
-        View::showLoadingScreen("正在打开存档{" + saveName + "}");
+void Game::loadGame() {
+    if (!SaveClass::getInstance()->doesSaveExist()) {
+        View::showTemporaryPopup("没有找到存档文件，请先开始新游戏。");
+        return;
     }
-    std::cout << "读取存档..." << std::endl;
-    // TODO
-    // ... 此处是读取存档的具体逻辑 ...
+
+    // 步骤 2: 存档文件存在，继续正常的加载流程
+    View::showLoadingScreen("正在打开存档...");
+
+    if (SaveClass::getInstance()->loadGame(*this)) {
+        // 加载成功后:
+
+        // 1. 清除任何可能残留的输入请求。
+        //    即使我们保存时降级了状态，这样做也是一个好的保险措施。
+        this->clearInputRequest();
+
+        // 2. 清理对话历史并显示成功消息。
+        this->getDialog().clearHistory();
+        this->getDialog().addMessage("<SYSTEM>", "存档已成功加载。");
+
+        // 如果加载的状态是 InStory，可能需要一条额外的提示
+        if (this->getCurrentState() == GameState::InStory) {
+            this->getDialog().addMessage("<SYSTEM>", "正在继续之前的剧情...");
+        }
+
+        // 3. 进入游戏界面。
+        //    UI会根据 SaveClass 恢复的 GameState 来正确渲染。
+        view_->showGameScreen();
+
+    } else {
+        View::showTemporaryPopup("加载存档失败，文件可能已损坏。", 4);
+        isFirstNewGame = true;
+    }
+}
+
+void Game::saveGame() const {
+    SaveClass::getInstance()->saveGame(const_cast<Game&>(*this));
 }
 
 void Game::showGameIntro() const {
