@@ -498,7 +498,7 @@ bool Player::learnSkill(const std::string& skillName) {
     
     if(skillName == "自杀式袭击"){
         exHitRate -= 0.1;
-        fatigueConsumeRate - 0.2;
+        fatigueConsumeRate -= 0.2;
     }
     else if(skillName == "钝兵挫锐"){
         sustainDamageRate -= 0.2;
