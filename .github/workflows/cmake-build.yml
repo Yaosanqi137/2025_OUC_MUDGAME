@@ -37,7 +37,7 @@ jobs:
       run: |
         $zipName = "${{ env.PROJECT_NAME }}-PR-${{ github.event.pull_request.number }}-windows-debug.zip"
         mkdir staging-pr
-        cp build/Debug/${{env.PROJECT_NAME}}.exe staging-pr/
+        cp build/bin/Debug/${{env.PROJECT_NAME}}.exe staging-pr/
         cp README.md staging-pr/
         Compress-Archive -Path staging-pr/* -DestinationPath $zipName
         echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
