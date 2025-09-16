@@ -96,7 +96,7 @@ const std::string& UsefulItem::getIntro() const {
     if (type_ == ItemType::BOXING_GYM_PASS) {
         // 为拳击馆通行证动态生成描述
         static std::string dynamicIntro;
-        dynamicIntro = "一张可以在拳击馆使用的通行证。一张能用15次，没了这个，就进不去拳击馆了，现在还剩" + std::to_string(getDurability()) + "次使用次数";
+        dynamicIntro = "一张可以在拳击馆使用的通行证";
         return dynamicIntro;
     }
     return AbstractItem::getIntro();
@@ -108,7 +108,7 @@ UsefulItem UsefulItem::createBoxingGloves(bool isUsable) {
 }
 
 UsefulItem UsefulItem::createBoxingGymPass(bool isUsable) {
-    return {ItemType::BOXING_GYM_PASS, "拳击馆通行证", "一张可以在拳击馆使用的通行证。一张能用15次，没了这个，就进不去拳击馆了，现在还剩" + std::to_string(15) + "次使用次数", 500, 15, isUsable};
+    return {ItemType::BOXING_GYM_PASS, "拳击馆通行证", "一张可以在拳击馆使用的通行证", 500, 15, isUsable};
 }
 
 UsefulItem UsefulItem::createCard(bool isUsable) {

@@ -120,6 +120,7 @@ void Dialog::processPlayerInput(std::string& input) {
 
         // TODO: 在这里解析并执行具体的命令
         if (input == "/help") {
+            clearHistory();
             addMessage("<SYSTEM>", "--==指令帮助菜单==--");
             addMessage("<SYSTEM>", "可用命令:");
             addMessage("<SYSTEM>", "/help: 查看本条指令帮助");
@@ -134,23 +135,27 @@ void Dialog::processPlayerInput(std::string& input) {
             game_logic_.getDialog().clearHistory(); // 清除历史记录
         } else if (input == "/use") {
             if (loc == "家") {
+                clearHistory();
                 addMessage("<SYSTEM>", "/sleep: 睡觉，用于恢复疲劳、缓解饥饿并跳过一天");
                 addMessage("<SYSTEM>", "恢复10点生命值和5点饱食度回满体力");
                 addMessage("<SYSTEM>", "/eat: 吃东西，恢复1点饥饿值和1点体力");
-                addMessage("<STSTEM>", "但是需要花1块钱");
+                addMessage("<SYSTEM>", "但是需要花1块钱");
             }
             if (loc == "工地") {
+                clearHistory();
                 addMessage("<SYSTEM>", "/work: 工作，赚取微薄的收入");
                 addMessage("<SYSTEM>", "每次工作赚取40-80元，消耗10点体力,10点饥饿值");
                 addMessage("<SYSTEM>", "预计花费3-5小时");
             }
             if (loc == "商店" || loc == "药店" || loc == "咖啡馆") {
+                clearHistory();
                 addMessage("<SYSTEM>", "/buy: 打开购买界面，购买食物、饮料、药品等");
                 addMessage("<SYSTEM>", "购买的物品会直接放入背包");
                 addMessage("<SYSTEM>", "但是买东西千万不要忘记带钱，否则...");
             }
         } else if (input == "/sleep") {
             if (loc == "家") {
+                clearHistory();
                 addMessage("", "你躺在了你的床上，闭上眼睛，渐渐进入了梦乡...");
                 GameTime::addDay(1);
                 static std::mt19937 rng(std::random_device{}());
@@ -173,6 +178,7 @@ void Dialog::processPlayerInput(std::string& input) {
                 if (game_logic_.getPlayer().getSavings() < 1) {
                     addMessage("<SYSTEM>", "你没有钱吃零食了");
                 }
+                clearHistory();
                 game_logic_.getPlayer().addSavings(-1);
                 game_logic_.getPlayer().addHunger(1);
                 game_logic_.getPlayer().addFatigue(1);
@@ -183,12 +189,15 @@ void Dialog::processPlayerInput(std::string& input) {
         }else if (input == "/buy") {
             if (loc == "商店") {
                 // 调用商店购买场景
+                clearHistory();
                 game_logic_.getStoryController().processNodeByID(10000001);
             } else if (loc == "药店") {
                 // 调用药店购买场景
+                clearHistory();
                 game_logic_.getStoryController().processNodeByID(11000001);
             } else if (loc == "咖啡馆") {
                 // 调用咖啡馆购买场景
+                clearHistory();
                 game_logic_.getStoryController().processNodeByID(12000001);
             } else {
                 addMessage("<SYSTEM>", "你只能在商店、药店或咖啡馆购买东西！");
@@ -203,6 +212,7 @@ void Dialog::processPlayerInput(std::string& input) {
                     addMessage("<SYSTEM>", "你太饿了，无法工作！");
                     return;
                 }
+                clearHistory();
                 static std::mt19937 rng(std::random_device{}());
                 std::uniform_int_distribution<int> distMoney(40, 80);
                 std::uniform_int_distribution<int> distHour(3, 5);
@@ -218,6 +228,7 @@ void Dialog::processPlayerInput(std::string& input) {
                 addMessage("<SYSTEM>", "你只能在工地工作！");
             }
         }else if (input == "/skill") {
+            clearHistory();
             addMessage("<SYSTEM>", "当前技能点：" + std::to_string((int)game_logic_.getPlayer().getSkillPoints()));
             addMessage("<SYSTEM>", "技能命令用法:");
             addMessage("<SYSTEM>", "/skill show all      - 显示所有技能");
@@ -234,6 +245,7 @@ void Dialog::processPlayerInput(std::string& input) {
         
         } else if (input == "/skill show canlearn") {
             // 显示可学习技能
+            clearHistory();
             auto learnableSkills = game_logic_.getPlayer().getLearnableSkillsInfo();
             addMessage("<SYSTEM>", "=== 可学习技能 ===");
             if (learnableSkills.empty()) {
@@ -251,9 +263,18 @@ void Dialog::processPlayerInput(std::string& input) {
                 int skillId = std::stoi(idStr);
                 bool success = game_logic_.getPlayer().learnSkillById(skillId);
                 if (success) {
+                    auto learnableSkills = game_logic_.getPlayer().getLearnableSkillsInfo();
                     addMessage("<SYSTEM>", "技能学习成功！");
                     addMessage("<SYSTEM>", "剩余技能点: " + 
                     std::to_string((int)game_logic_.getPlayer().getSkillPoints()));
+                    addMessage("<SYSTEM>", "=== 现在的可学习技能 ===");
+                    if (learnableSkills.empty()) {
+                        addMessage("<SYSTEM>", "暂无可以学习的技能");
+                    } else {
+                        for (const auto& skillInfo : learnableSkills) {
+                            addMessage("<SYSTEM>", skillInfo);
+                        }
+                    }
                 } else {
                     addMessage("<SYSTEM>", "技能学习失败！");
                     addMessage("<SYSTEM>", "可能的原因: 技能点不足、前置条件未满足或技能ID无效");
@@ -312,6 +333,7 @@ void Dialog::processPlayerInput(std::string& input) {
             }
             game_logic_.getPlayer().getTrainingSystem()->train(TrainingType::STAMINA, game_logic_);
         } else if (input == "/enemy") {
+            clearHistory();
             addMessage("<SYSTEM>", "敌人相关命令:");
             addMessage("<SYSTEM>", "/enemy show: 显示下一个敌人的信息");
             addMessage("<SYSTEM>", "/enemy battle: 开始与下一个敌人的战斗");
@@ -323,6 +345,7 @@ void Dialog::processPlayerInput(std::string& input) {
                 addMessage("<SYSTEM>", "你只能在比赛场地查看敌人！");
                 return;
             }
+            clearHistory();
             int nextEnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy() + 1;
             BattleCommandHandler::showEnemyInfo(game_logic_, nextEnemyId);
         } else if (input == "/enemy battle") {

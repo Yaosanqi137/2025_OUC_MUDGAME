@@ -15,7 +15,7 @@ MapLayout::MapLayout(Game& game_logic, bool& isShowingFlag)
     : game_logic_(game_logic), isShowingFlag_(isShowingFlag) {
     initializeLocations();
 
-    buttonTaxi_ = Button("计程车 (15元)", [this] { travelBy("taxi"); });
+    buttonTaxi_ = Button("计程车", [this] { travelBy("taxi"); });
     buttonWalk_ = Button("步行", [this] { travelBy("walk"); });
     buttonCancelTravel_ = Button("取消", [this] { viewMode_ = 0; });
     buttonExit_ = Button("[ 退出地图 ]", [this] { isShowingFlag_ = false; });
@@ -158,7 +158,7 @@ void MapLayout::travelBy(const std::string& method) {
 
     // 检查是否是第一次来到这个地点
     bool isFirstVisit = destination.isFirstTo;
-
+    
     // 根据地点显示对应的对话和引导
     if (destination.name == "家") {
         if (isFirstVisit) {
@@ -212,14 +212,14 @@ void MapLayout::travelBy(const std::string& method) {
         if (isFirstVisit) {
             game_logic_.getDialog().addMessage("", "你第一次走进这家商店，货架上摆满了各种商品");
             game_logic_.getDialog().addMessage("", "从食物到生活用品，这里应有尽有");
-            game_logic_.getDialog().addMessage("商店老板", "欢迎来到我的小店！第一次来吧？");
-            game_logic_.getDialog().addMessage("商店老板", "我们这里有各种食物：烤肉、苏打水、能量饮料、冷冻披萨");
-            game_logic_.getDialog().addMessage("商店老板", "价格实惠，质量保证！");
-            game_logic_.getDialog().addMessage("商店老板", "使用 /buy 指令可以打开购买界面");
-            game_logic_.getDialog().addMessage("商店老板", "记得带够钱哦~");
+            game_logic_.getDialog().addMessage("老板", "欢迎来到我的小店！第一次来吧？");
+            game_logic_.getDialog().addMessage("老板", "我们这里有各种食物：烤肉、苏打水、能量饮料、冷冻披萨");
+            game_logic_.getDialog().addMessage("老板", "价格实惠，质量保证！");
+            game_logic_.getDialog().addMessage("老板", "使用 /buy 指令可以打开购买界面");
+            game_logic_.getDialog().addMessage("老板", "记得带够钱哦~");
         } else {
             game_logic_.getDialog().addMessage("", "你来到了商店，这里可以买到各种生活用品和食物");
-            game_logic_.getDialog().addMessage("商店老板", "欢迎光临，有什么需要的吗？吃的喝的都可以在这里买哦");
+            game_logic_.getDialog().addMessage("老板", "欢迎光临，有什么需要的吗？吃的喝的都可以在这里买哦");
         }
     } else if (destination.name == "药店") {
         if (isFirstVisit) {
@@ -258,7 +258,7 @@ void MapLayout::travelBy(const std::string& method) {
     if (isFirstVisit) {
         destination.isFirstTo = false;
     }
-
+    
     isShowingFlag_ = false;
 }
 
@@ -311,13 +311,13 @@ Element MapLayout::Render() {
         travelDialog = vbox({
             text("前往 " + dest.name) | bold | color(Color::Yellow),
             hbox({
-                buttonTaxi_->Render() | size(WIDTH, LESS_THAN, 22),
+                buttonTaxi_->Render() | size(WIDTH, EQUAL, 15),
                 text(" "),
-                buttonWalk_->Render() | size(WIDTH, LESS_THAN, 20),
+                buttonWalk_->Render() | size(WIDTH, EQUAL, 15),
                 text(" "),
-                buttonCancelTravel_->Render() | size(WIDTH, LESS_THAN, 20)
+                buttonCancelTravel_->Render() | size(WIDTH, EQUAL, 15)
             })
-        }) | border | size(WIDTH, LESS_THAN, 65) | size(HEIGHT, LESS_THAN, 10);
+        }) | border | size(WIDTH, EQUAL, 50) | size(HEIGHT, LESS_THAN, 10);
     }
 
     auto mapElement = vbox({

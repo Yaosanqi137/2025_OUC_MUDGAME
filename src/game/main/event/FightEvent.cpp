@@ -197,7 +197,7 @@ void FightEvent::startBattle() {
         battleOver_ = false;
         playerWon_ = false;
         currentRound_ = 1;
-        
+
         game_.getDialog().addMessage("<SYSTEM>", "战斗开始了，对手是" + enemy_->getName());
         game_.getDialog().addMessage("<SYSTEM>", "他的攻击技能是:");
         for (int i = 0; i < enemy_ -> getSkills().size(); i++) {
