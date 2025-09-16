@@ -58,7 +58,7 @@ namespace PharmacyScene {
                 game_logic_.getStoryController().processNodeByID(11000012);
             }
         }),
-        Choice("力量药�� - 200元", 0, [](const Game& game_logic_) {
+        Choice("力量药水 - 200元", 0, [](const Game& game_logic_) {
             if (game_logic_.getPlayer().getSavings() >= 200) {
                 game_logic_.getPlayer().addSavings(-200);
                 Medicine strengthPotion(Medicine::MedicineType::STRENGTH_POTION);

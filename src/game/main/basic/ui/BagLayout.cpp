@@ -181,13 +181,13 @@ Element BagLayout::Render() {
     auto detailPanel = vbox({
         text("物品详情") | bold | center,
         separator(),
-        paragraph(itemDetailName) | size(WIDTH, LESS_THAN, 40) | flex,
-        paragraph(itemDetailDesc) | size(WIDTH, LESS_THAN, 40) | flex,
-        paragraph(itemDetailAmount) | size(WIDTH, LESS_THAN, 40) | flex,
-        paragraph(itemDetailClass) | size(WIDTH, LESS_THAN, 40) | flex,
+        paragraph(itemDetailName) | size(WIDTH, LESS_THAN, 48) | flex,
+        paragraph(itemDetailDesc) | size(WIDTH, EQUAL, 48) | flex,
+        paragraph(itemDetailAmount) | size(WIDTH, LESS_THAN, 48) | flex,
+        paragraph(itemDetailClass) | size(WIDTH, LESS_THAN, 48) | flex,
         separator(),
         (canUseItem && isUsable ? useButton_->Render() : text("无法使用") | color(Color::GrayDark)) | center
-    }) | border | size(WIDTH, EQUAL, 45) | size(HEIGHT, GREATER_THAN, 20);
+    }) | border | size(WIDTH, EQUAL, 50) | size(HEIGHT, GREATER_THAN, 20);
 
     int totalPages = getTotalPages();
     auto pageInfo = text("第 " + std::to_string(currentPage_ + 1) + " 页 / 共 " + std::to_string(totalPages) + " 页");
@@ -196,7 +196,6 @@ Element BagLayout::Render() {
         filler(),
         pageInfo | center,
         filler(),
-        pageNextButton_->Render(),
         pageNextButton_->Render(),
         separator(),
         exitButton_->Render()
