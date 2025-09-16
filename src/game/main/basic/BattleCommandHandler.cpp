@@ -7,7 +7,9 @@
 void BattleCommandHandler::showEnemyInfo(Game& game, int enemyId) {
     try {
         // 检查 enemyId 的有效性
-        if (enemyId <= 0 || enemyId > 11) {
+        if (enemyId == 12)
+            game.getDialog().addMessage("<SYSTEM>", "你已经击败所有敌人！");
+        else if (enemyId <= 0 || enemyId > 11) {
             game.getDialog().addMessage("<SYSTEM>", "无效的敌人ID: " + std::to_string(enemyId));
             return;
         }
