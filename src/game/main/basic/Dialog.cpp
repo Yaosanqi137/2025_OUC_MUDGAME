@@ -348,12 +348,12 @@ const std::vector<DialogMessage>& Dialog::getHistory() const {
 
 void Dialog::clearHistory() {
     history_.clear();
-    history_was_cleared_ = true; // to be checked in GameLayout.cpp
+    historyWasCleared_ = true; // to be checked in GameLayout.cpp
 }
 
 bool Dialog::historyWasClearedAndConsume() const {
-    if (history_was_cleared_) {
-        history_was_cleared_ = false;
+    if (historyWasCleared_) {
+        historyWasCleared_ = false;
         return true;
     }
     return false;

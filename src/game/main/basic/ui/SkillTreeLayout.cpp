@@ -123,6 +123,7 @@ Element SkillTreeLayout::Render() {
         text("■") | color(Color::Green), text(" 已学习  "),
         text("■") | color(Color::Yellow), text(" 可学习  "),
         text("■") | color(Color::White), text(" 未激活"),
+        text("  |  ") | color(Color::White), text("技能学习请在主界面输入 /skill 以获取帮助") | color(Color::Green),
     }) | hcenter;
 
     auto treeContent = buildSkillTreeGraph();

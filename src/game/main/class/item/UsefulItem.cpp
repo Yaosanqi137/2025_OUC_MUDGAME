@@ -92,6 +92,10 @@ int UsefulItem::getDurability() const {
     return durability_;
 }
 
+void UsefulItem::setDurability(const int value) {
+    durability_ = value;
+}
+
 const std::string& UsefulItem::getIntro() const {
     if (type_ == ItemType::BOXING_GYM_PASS) {
         // 为拳击馆通行证动态生成描述

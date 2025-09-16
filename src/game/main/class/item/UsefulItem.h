@@ -24,6 +24,7 @@ public:
     const std::string& getIntro() const override;
     ItemType getItemType() const;
     int getDurability() const;
+    void setDurability(int value);
 
     static UsefulItem createBoxingGloves(bool isUsable = false);
     static UsefulItem createBoxingGymPass(bool isUsable = false);

@@ -52,7 +52,8 @@ public:
 
     void run() const;
     void startNewGame();
-    void loadGame() const;
+    void loadGame();
+    void saveGame() const;
     void showGameIntro() const;
     // static void showGameSettings(); -> 逻辑在View.cpp中实现
     void exitGame() const;

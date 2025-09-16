@@ -107,13 +107,13 @@ bool MapLayout::OnEvent(Event event) {
 }
 
 void MapLayout::initializeLocations() {
-    locations_["home"]         = {"家",         "家",         80, 42, "cafe", "", "", "", false}; // 家不是第一次来
-    locations_["cafe"]         = {"咖啡馆",         "咖啡馆",     80, 32, "store", "home", "", "", true};
-    locations_["store"]        = {"商店",        "商店",       80, 22, "arena", "cafe", "gym", "pharmacy", true};
-    locations_["gym"]          = {"拳击馆",          "拳击馆",     40, 22, "construction", "", "", "store", true};
-    locations_["construction"] = {"工地", "工地",       40, 12, "", "gym", "", "", true};
-    locations_["arena"]        = {"比赛场地",        "比赛场地",   80,  5, "", "store", "", "", true};
-    locations_["pharmacy"]     = {"药店",     "药店", 120, 22, "", "", "store", "", true};
+    locations_["home"]         = {"家",         "家",         80, 42, "cafe", "", "", ""}; // 家不是第一次来
+    locations_["cafe"]         = {"咖啡馆",         "咖啡馆",     80, 32, "store", "home", "", ""};
+    locations_["store"]        = {"商店",        "商店",       80, 22, "arena", "cafe", "gym", "pharmacy"};
+    locations_["gym"]          = {"拳击馆",          "拳击馆",     40, 22, "construction", "", "", "store"};
+    locations_["construction"] = {"工地", "工地",       40, 12, "", "gym", "", ""};
+    locations_["arena"]        = {"比赛场地",        "比赛场地",   80,  5, "", "store", "", ""};
+    locations_["pharmacy"]     = {"药店",     "药店", 120, 22, "", "", "store", ""};
 }
 
 void MapLayout::travelBy(const std::string& method) {
@@ -157,7 +157,7 @@ void MapLayout::travelBy(const std::string& method) {
     }
 
     // 检查是否是第一次来到这个地点
-    bool isFirstVisit = destination.isFirstTo;
+    bool isFirstVisit = !player.hasVisitedLocation(destination.id);
 
     // 根据地点显示对应的对话和引导
     if (destination.name == "家") {
@@ -253,10 +253,10 @@ void MapLayout::travelBy(const std::string& method) {
         }
     }
 
-    // 移动成功后，设置玩家位置并标记不再是第一次访问
+    // 移动成功后，设置玩家位置并标记
     player.setLocation(destination.name);
     if (isFirstVisit) {
-        destination.isFirstTo = false;
+        player.addVisitedLocation(destination.id);
     }
 
     isShowingFlag_ = false;

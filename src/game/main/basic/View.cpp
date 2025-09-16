@@ -37,8 +37,12 @@ void View::showMainMenu() {
 
     // 按钮的回调函数现在通过 game_logic_ 引用来调用 Game 类的方法
     auto menu= Container::Vertical({
-        Button(menuItems[0], [&] { screen.ExitLoopClosure()(); game_logic_.startNewGame(); }, ButtonOption::Animated()),
-        Button(menuItems[1], [&] { game_logic_.loadGame(); }, ButtonOption::Animated()),
+        Button(menuItems[0], [&] {
+            screen.ExitLoopClosure()();
+            // 如果是新游戏，调用 startNewGame()；否则，调用 loadGame()。
+            game_logic_.isFirstNewGame ? game_logic_.startNewGame() : game_logic_.loadGame(); }, ButtonOption::Animated()),
+        // 暂时移除读档按钮：目前只有一个存档，功能与第一个按钮的继续游戏重复了
+        // Button(menuItems[1], [&] { screen.ExitLoopClosure()(); game_logic_.loadGame(); }, ButtonOption::Animated()),
         Button(menuItems[2], [&] { game_logic_.showGameIntro(); }, ButtonOption::Animated()),
         Button(menuItems[3], [&showSettings, settingsPtr] {
             settingsPtr->loadSettings(); // 显示前加载最新设置
@@ -238,4 +242,39 @@ void View::showGameScreen() {
     if (refreshThread.joinable()) {
         refreshThread.join();
     }
+}
+void View::showTemporaryPopup(const std::string& message, unsigned int duration_seconds) {
+    using namespace ftxui;
+
+    // 1. 使用 Fullscreen 模式，这样我们才有空间进行居中
+    auto screen = ScreenInteractive::Fullscreen();
+
+    // 2. 定义弹窗本身的内容和样式
+    auto popupContent = vbox({
+        text(" 提 示 ") | bold | hcenter,
+        separator(),
+        paragraph(" " + message + " ") | hcenter, // 使用 paragraph 以支持自动换行
+    }) | border | size(WIDTH, LESS_THAN, 50);
+
+    // 3. 创建一个渲染器组件，它负责将弹窗居中显示
+    auto finalComponent = Renderer([&] {
+        // 使用 dbox 将弹窗(前景)绘制在一个空的填充物(背景)之上
+        // 并使用 | center 将弹窗居中
+        return dbox({
+            filler(),               // 背景：一个空的、会填满整个屏幕的元素
+            popupContent | center, // 前景：我们的弹窗，被放置在屏幕中央
+        });
+    });
+
+    // 4. 计时器线程逻辑保持不变
+    std::thread timerThread([&screen, duration_seconds] {
+        std::this_thread::sleep_for(std::chrono::seconds(duration_seconds));
+        screen.ExitLoopClosure()();
+    });
+
+    // 5. 启动临时的事件循环
+    screen.Loop(finalComponent);
+
+    // 6. 等待计时器线程结束
+    timerThread.join();
 }
