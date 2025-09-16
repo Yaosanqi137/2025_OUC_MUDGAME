@@ -23,8 +23,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
 message(STATUS "CMAKE_RUNTIME_OUTPUT_DIRECTORY = ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 
-file(GLOB_RECURSE files "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
+file(GLOB_RECURSE files "src/*.cpp")
 
 add_executable(${NAME} ${files})
 
 target_link_libraries(${NAME} PRIVATE toml11::toml11 ftxui::screen ftxui::dom ftxui::component)
+
+install(TARGETS ${NAME} DESTINATION bin)
