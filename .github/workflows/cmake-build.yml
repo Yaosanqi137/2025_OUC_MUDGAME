@@ -1,0 +1,142 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: CMake Build and Release
+
+on:
+  push:
+    # branches: [ "main" ]
+    #tags: [ 'v*' ]
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+      
+  pull_request:
+    # branches: [ "main" ]
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+
+env:
+  # 项目名称
+  PROJECT_NAME: BoxingGame
+
+jobs:
+  # Job 1: PR 测试流程
+  test-on-pr:
+    if: github.event_name == 'pull_request'
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Configure CMake (Debug)
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug
+    - name: Build with CMake (Debug)
+      run: cmake --build ${{github.workspace}}/build --config Debug
+    - name: Package and Upload PR Artifact
+      id: create_pr_zip
+      run: |
+        $zipName = "${{ env.PROJECT_NAME }}-PR-${{ github.event.pull_request.number }}-windows-debug.zip"
+        mkdir staging-pr
+        cp build/Debug/${{env.PROJECT_NAME}}.exe staging-pr/
+        cp README.md staging-pr/
+        Compress-Archive -Path staging-pr/* -DestinationPath $zipName
+        echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+    - name: Upload PR Artifact for Testing
+      uses: actions/upload-artifact@v4
+      with:
+        name: pr-build-${{ github.event.pull_request.number }}
+        path: ${{ steps.create_pr_zip.outputs.zip_name }}
+
+  # Job 2: 用于发布的构建与打包流程
+  build-for-publish:
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    outputs:
+      release_zip_name: ${{ steps.package_release.outputs.zip_name }}
+      debug_zip_name: ${{ steps.package_debug.outputs.zip_name }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build
+    - name: Build Release Version
+      if: startsWith(github.ref, 'refs/tags/')
+      run: cmake --build ${{github.workspace}}/build --config Release
+    - name: Build Debug Version
+      if: startsWith(github.ref, 'refs/heads/')
+      run: cmake --build ${{github.workspace}}/build --config Debug
+    - name: Package Release Artifact
+      id: package_release
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        $zipName = "${{ env.PROJECT_NAME }}-${{ github.ref_name }}-windows-release.zip"
+        mkdir staging-release
+        cp build/bin/Release/${{env.PROJECT_NAME}}.exe staging-release/
+        cp README.md staging-release/
+        Compress-Archive -Path staging-release/* -DestinationPath $zipName
+        echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+    - name: Upload Release Artifact
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-artifact
+        path: ${{ steps.package_release.outputs.zip_name }}
+    - name: Package Debug Artifact
+      id: package_debug
+      if: startsWith(github.ref, 'refs/heads/')
+      run: |
+        $zipName = "${{ env.PROJECT_NAME }}-nightly-windows-debug.zip"
+        mkdir staging-debug
+        cp build/bin/Debug/${{env.PROJECT_NAME}}.exe staging-debug/
+        cp README.md staging-debug/
+        Compress-Archive -Path staging-debug/* -DestinationPath $zipName
+        echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+    - name: Upload Debug Artifact
+      if: startsWith(github.ref, 'refs/heads/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-artifact
+        path: ${{ steps.package_debug.outputs.zip_name }}
+
+  # Job 3: 发布每夜版
+  publish-nightly:
+    needs: build-for-publish
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
+    permissions: write-all
+    runs-on: windows-latest
+    steps:
+    - name: Download Debug Build Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: debug-artifact
+    - name: Create or Update Nightly Release
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "nightly"
+        prerelease: true
+        # 在标题中加入分支名，方便区分
+        title: "Nightly Build (Debug) - Branch [${{ github.ref_name }}] - ${{ github.sha }}"
+        files: ${{ needs.build-for-publish.outputs.debug_zip_name }}
+
+  # Job 4: 发布正式版
+  publish-release:
+    needs: build-for-publish
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    permissions: write-all
+    runs-on: windows-latest
+    steps:
+    - name: Download Release Build Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: release-artifact
+    - name: Create new GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        prerelease: false
+        files: ${{ needs.build-for-publish.outputs.release_zip_name }}
