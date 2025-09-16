@@ -230,6 +230,7 @@ bool SaveClass::loadGame(Game& game, const std::string& filePath) {
         for (const auto& skillNameVal : learnedSkillsArr) {
             auto skill = SkillFactory::createSkillByName(skillNameVal.as_string());
             if (skill) {
+                skill->unlock();
                 player.addSkill(skill);
             }
         }
