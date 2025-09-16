@@ -659,6 +659,83 @@ void Player::checkAndApplyDailyDecay(Game& game) {
     }
 }
 
+unsigned int Player::getLastDecayYear() const {
+    return lastDecayYear;
+}
+
+unsigned int Player::getLastDecayMonth() const {
+    return lastDecayMonth;
+}
+
+unsigned int Player::getLastDecayDay() const {
+    return lastDecayDay;
+}
+
+/**
+ * @brief (用于加载存档) 设置上次应用衰减的时间戳。
+ * @details 这个方法应该只在从存档文件恢复游戏状态时被调用。
+ */
+void Player::setLastDecayTimestamp(unsigned int year, unsigned int month, unsigned int day) {
+    lastDecayYear = year;
+    lastDecayMonth = month;
+    lastDecayDay = day;
+}
+
+void Player::addVisitedLocation(const std::string& location_id) {
+    visitedLocationIds_.insert(location_id);
+}
+
+bool Player::hasVisitedLocation(const std::string& location_id) const {
+    return visitedLocationIds_.count(location_id) > 0;
+}
+
+std::set<std::string>& Player::getVisitedLocations() {
+    return visitedLocationIds_;
+}
+
+void Player::setStrength(double value) {
+    strength = value;
+}
+
+void Player::setStamina(double value) {
+    stamina = value;
+}
+
+void Player::setAgility(double value) {
+    agility = value;
+}
+
+void Player::setHunger(double value) {
+    hunger = value;
+}
+
+void Player::setFatigue(double value) {
+    fatigue = value;
+}
+
+void Player::setHealth(double value) {
+    health = value;
+}
+
+void Player::setSavings(double value) {
+    money = value;
+}
+
+void Player::setSkillPoints(double value) {
+    skillPoints = value;
+}
+
+void Player::resyncSkillTreeManager() {
+    // 获取当前已学技能的名称列表
+    std::vector<std::string> learned_skill_names;
+    for (const auto& skill_ptr : skills_) {
+        learned_skill_names.push_back(skill_ptr->getSkillName());
+    }
+
+    // 使用这个列表来重置技能树管理器的状态
+    skillTreeManager.setLearnedSkills(learned_skill_names);
+}
+
 // 急救系统实现
 void Player::triggerEmergencyRescue() {
     // 输出急救信息

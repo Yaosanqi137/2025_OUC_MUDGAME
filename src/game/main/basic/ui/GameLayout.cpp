@@ -189,15 +189,17 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
     auto buttonExitToMainMenu = Button(" 回到主界面 ", [&] {
         game_logic_.getDialog().clearHistory();
         game_logic_.getDialog().addMessage("<SYSTEM>", "欢迎回来");
-        // TODO: 调用自动保存方法
+        game_logic_.saveGame(); // 在返回主菜单时自动保存
         game_logic_.getView().showMainMenu();
     }, ButtonOption::Animated());
+    auto buttonSaveGame = Button(" 保存游戏 ", [&] { game_logic_.saveGame(); }, ButtonOption::Animated());
 
     navigationContainer_ = Container::Vertical({
         buttonPhone,
         buttonSettings,
         buttonBag,
         buttonSkillTree,
+        buttonSaveGame,
         buttonExitToMainMenu,
     });
 

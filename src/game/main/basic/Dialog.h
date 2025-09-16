@@ -40,8 +40,8 @@ public:
 
 private:
     Game& game_logic_;
-    std::vector<DialogMessage> history_;
-    mutable bool history_was_cleared_ = false;
+    std::vector<DialogMessage> history_
+    mutable bool historyWasCleared_ = false;
     static constexpr size_t MAX_HISTORY_SIZE = 29; // 限制历史记录最大长度
 };
 

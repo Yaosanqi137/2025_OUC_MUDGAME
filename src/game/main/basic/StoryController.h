@@ -56,10 +56,10 @@ private:
     std::map<unsigned int, const DialogNode*> dialogDatabase_; ///< 存储所有对话节点的数据库。
 
     // --- 剧情序列状态成员 ---
-    StorySequence active_sequence_;                     ///< 当前正在执行的剧情序列。
-    size_t sequence_step_ = 0;                          ///< 指向序列中当前步骤的索引。
+    StorySequence activeSequence_;                     ///< 当前正在执行的剧情序列。
+    size_t sequenceStep_ = 0;                          ///< 指向序列中当前步骤的索引。
     std::chrono::steady_clock::time_point waitUntil_;  ///< 如果当前是停顿步骤，记录需要等待到的时间点。
-    unsigned int pending_next_node_id_ = 0;             ///< 序列结束后的跳转ID
+    unsigned int pendingNextNodeId_ = 0;               ///< 序列结束后的跳转ID
 };
 
 #endif // STORYCONTROLLER_H
