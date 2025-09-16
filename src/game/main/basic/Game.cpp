@@ -4,7 +4,7 @@
 #include "View.h"
 #include "../class/entity/Player.h"
 #include "../GameStory/GameProcess.h"
-#include "../event/FightEvent.h" // 包含FightEvent头文件
+#include "../event/FightEvent.h"
 
 #include <iostream>
 #include <cstdlib>
