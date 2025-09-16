@@ -466,6 +466,7 @@ void FightEvent::applyDamageToPlayer(double damage) {
 }
 
 void FightEvent::processPlayerSkill(int skillIndex) {
+    game_.getDialog().clearHistory();
     auto& playerSkills = player_->getSkills();
     if (skillIndex < 0 || skillIndex >= static_cast<int>(playerSkills.size())) {
         game_.getDialog().addMessage("<SYSTEM>", "无效的技能选择");
@@ -476,8 +477,8 @@ void FightEvent::processPlayerSkill(int skillIndex) {
     
     // 添加调试信息
     double staminaCost = skill->calculateStaminaCost(player_->getStrength());
-    game_.getDialog().addMessage("<DEBUG>", "玩家体力: " + std::to_string((int)player_->getFatigue()) + 
-                                 ", 技能消耗: " + std::to_string((int)staminaCost));
+    // game_.getDialog().addMessage("<DEBUG>", "玩家体力: " + std::to_string((int)player_->getFatigue()) +
+    //                             ", 技能消耗: " + std::to_string((int)staminaCost));
     
     // 检查技能是否可用
     if (!skill->canUse(*player_)) {
