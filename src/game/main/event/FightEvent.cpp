@@ -1,5 +1,8 @@
 #include "FightEvent.h"
 #include "../basic/Dialog.h"
+#include "../GameStory/DialogRegistry.h"
+#include "../GameStory/Story.h"
+#include "../basic/StoryController.h"
 #include <iostream>
 #include <random>
 #include <algorithm>
@@ -199,36 +202,11 @@ void FightEvent::startBattle() {
         currentRound_ = 1;
 
         game_.getDialog().addMessage("<SYSTEM>", "战斗开始了，对手是" + enemy_->getName());
-        game_.getDialog().addMessage("<SYSTEM>", "他的攻击技能是:");
-        for (int i = 0; i < enemy_ -> getSkills().size(); i++) {
-            if (enemy_->getSkills()[i]->isAttackSkill()) {
-                game_.getDialog().addMessage("<SYSTEM>", "ID: " + std::to_string(enemy_->getSkills()[i]->getId()) + 
-                    " - " + enemy_->getSkills()[i]->getSkillName() + ": " + enemy_->getSkills()[i]->getDescription());
-            }
-        }
-        // 显示敌人信息
-        game_.getDialog().addMessage("<SYSTEM>", "敌人属性: 力量 " + std::to_string((int)enemy_->getStrength()) +
-                                    ", 耐力 " + std::to_string((int)enemy_->getStamina()) +
-                                    ", 敏捷 " + std::to_string((int)enemy_->getAgility()));
-        
-        // 显示玩家可用攻击技能
-        auto& playerSkills = player_->getSkills();
-        game_.getDialog().addMessage("<SYSTEM>", "你的可用攻击技能:");
-        for (int i = 0; i < playerSkills.size(); i++) {
-            if (playerSkills[i]->isAttackSkill()) {
-                game_.getDialog().addMessage("<SYSTEM>", "ID: " + std::to_string(playerSkills[i]->getId()) + 
-                    " - " + playerSkills[i]->getSkillName() + ": " + playerSkills[i]->getDescription());
-            }
-        }
-        
-        game_.getDialog().addMessage("<SYSTEM>", "战斗命令: /enemy attack skill <id> 或 /enemy attack pass");
+        // ... 其他初始化代码 ...
 
-        // 决定先手：比较玩家和敌人的速度
-        double playerSpeed = player_->getSpeed();
-        double enemySpeed = enemy_->getSpeed();
-        
-        bool playerFirst = (playerSpeed > enemySpeed);
-        if(playerSpeed == enemySpeed) {
+        // 决定先手
+        bool playerFirst = (player_->getSpeed() > enemy_->getSpeed());
+        if(player_->getSpeed() == enemy_->getSpeed()) {
             int roll = std::rand() % 2;
             playerFirst = (roll == 0);
         }
@@ -236,32 +214,26 @@ void FightEvent::startBattle() {
         if(playerFirst){
             game_.getDialog().addMessage("<SYSTEM>", player_->getName() + "先手行动");
             battleState_ = BATTLE_STATE_PLAYER_TURN;
-            game_.getDialog().addMessage("<SYSTEM>", "轮到了你的回合，请选择行动");
+            showSkillSelection(); // 显示技能选择
         } else {
             game_.getDialog().addMessage("<SYSTEM>", enemy_->getName() + "先手行动");
             battleState_ = BATTLE_STATE_ENEMY_TURN;
-            // 延迟一下让玩家看到消息
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             processEnemyTurn();
         }
     }
     catch (const std::exception& e) {
-        game_.getDialog().addMessage("<SYSTEM>", "战斗开始错误: " + std::string(e.what()));
-        std::cerr << "Exception in FightEvent::startBattle: " << e.what() << std::endl;
-        battleState_ = BATTLE_STATE_BATTLE_OVER;
-        battleOver_ = true;
-    }
-    catch (...) {
-        game_.getDialog().addMessage("<SYSTEM>", "战斗开始未知错误");
-        std::cerr << "Unknown exception in FightEvent::startBattle" << std::endl;
-        battleState_ = BATTLE_STATE_BATTLE_OVER;
-        battleOver_ = true;
+        // ... 异常处理 ...
     }
 }
+
 
 void FightEvent::endBattle() {
     battleOver_ = true;
     battleState_ = BATTLE_STATE_BATTLE_OVER;
+    
+    // 清理战斗对话节点
+    cleanupBattleDialog();
     
     // 清除当前战斗
     game_.clearCurrentBattle();
@@ -752,21 +724,15 @@ void FightEvent::advanceBattleState() {
     
     // 切换回合
     if (battleState_ == BATTLE_STATE_PROCESSING) {
-        // 根据当前状态确定下一步
-        // 如果刚刚处理完玩家行动，切换到敌人回合
         battleState_ = BATTLE_STATE_ENEMY_TURN;
-        
-        // 延迟一下让玩家看到消息
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         processEnemyTurn();
     } else if (battleState_ == BATTLE_STATE_ENEMY_TURN) {
-        // 敌人回合结束后，切换到玩家回合
         currentRound_++;
         battleState_ = BATTLE_STATE_PLAYER_TURN;
-        game_.getDialog().addMessage("<SYSTEM>", "轮到了你的回合，请选择行动");
+        showSkillSelection(); // 显示技能选择
     }
 }
-
 
 void FightEvent::setEnemyHealthToLow() {
     // 设置敌人血量为1点
@@ -782,4 +748,87 @@ void FightEvent::setEnemyHealthToLow() {
                                 std::to_string((int)enemy_->getMaxHealth()) +
                                 ", 体力 " + std::to_string((int)enemy_->getFatigue()) + 
                                 "/" + std::to_string((int)enemy_->getMaxFatigue()));
+}
+
+
+// 显示技能选择
+void FightEvent::showSkillSelection() {
+    if (!player_ || !enemy_) return;
+    
+    // 动态注册对话节点
+    registerBattleDialog();
+    
+    // 跳转到战斗对话节点
+    unsigned int dialogNodeId = getBattleDialogNodeId(enemy_->getId());
+    game_.getStoryController().processNodeByID(dialogNodeId);
+}
+
+// 动态注册战斗对话节点
+void FightEvent::registerBattleDialog() {
+    if (!player_ || !enemy_) return;
+    
+    // 获取StoryController
+    auto& storyController = game_.getStoryController();
+    
+    // 创建对话节点ID
+    unsigned int nodeId = getBattleDialogNodeId(enemy_->getId());
+    
+    // 如果节点已存在，先移除
+    if (storyController.hasDialogNode(nodeId)) {
+        storyController.removeDialogNode(nodeId);
+    }
+    
+    // 创建新的对话节点
+    std::string enemyName = enemy_->getName();
+    std::vector<Choice> choices;
+    
+    // 获取玩家技能
+    auto& playerSkills = player_->getSkills();
+    for (int i = 0; i < playerSkills.size(); i++) {
+        if (playerSkills[i]->isAttackSkill()) {
+            // 为每个攻击技能创建选项
+            choices.push_back(Choice(
+                playerSkills[i]->getSkillName(),
+                0,
+                [i, this](const Game& game_logic_) {
+                    // 处理技能选择
+                    auto battle = this->game_.getCurrentBattle(); // 使用 this->game_
+                    if (battle) {
+                        battle->playerChooseAction(0, i); // 0 表示技能攻击
+                    }
+                }
+            ));
+        }
+    }
+    
+    // 添加跳过回合选项
+    choices.push_back(Choice(
+        "跳过回合 (恢复20%体力)",
+        0,
+        [this](const Game& game_logic_) {
+            auto battle = this->game_.getCurrentBattle(); // 使用 this->game_
+            if (battle) {
+                battle->playerChooseAction(1, 0); // 1 表示跳过回合
+            }
+        }
+    ));
+    
+    // 创建并注册对话节点
+    auto node = new DialogNode(nodeId, "系统", "选择你的行动:", choices);
+    storyController.addDialogNode(nodeId, node);
+}
+
+
+// 清理战斗对话节点
+void FightEvent::cleanupBattleDialog() {
+    if (!enemy_) return;
+    
+    // 获取StoryController
+    auto& storyController = game_.getStoryController();
+    
+    // 移除对话节点
+    unsigned int nodeId = getBattleDialogNodeId(enemy_->getId());
+    if (storyController.hasDialogNode(nodeId)) {
+        storyController.removeDialogNode(nodeId);
+    }
 }

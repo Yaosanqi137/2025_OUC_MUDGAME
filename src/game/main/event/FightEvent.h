@@ -7,6 +7,7 @@
 #include "../class/skill/SkillFactory.h"
 #include "../basic/BattleCommandHandler.h"
 #include "../basic/Game.h"
+#include "../basic/StoryController.h"
 
 #include <memory>
 #include <vector>
@@ -55,6 +56,19 @@ public:
 
     // 战斗调试
     void setEnemyHealthToLow();
+
+    static unsigned int getBattleDialogNodeId(int enemyId) {
+        return 20000000 + enemyId;
+    }
+    
+    // 显示技能选择
+    void showSkillSelection();
+    
+    // 动态注册战斗对话节点
+    void registerBattleDialog();
+    
+    // 清理战斗对话节点
+    void cleanupBattleDialog();
 
 private:
     std::shared_ptr<Player> player_;

@@ -56,59 +56,9 @@ void Dialog::processPlayerInput(std::string& input) {
 
     //检查是否在战斗中
     if (game_logic_.isInBattle()) {
-        // 直接处理战斗命令
-        auto battle = game_logic_.getCurrentBattle();
-        if (!battle) {
-            addMessage("<SYSTEM>", "错误：战斗状态异常");
-            game_logic_.clearCurrentBattle();
-            return;
-        }
-
-        // 检查是否是玩家回合
-        if (!battle->isPlayerTurn()) {
-            addMessage("<SYSTEM>", "现在不是你的回合，请等待敌人行动");
-            return;
-        }
-
-        // 处理战斗命令
-        if (input.find("/enemy attack pass") != std::string::npos) {
-            // 处理跳过回合
-            battle->playerChooseAction(1, 0); // 1 表示跳过回合
-            return;
-        } else if (input.rfind("/enemy attack skill ", 0) == 0) {
-            // 处理技能攻击
-            std::string idStr = input.substr(20);
-            try {
-                int skillId = std::stoi(idStr);
-                auto& skills = game_logic_.getPlayer().getSkills();
-                int index = -1;
-                
-                for (int i = 0; i < skills.size(); i++) {
-                    if (skills[i]->getId() == skillId && skills[i]->isAttackSkill()) {
-                        index = i;
-                        break;
-                    }
-                }
-                
-                if (index != -1) {
-                    battle->playerChooseAction(0, index); // 0 表示技能攻击
-                } else {
-                    addMessage("<SYSTEM>", "无效的技能ID或这不是攻击技能");
-                }
-            } catch (const std::exception& e) {
-                addMessage("<SYSTEM>", "错误: 无效的技能ID格式");
-            }
-            return;
-        } else if (input.find("/enemy kill") != std::string::npos){
-            // 设置敌人血量为1点 - 调试命令
-            battle->setEnemyHealthToLow();
-            addMessage("<SYSTEM>", "调试命令: 已将敌人血量设置为1点");
-            return;
-        } else {
-            // 不是战斗命令，显示错误消息
-            addMessage("<SYSTEM>", "在战斗中，请使用战斗命令: /enemy attack skill <id> 或 /enemy attack pass");
-            return;
-        }
+        // 在战斗中，不处理普通输入，而是通过选项选择
+        addMessage("<SYSTEM>", "请在战斗选项中选择行动");
+        return;
     }
 
 

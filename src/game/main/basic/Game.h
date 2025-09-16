@@ -87,7 +87,6 @@ public:
     std::shared_ptr<Player> getPlayerSharedPtr();
 
     bool isFirstNewGame = true; // 标记是否是第一次开始新游戏
-
 private:
 
     GameState currentState_;
