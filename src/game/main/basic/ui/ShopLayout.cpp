@@ -128,7 +128,7 @@ int ShopLayout::getTotalPages() const {
     return (shopItems_.size() + itemsPerPage_ - 1) / itemsPerPage_;
 }
 
-Element ShopLayout::Render() {
+Element ShopLayout::OnRender() {
     if (shopItems_.empty()) {
         auto empty_shop_view = vbox({
             filler(),

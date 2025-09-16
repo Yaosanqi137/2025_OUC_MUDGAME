@@ -71,7 +71,7 @@ PhoneLayout::PhoneLayout(Game& game_logic, bool& isShowingFlag,
 /**
  * @brief 渲染函数，负责绘制手机界面。
  */
-Element PhoneLayout::Render() {
+Element PhoneLayout::OnRender() {
     // --- 模拟手机状态栏 ---
     // 获取游戏内时间
     unsigned int gameHour = GameTime::getHour();

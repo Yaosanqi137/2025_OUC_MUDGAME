@@ -302,7 +302,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
  * @brief 渲染函数：FTXUI每一帧都会调用。
  * @details 负责根据当前游戏状态同步UI，并组合所有子组件来构建最终的界面布局。
  */
-Element GameLayout::Render() {
+Element GameLayout::OnRender() {
     // 使用 Maybe 后，不再需要在 Render 函数的开头检查每个覆盖层是否显示。
     // FTXUI 会自动处理。只需要考虑渲染主布局即可。
 

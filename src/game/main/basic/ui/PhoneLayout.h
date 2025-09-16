@@ -21,7 +21,7 @@ public:
                          std::function<void()> onShopClick,
                          std::function<void()> onInfoClick);
 
-    ftxui::Element Render() override;
+    ftxui::Element OnRender() override;
 
 private:
     Game& game_logic_;

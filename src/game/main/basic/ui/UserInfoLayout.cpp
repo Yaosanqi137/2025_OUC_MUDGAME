@@ -44,7 +44,7 @@ std::string UserInfoLayout::formatMoney() const {
     return ss.str();
 }
 
-Element UserInfoLayout::Render() {
+Element UserInfoLayout::OnRender() {
     // 游戏时间区域
     auto timeSection = vbox({
         text("时间与位置") | bold | hcenter,

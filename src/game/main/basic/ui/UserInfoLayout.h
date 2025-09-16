@@ -11,7 +11,7 @@ class UserInfoLayout : public ftxui::ComponentBase {
 public:
     explicit UserInfoLayout(Game& game_logic, bool& isShowingFlag);
 
-    ftxui::Element Render() override;
+    ftxui::Element OnRender() override;
 
 private:
     std::string formatGameTime() const;

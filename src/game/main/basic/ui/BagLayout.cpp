@@ -122,7 +122,7 @@ std::string BagLayout::getItemTypeString(const std::shared_ptr<AbstractItem>& it
     }
 }
 
-Element BagLayout::Render() {
+Element BagLayout::OnRender() {
     // 每次渲染前刷新物品列表
     refreshItems();
 

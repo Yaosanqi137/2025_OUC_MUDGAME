@@ -15,7 +15,7 @@ class BagLayout : public ftxui::ComponentBase {
 public:
     explicit BagLayout(Game& game_logic, bool& isShowingFlag, std::vector<std::shared_ptr<AbstractItem>>& displayableItems);
 
-    ftxui::Element Render() override;
+    ftxui::Element OnRender() override;
 
 private:
     void refreshItems(); // 从Player获取最新的物品列表

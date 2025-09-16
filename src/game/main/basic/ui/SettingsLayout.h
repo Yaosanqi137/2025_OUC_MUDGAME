@@ -23,7 +23,7 @@ public:
      */
     explicit SettingsLayout(Game& game_logic, bool& isShowingFlag);
 
-    ftxui::Element Render() override;
+    ftxui::Element OnRender() override;
 
     void loadSettings();
 
