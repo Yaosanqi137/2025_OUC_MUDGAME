@@ -30,7 +30,7 @@ class MapLayout : public ftxui::ComponentBase {
 public:
     explicit MapLayout(Game& game_logic, bool& isShowingFlag);
 
-    ftxui::Element Render() override;
+    ftxui::Element OnRender() override;
 
     // 添加 OnEvent 函数的声明，并使用 override 关键字确保正确覆盖基类方法
     bool OnEvent(ftxui::Event event) override;

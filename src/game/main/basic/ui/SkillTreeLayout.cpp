@@ -115,7 +115,7 @@ Element SkillTreeLayout::buildSkillTreeGraph() const {
     return vbox(std::move(renderedRows)) | hcenter;
 }
 
-Element SkillTreeLayout::Render() {
+Element SkillTreeLayout::OnRender() {
     auto title = text(" 技 能 树 ") | bold | hcenter;
 
     auto legend = hbox({

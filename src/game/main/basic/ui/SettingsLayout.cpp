@@ -90,7 +90,7 @@ void SettingsLayout::applyAndSaveChanges() const {
     config->saveConfig();
 }
 
-Element SettingsLayout::Render() {
+Element SettingsLayout::OnRender() {
     // loadSettings();
 
     auto speedControlRenderer = hbox({

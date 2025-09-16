@@ -264,7 +264,7 @@ void MapLayout::travelBy(const std::string& method) {
     isShowingFlag_ = false;
 }
 
-Element MapLayout::Render() {
+Element MapLayout::OnRender() {
     auto legend = hbox({
         text("图例: "),
         text("■") | color(Color::Green) | bold, text(" 已选择  "),

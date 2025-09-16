@@ -21,7 +21,7 @@ class ShopLayout : public ftxui::ComponentBase {
 public:
     explicit ShopLayout(Game& game_logic, bool& isShowingFlag);
 
-    ftxui::Element Render() override;
+    ftxui::Element OnRender() override;
 
 private:
     void initializeShopItems();

@@ -33,7 +33,7 @@ public:
      * @brief 重写的Render方法，FTXUI每一帧都会调用此方法来绘制界面。
      * @return 返回一个代表当前帧UI布局的ftxui::Element。
      */
-    ftxui::Element Render() override;
+    ftxui::Element OnRender() override;
 
 private:
     Game& game_logic_;

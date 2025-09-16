@@ -14,7 +14,7 @@ class Game;
 class SkillTreeLayout : public ftxui::ComponentBase {
 public:
     explicit SkillTreeLayout(Game& game_logic, bool& isShowingFlag);
-    ftxui::Element Render() override;
+    ftxui::Element OnRender() override;
 
 private:
     // 辅助函数，用于生成FTXUI的graph元素
