@@ -5,9 +5,9 @@
 #include "ui/SettingsLayout.h"
 #include "Configuration.h"
 
-#include "FTXUI/component/component.hpp"
-#include "FTXUI/component/screen_interactive.hpp"
-#include "FTXUI/dom/elements.hpp"
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
 
 #include <atomic>
 #include <chrono>

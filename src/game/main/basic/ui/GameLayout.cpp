@@ -12,9 +12,9 @@
 #include "../View.h"
 #include "../../class/entity/Player.h"
 
-#include "FTXUI/component/screen_interactive.hpp"
-#include "FTXUI/dom/elements.hpp"
-#include "FTXUI/screen/string.hpp"
+#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/string.hpp>
 
 using namespace ftxui;
 
@@ -304,7 +304,7 @@ GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
  */
 Element GameLayout::OnRender() {
     // 使用 Maybe 后，不再需要在 Render 函数的开头检查每个覆盖层是否显示。
-    // FTXUI 会自动处理。只需要考虑渲染主布局即可。
+    // ftxui 会自动处理。只需要考虑渲染主布局即可。
 
     // 更新剧情控制器
     game_logic_.getStoryController().update();

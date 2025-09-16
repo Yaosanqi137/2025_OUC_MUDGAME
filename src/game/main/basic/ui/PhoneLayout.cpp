@@ -1,7 +1,7 @@
 #include "PhoneLayout.h"
 #include "../Game.h" // 假设 Game.h 的路径
-#include "FTXUI/dom/elements.hpp"
-#include "FTXUI/component/component.hpp" // 引入 component.hpp for ButtonOption
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/component/component.hpp> // 引入 component.hpp for ButtonOption
 #include <chrono>
 #include <ctime>
 #include <iomanip>

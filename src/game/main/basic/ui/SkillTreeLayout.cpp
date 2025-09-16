@@ -1,7 +1,7 @@
 #include "SkillTreeLayout.h"
 #include "../Game.h"
 #include "../../class/entity/Player.h"
-#include "ftxui/dom/elements.hpp"
+#include <ftxui/dom/elements.hpp>
 #include <algorithm>
 #include <map>
 #include <set>

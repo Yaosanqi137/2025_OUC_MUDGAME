@@ -1,8 +1,8 @@
 #ifndef INC_2025_OUC_MUDGAME_PHONELAYOUT_H
 #define INC_2025_OUC_MUDGAME_PHONELAYOUT_H
 
-#include "FTXUI/component/component_base.hpp"
-#include "FTXUI/component/component.hpp"
+#include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component.hpp>
 #include <memory>
 
 class Game; // 前向声明

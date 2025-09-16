@@ -2,10 +2,10 @@
 #include "../Game.h"
 #include "../GameTime.h"
 #include "../../class/entity/Player.h"
-#include "FTXUI/dom/elements.hpp"
-#include "FTXUI/screen/string.hpp"
-#include "FTXUI/dom/canvas.hpp"
-#include "FTXUI/component/component.hpp"
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/screen/string.hpp>
+#include <ftxui/dom/canvas.hpp>
+#include <ftxui/component/component.hpp>
 
 #include <random>
 

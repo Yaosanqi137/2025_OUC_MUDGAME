@@ -1,7 +1,7 @@
 #ifndef SHOP_LAYOUT_H
 #define SHOP_LAYOUT_H
 
-#include "ftxui/component/component.hpp"
+#include <ftxui/component/component.hpp>
 #include <vector>
 #include <memory>
 #include <array>
