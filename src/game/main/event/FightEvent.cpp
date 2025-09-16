@@ -474,6 +474,11 @@ void FightEvent::processPlayerSkill(int skillIndex) {
     
     auto skill = playerSkills[skillIndex];
     
+    // 添加调试信息
+    double staminaCost = skill->calculateStaminaCost(player_->getStrength());
+    game_.getDialog().addMessage("<DEBUG>", "玩家体力: " + std::to_string((int)player_->getFatigue()) + 
+                                 ", 技能消耗: " + std::to_string((int)staminaCost));
+    
     // 检查技能是否可用
     if (!skill->canUse(*player_)) {
         game_.getDialog().addMessage("<SYSTEM>", "技能不可用，可能体力不足");
@@ -531,7 +536,7 @@ void FightEvent::processPlayerSkill(int skillIndex) {
     }
     
     // 计算玩家体力消耗
-    double staminaCost = skill->calculateStaminaCost(player_->getStrength());
+    // double staminaCost = skill->calculateStaminaCost(player_->getStrength());
     
     // 特殊技能效果
     for(auto& skill__ : player_->getSkills()){
