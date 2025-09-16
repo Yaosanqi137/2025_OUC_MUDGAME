@@ -122,6 +122,8 @@ public:
     bool isTrainingSkill() const;
     bool isSpecialEffectSkill() const;
 
+    int getSkillPointCost() const;
+    
     // 工具方法
     static int skillNameToID(const std::string& skillName);
     static std::string idToSkillName(int id);

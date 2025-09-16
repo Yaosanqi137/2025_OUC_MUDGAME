@@ -100,6 +100,8 @@ bool TrainingEvent::train(TrainingType type, Game& game) {
 void TrainingEvent::sendTrainingSuccessMessage(Game& game, TrainingType type) const {
     std::string message;
     
+    GameTime::addHour(3);
+    game.getDialog().addMessage("<SYSTEM>", "你训练了三个小时。");
     switch (type) {
         case TrainingType::STRENGTH:
             message = "力量训练完成！获得300力量经验";
@@ -265,12 +267,21 @@ double TrainingEvent::getHungerCost() const {
     return 25.0; // 消耗25饱食度
 }
 
-void TrainingEvent::applyDailyExperienceDecay() {
+void TrainingEvent::applyDailyExperienceDecay(Game& game) {
     double decayRate = getExperienceDecayRate();
-    
+    double oldStrengthExp = strengthExp;
+    double oldAgilityExp = agilityExp;
+    double oldStaminaExp = staminaExp;
     strengthExp = std::max(0.0, strengthExp * (1.0 - decayRate));
     agilityExp = std::max(0.0, agilityExp * (1.0 - decayRate));
     staminaExp = std::max(0.0, staminaExp * (1.0 - decayRate));
+    if(fabs(oldStrengthExp - strengthExp) < 1e6)
+        game.getDialog().addMessage("<SYSTEM>", "你的力量训练经验由" + std::to_string((int)oldStrengthExp) + "衰减为" + std::to_string((int)strengthExp));
+    if(fabs(oldAgilityExp - agilityExp) < 1e6)
+        game.getDialog().addMessage("<SYSTEM>", "你的敏捷训练经验由" + std::to_string((int)oldAgilityExp) + "衰减为" + std::to_string((int)agilityExp));
+    if(fabs(oldStaminaExp - staminaExp) < 1e6)
+        game.getDialog().addMessage("<SYSTEM>", "你的耐力训练经验由" + std::to_string((int)oldStaminaExp) + "衰减为" + std::to_string((int)staminaExp));
+
 }
 
 double TrainingEvent::getStrengthExp() const {

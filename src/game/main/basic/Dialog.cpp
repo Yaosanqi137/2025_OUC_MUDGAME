@@ -51,6 +51,9 @@ void Dialog::processPlayerInput(std::string& input) {
         return;
     }
 
+    // 每次输入都判断是否过了一天
+    game_logic_.getPlayer().checkAndApplyDailyDecay(game_logic_); 
+
     //检查是否在战斗中
     if (game_logic_.isInBattle()) {
         // 直接处理战斗命令
@@ -327,6 +330,7 @@ void Dialog::processPlayerInput(std::string& input) {
                 addMessage("<SYSTEM>", "你只能在比赛场地进行拳击比赛！");
                 return;
             }
+            clearHistory();
             int EnemyId = game_logic_.getPlayer().getHighestUnlockedEnemy();
             BattleCommandHandler::startBattle(game_logic_, EnemyId);
         } else {

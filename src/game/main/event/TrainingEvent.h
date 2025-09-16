@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include "../basic/GameTime.h"
 
 class Player;
 class Game;
@@ -38,7 +39,7 @@ public:
     double getHungerCost() const;  // 饱食度消耗
 
     // 每日经验衰减
-    void applyDailyExperienceDecay();
+    void applyDailyExperienceDecay(Game& game);
 
     // 获取经验值
     double getStrengthExp() const; // 力量训练经验
