@@ -349,6 +349,7 @@ Element GameLayout::Render() {
             break;
         default: // GameState::InGame 或其他
             selectedInputMode_ = 0;
+            lastInputPrompt_ = " 输入 ";
             break;
     }
 
