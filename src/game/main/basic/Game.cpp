@@ -139,6 +139,7 @@ const std::optional<InputRequest>& Game::getCurrentInputRequest() const {
 void Game::clearInputRequest() {
     inputRequest_.reset();
     setGameState(GameState::InGame);
+    inputRequestChanged_ = true;
 }
 
 // --- 输入请求接口实现 ---
@@ -151,6 +152,7 @@ void Game::requestTextInput(const std::string& prompt,
         .onTextSubmitDefault = std::move(onSubmitDefault)
     };
     setGameState(GameState::AwaitingTextInput);
+    inputRequestChanged_ = true;
 }
 
 void Game::requestChoice(const std::string& prompt, 
@@ -162,6 +164,7 @@ void Game::requestChoice(const std::string& prompt,
         .onChoiceSelect = std::move(onSelect)
     };
     setGameState(GameState::AwaitingChoice);
+    inputRequestChanged_ = true;
 }
 
 // --- 战斗管理实现 ---
@@ -196,4 +199,12 @@ std::shared_ptr<FightEvent> Game::getCurrentBattle() {
 std::shared_ptr<Player> Game::getPlayerSharedPtr() {
     // 直接返回 Player 的共享指针，使用空删除器
     return std::shared_ptr<Player>(&getPlayer(), [](Player*){});
+}
+
+bool Game::checkAndConsumeInputRequestChanged() {
+    if (inputRequestChanged_) {
+        inputRequestChanged_ = false;
+        return true;
+    }
+    return false;
 }
