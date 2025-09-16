@@ -123,7 +123,9 @@ void MapLayout::travelBy(const std::string& method) {
         isShowingFlag_ = false; // 关闭地图界面
         return;
     }
-    
+
+    game_logic_.getDialog().clearHistory();
+
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> distWalkTime(10, 25); // 步行时间10-20分钟
     std::uniform_int_distribution<int> distTaxiTime(4, 10);  // 计程车时间5-10分钟
@@ -258,7 +260,7 @@ void MapLayout::travelBy(const std::string& method) {
     if (isFirstVisit) {
         player.addVisitedLocation(destination.id);
     }
-    
+
     isShowingFlag_ = false;
 }
 
