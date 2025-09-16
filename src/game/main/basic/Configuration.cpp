@@ -4,7 +4,7 @@
 
 const     std::string DEFAULT_GAME_NAME                 =    "拳王之路"          ;
 const     std::string DEFAULT_GAME_VERSION              =    "1.0.0"            ;
-constexpr int         DEFAULT_TYPEWRITER_SPEED_MS       =    50                 ; // 默认打字机速度：50毫秒/字符
+constexpr int         DEFAULT_TYPEWRITER_SPEED_MS       =    20                 ; // 默认打字机速度：20毫秒/字符
 constexpr int         DEFAULT_DIFFICULTY                =    2                  ; // 默认难度：普通
 
 Configuration::Configuration() : configFilePath("config.toml") {
