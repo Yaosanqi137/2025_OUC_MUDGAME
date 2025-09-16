@@ -737,6 +737,10 @@ void FightEvent::advanceBattleState() {
         currentRound_++;
         battleState_ = BATTLE_STATE_PLAYER_TURN;
         showSkillSelection(); // 显示技能选择
+    } else if (battleState_ == BATTLE_STATE_PLAYER_TURN) {
+        // 如果已经是玩家回合，可能是通过kill选项触发的，不需要做任何事
+        // 或者可以重新显示技能选择
+        showSkillSelection();
     }
 }
 
@@ -819,6 +823,35 @@ void FightEvent::registerBattleDialog() {
         }
     ));
     
+    // 添加kill选项（调试功能）
+    choices.push_back(Choice(
+        "Kill (调试: 将敌人血量设为1)",
+        0,
+        [this](const Game& game_logic_) {
+            // 将敌人血量设为1
+            if (this->enemy_) {
+                double currentHealth = this->enemy_->getHealth();
+                this->enemy_->addHealth(-(currentHealth - 1));
+                game_logic_.getDialog().addMessage("<SYSTEM>", "调试命令: 已将敌人血量设置为1");
+                
+                // 显示状态更新
+                game_logic_.getDialog().addMessage("<SYSTEM>", "你的状态: 生命值 " + 
+                    std::to_string((int)this->player_->getHealth()) + 
+                    "/" + std::to_string((int)this->player_->getMaxHealth()) +
+                    ", 体力 " + std::to_string((int)this->player_->getFatigue()) + 
+                    "/" + std::to_string((int)this->player_->getMaxFatigue()));
+                game_logic_.getDialog().addMessage("<SYSTEM>", this->enemy_->getName() + "的状态: 生命值 " + 
+                    std::to_string((int)this->enemy_->getHealth()) + "/" + 
+                    std::to_string((int)this->enemy_->getMaxHealth()) +
+                    ", 体力 " + std::to_string((int)this->enemy_->getFatigue()) + 
+                    "/" + std::to_string((int)this->enemy_->getMaxFatigue()));
+                
+                // 继续战斗
+                this->advanceBattleState();
+            }
+        }
+    ));
+
     // 创建并注册对话节点
     auto node = new DialogNode(nodeId, "系统", "选择你的行动:", choices);
     storyController.addDialogNode(nodeId, node);
