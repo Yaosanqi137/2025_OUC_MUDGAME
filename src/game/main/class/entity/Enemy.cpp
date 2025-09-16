@@ -64,7 +64,7 @@ void Enemy::addSkill(std::shared_ptr<Skill> skill) {
     std::string skillName_ = skill -> getSkillName();
     if(skillName_ == "自杀式袭击"){
         exHitRate -= 0.1;
-        fatigueConsumeRate - 0.2;
+        fatigueConsumeRate -= 0.2;
     }
     else if(skillName_ == "钝兵挫锐"){
         sustainDamageRate -= 0.2;
