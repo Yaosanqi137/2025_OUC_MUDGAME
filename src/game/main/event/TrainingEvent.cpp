@@ -80,13 +80,13 @@ bool TrainingEvent::train(TrainingType type, Game& game) {
         case TrainingType::AGILITY:
             if (agilityLevel > oldAgilityLevel) {
                 sendLevelUpMessage(game, type, agilityLevel);
-                game.getDialog().addMessage("<SYSTEM>", "敏捷提升了" + std::to_string(agilityLevel - oldStrengthLevel) + "点");
+                game.getDialog().addMessage("<SYSTEM>", "敏捷提升了" + std::to_string(agilityLevel - oldAgilityLevel) + "点");
             }
             break;
         case TrainingType::STAMINA:
             if (staminaLevel > oldStaminaLevel) {
                 sendLevelUpMessage(game, type, staminaLevel);
-                game.getDialog().addMessage("<SYSTEM>", "耐力提升了" + std::to_string(staminaLevel - oldStrengthLevel) + "点");
+                game.getDialog().addMessage("<SYSTEM>", "耐力提升了" + std::to_string(staminaLevel - oldStaminaLevel) + "点");
             }
             break;
     }

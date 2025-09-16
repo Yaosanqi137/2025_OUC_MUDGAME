@@ -89,19 +89,50 @@ bool Skill::canUnlock(int playerSkillPoints) const {
 
 // ========== 使用条件检查（重载版本） ==========
 bool Skill::canUse(const Player& user) const {
-    if (isLocked) return false;
+    // 使用 const_cast 来绕过 const 限制，仅用于调试
+    Game& game = const_cast<Player&>(user).getGameLogic();
+    // game.getDialog().addMessage("<DEBUG>", "检查技能: " + getSkillName());
+    // game.getDialog().addMessage("<DEBUG>", "技能是否锁定: " + std::string(isLocked ? "是" : "否"));
+    
+    if (isLocked) {
+        // game.getDialog().addMessage("<DEBUG>", "技能已锁定，无法使用");
+        return false;
+    }
     
     double requiredStamina = calculateStaminaCost(user.getStrength());
-    if (user.getFatigue() < requiredStamina) return false;
-
-    if (effectType == SkillEffectType::ATTRIBUTE_BOOST) {
-        if (attributeType == "strength" && user.getStrength() < minAttributeValue) return false;
-        if (attributeType == "agility" && user.getAgility() < minAttributeValue) return false;
-        if (attributeType == "stamina" && user.getStamina() < minAttributeValue) return false;
+    // game.getDialog().addMessage("<DEBUG>", "所需体力: " + std::to_string(requiredStamina));
+    // game.getDialog().addMessage("<DEBUG>", "玩家当前体力: " + std::to_string(user.getFatigue()));
+    
+    if (user.getFatigue() < requiredStamina) {
+        // game.getDialog().addMessage("<DEBUG>", "体力不足，无法使用技能");
+        return false;
     }
 
+    if (effectType == SkillEffectType::ATTRIBUTE_BOOST) {
+        // game.getDialog().addMessage("<DEBUG>", "检查属性提升条件");
+        if (attributeType == "strength") {
+            bool canUse = user.getStrength() >= minAttributeValue;
+            // game.getDialog().addMessage("<DEBUG>", "力量条件: " + std::string(canUse ? "满足" : "不满足"));
+            return canUse;
+        }
+        if (attributeType == "agility") {
+            bool canUse = user.getAgility() >= minAttributeValue;
+            // game.getDialog().addMessage("<DEBUG>", "敏捷条件: " + std::string(canUse ? "满足" : "不满足"));
+            return canUse;
+        }
+        if (attributeType == "stamina") {
+            bool canUse = user.getStamina() >= minAttributeValue;
+            // game.getDialog().addMessage("<DEBUG>", "耐力条件: " + std::string(canUse ? "满足" : "不满足"));
+            return canUse;
+        }
+        // game.getDialog().addMessage("<DEBUG>", "未知属性类型: " + attributeType);
+        return false;
+    }
+
+    // game.getDialog().addMessage("<DEBUG>", "技能可用");
     return true;
 }
+
 
 bool Skill::canUse(const Enemy& user) const {
     // if (isLocked) return false;

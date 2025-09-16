@@ -145,3 +145,35 @@ void StoryController::update() {
         }
     }
 }
+
+
+// 新增：动态添加对话节点
+void StoryController::addDialogNode(unsigned int id, const DialogNode* node) {
+    // 如果节点已存在，先移除
+    if (dialogDatabase_.find(id) != dialogDatabase_.end()) {
+        removeDialogNode(id);
+    }
+    
+    dialogDatabase_[id] = node;
+    dynamicNodes_.push_back(id);
+}
+
+// 新增：移除对话节点
+void StoryController::removeDialogNode(unsigned int id) {
+    auto it = dialogDatabase_.find(id);
+    if (it != dialogDatabase_.end()) {
+        // 从动态节点列表中移除
+        auto dynamicIt = std::find(dynamicNodes_.begin(), dynamicNodes_.end(), id);
+        if (dynamicIt != dynamicNodes_.end()) {
+            dynamicNodes_.erase(dynamicIt);
+        }
+        
+        // 从数据库中移除
+        dialogDatabase_.erase(it);
+    }
+}
+
+// 新增：检查节点是否存在
+bool StoryController::hasDialogNode(unsigned int id) const {
+    return dialogDatabase_.find(id) != dialogDatabase_.end();
+}

@@ -39,6 +39,20 @@ public:
      */
     void update();
 
+    // 新增：获取对话数据库的引用（用于动态添加节点）
+    std::map<unsigned int, const DialogNode*>& getDialogDatabase() {
+        return dialogDatabase_;
+    }
+    
+    // 新增：动态添加对话节点
+    void addDialogNode(unsigned int id, const DialogNode* node);
+    
+    // 新增：移除对话节点
+    void removeDialogNode(unsigned int id);
+    
+    // 新增：检查节点是否存在
+    bool hasDialogNode(unsigned int id) const;
+
 private:
     /**
      * @brief 真正处理DialogNode对象的内部函数。
@@ -60,6 +74,9 @@ private:
     size_t sequenceStep_ = 0;                          ///< 指向序列中当前步骤的索引。
     std::chrono::steady_clock::time_point waitUntil_;  ///< 如果当前是停顿步骤，记录需要等待到的时间点。
     unsigned int pendingNextNodeId_ = 0;               ///< 序列结束后的跳转ID
+
+    // 新增：跟踪动态添加的节点，以便后续清理
+    std::vector<unsigned int> dynamicNodes_;
 };
 
 #endif // STORYCONTROLLER_H
