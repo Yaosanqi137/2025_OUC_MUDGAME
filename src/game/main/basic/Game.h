@@ -87,6 +87,13 @@ public:
     std::shared_ptr<Player> getPlayerSharedPtr();
 
     bool isFirstNewGame = true; // 标记是否是第一次开始新游戏
+
+    /**
+     * @brief 检查输入请求是否已更改，并在检查后消耗此标志。
+     * @return 如果自上次检查后发生过更改，则返回 true。
+     */
+    bool checkAndConsumeInputRequestChanged();
+
 private:
 
     GameState currentState_;
@@ -103,6 +110,7 @@ private:
     std::shared_ptr<FightEvent> currentBattle_;
     bool inBattle_;
 
+    bool inputRequestChanged_ = false;
 };
 
 inline static const std::string VOICEOVER; // 旁白

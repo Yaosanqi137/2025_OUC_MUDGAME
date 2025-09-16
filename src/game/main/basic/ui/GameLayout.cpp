@@ -24,7 +24,8 @@ using namespace ftxui;
  *          关键在于，所有组件都作为成员变量，保证了其生命周期与GameLayout实例一致。
  */
 GameLayout::GameLayout(Game& game_logic) : game_logic_(game_logic),
-                                           animationStartTime_(std::chrono::steady_clock::now()) {
+                                           animationStartTime_(std::chrono::steady_clock::now()),
+                                           lastInputPrompt_(" 指令 ") {
     // --- 初始化所有 Layout，并传入对应的可见性标志 ---
     bagLayout_ = Make<BagLayout>(game_logic_, showBag_, game_logic_.getPlayer().getInventory());
     mapLayout_ =  Make<MapLayout>(game_logic_, showMap_);
@@ -311,7 +312,25 @@ Element GameLayout::Render() {
     // 状态同步：根据Game状态切换Tab的显示，并动态更新内容
     GameState state = game_logic_.getCurrentState();
     auto requestOpt = game_logic_.getCurrentInputRequest();
-    lastInputPrompt_ = " 指令 ";
+
+    if (game_logic_.checkAndConsumeInputRequestChanged()) {
+        // 无条件地清除旧按钮
+        choiceContainer_->DetachAllChildren();
+
+        // 如果当前应该显示选项，就根据最新的状态构建它们
+        if (state == GameState::AwaitingChoice && requestOpt) {
+            for (size_t i = 0; i < requestOpt->choices.size(); ++i) {
+                choiceContainer_->Add(Button(
+                    requestOpt->choices[i],
+                    [i, choice = requestOpt->choices[i], onSelect = requestOpt->onChoiceSelect] {
+                        onSelect(i, choice);
+                    },
+                    ButtonOption::Animated()
+                ));
+            }
+        }
+        // 如果状态不是 AwaitingChoice，则 choiceContainer 保持为空
+    }
 
     switch(state) {
         case GameState::AwaitingTextInput:
@@ -322,17 +341,6 @@ Element GameLayout::Render() {
             selectedInputMode_ = 2;
             if (requestOpt) {
                 lastInputPrompt_ = requestOpt->prompt;
-                // 动态更新选项按钮
-                if (choiceContainer_->ChildCount() != requestOpt->choices.size()) {
-                    choiceContainer_->DetachAllChildren();
-                    for (int i = 0; i < requestOpt->choices.size(); ++i) {
-                         choiceContainer_->Add(
-                             Button(requestOpt->choices[i], [i, choice = requestOpt->choices[i], onSelect = requestOpt->onChoiceSelect] {
-                                 onSelect(i, choice);
-                             }, ButtonOption::Animated())
-                         );
-                    }
-                }
             }
             break;
         case GameState::InStory:
