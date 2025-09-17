@@ -25,7 +25,7 @@ jobs:
     strategy:
       # 使用矩阵，为每个操作系统并行运行此 Job
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [windows-latest, ubuntu-22.04, macos-latest]
     
     runs-on: ${{ matrix.os }}
 
