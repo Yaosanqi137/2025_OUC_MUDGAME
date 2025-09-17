@@ -35,6 +35,10 @@
 
 下载 Assets 中的 BoxingGame-*.zip。运行需要 C++ 运行库。
 
+C++ 运行库下载：
+
+[x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+
 ## 构建 / Build
 
 ### **Windows**
