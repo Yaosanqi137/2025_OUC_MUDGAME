@@ -3,7 +3,7 @@
 #include "StoryController.h"
 #include "../GameStory/DialogRegistry.h"
 #include "../GameStory/Story.h"
-#include "FTXUI/screen/string.hpp"
+#include <ftxui/screen/string.hpp>
 
 StoryController::StoryController(Game& game) : game_(game) {
     registerDialogs();

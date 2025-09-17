@@ -3,7 +3,7 @@
 #ifndef SKILLTREELAYOUT_H
 #define SKILLTREELAYOUT_H
 
-#include "ftxui/component/component.hpp"
+#include <ftxui/component/component.hpp>
 
 class Game;
 

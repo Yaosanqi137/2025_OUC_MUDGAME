@@ -4,8 +4,8 @@
 #include "../../class/item/AbstractItem.h"
 #include "../../class/item/Food.h"
 #include "../../class/item/UsefulItem.h"
-#include "FTXUI/component/screen_interactive.hpp"
-#include "FTXUI/dom/elements.hpp"
+#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
 #include <algorithm>
 #include <string>
 #include <vector>

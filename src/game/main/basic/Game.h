@@ -4,7 +4,7 @@
 #include "Configuration.h"
 #include "Types.h"
 #include "../class/entity/Player.h"
-#include "FTXUI/component/screen_interactive.hpp"
+#include <ftxui/component/screen_interactive.hpp>
 #include <memory>
 #include <optional>
 #include <string>

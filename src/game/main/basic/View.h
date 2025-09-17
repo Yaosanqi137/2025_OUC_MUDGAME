@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "FTXUI/component/component.hpp"
+#include <ftxui/component/component.hpp>
 
 // 告知 Game 类存在
 class Game;

@@ -2,8 +2,8 @@
 #include "../Game.h"
 #include "../../class/entity/Player.h"
 #include "../GameTime.h"
-#include "ftxui/dom/elements.hpp"
-#include "ftxui/component/component.hpp"
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/component/component.hpp>
 #include <sstream>
 #include <iomanip>
 

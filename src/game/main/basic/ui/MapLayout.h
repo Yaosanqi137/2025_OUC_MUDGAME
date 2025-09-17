@@ -1,8 +1,8 @@
 #ifndef MAPLAYOUT_H
 #define MAPLAYOUT_H
 
-#include "FTXUI/component/component_base.hpp"
-#include "FTXUI/component/component.hpp"
+#include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component.hpp>
 #include <string>
 #include <vector>
 #include <map>

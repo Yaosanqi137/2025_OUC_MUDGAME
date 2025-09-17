@@ -4,139 +4,153 @@ name: CMake Build and Release
 
 on:
   push:
-    # branches: [ "main" ]
-    #tags: [ 'v*' ]
+    branches: [ '**' ]
+    tags: [ 'v*' ]
     paths-ignore:
       - 'README.md'
       - '.gitignore'
       
   pull_request:
-    # branches: [ "main" ]
+    branches: [ '**' ]
     paths-ignore:
       - 'README.md'
       - '.gitignore'
 
 env:
-  # 项目名称
   PROJECT_NAME: BoxingGame
 
 jobs:
-  # Job 1: PR 测试流程
-  test-on-pr:
-    if: github.event_name == 'pull_request'
-    runs-on: windows-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Configure CMake (Debug)
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Debug
-    - name: Build with CMake (Debug)
-      run: cmake --build ${{github.workspace}}/build --config Debug
-    - name: Package and Upload PR Artifact
-      id: create_pr_zip
-      run: |
-        $zipName = "${{ env.PROJECT_NAME }}-PR-${{ github.event.pull_request.number }}-windows-debug.zip"
-        mkdir staging-pr
-        cp build/bin/Debug/${{env.PROJECT_NAME}}.exe staging-pr/
-        cp README.md staging-pr/
-        Compress-Archive -Path staging-pr/* -DestinationPath $zipName
-        echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
-      shell: pwsh
-    - name: Upload PR Artifact for Testing
-      uses: actions/upload-artifact@v4
-      with:
-        name: pr-build-${{ github.event.pull_request.number }}
-        path: ${{ steps.create_pr_zip.outputs.zip_name }}
+  # Job 1: 统一的、跨平台的构建与测试 Job
+  build:
+    strategy:
+      # 使用矩阵，为每个操作系统并行运行此 Job
+      matrix:
+        os: [windows-latest, ubuntu-22.04, macos-latest]
+    
+    runs-on: ${{ matrix.os }}
 
-  # Job 2: 用于发布的构建与打包流程
-  build-for-publish:
-    if: github.event_name == 'push'
-    runs-on: windows-latest
-    outputs:
-      release_zip_name: ${{ steps.package_release.outputs.zip_name }}
-      debug_zip_name: ${{ steps.package_debug.outputs.zip_name }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Install Dependencies (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ cmake libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgpm-dev zip
+
+    - name: Determine Build Type
+      id: build_type
+      shell: bash
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.ref_type }}" == "branch" ]]; then
+          echo "type=Debug" >> $GITHUB_OUTPUT
+        else
+          echo "type=Release" >> $GITHUB_OUTPUT
+        fi
+
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build
-    - name: Build Release Version
-      if: startsWith(github.ref, 'refs/tags/')
-      run: cmake --build ${{github.workspace}}/build --config Release
-    - name: Build Debug Version
-      if: startsWith(github.ref, 'refs/heads/')
-      run: cmake --build ${{github.workspace}}/build --config Debug
-    - name: Package Release Artifact
-      id: package_release
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        $zipName = "${{ env.PROJECT_NAME }}-${{ github.ref_name }}-windows-release.zip"
-        mkdir staging-release
-        cp build/bin/Release/${{env.PROJECT_NAME}}.exe staging-release/
-        cp README.md staging-release/
-        Compress-Archive -Path staging-release/* -DestinationPath $zipName
-        echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
-      shell: pwsh
-    - name: Upload Release Artifact
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-artifact
-        path: ${{ steps.package_release.outputs.zip_name }}
-    - name: Package Debug Artifact
-      id: package_debug
-      if: startsWith(github.ref, 'refs/heads/')
-      run: |
-        $zipName = "${{ env.PROJECT_NAME }}-nightly-windows-debug.zip"
-        mkdir staging-debug
-        cp build/bin/Debug/${{env.PROJECT_NAME}}.exe staging-debug/
-        cp README.md staging-debug/
-        Compress-Archive -Path staging-debug/* -DestinationPath $zipName
-        echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
-      shell: pwsh
-    - name: Upload Debug Artifact
-      if: startsWith(github.ref, 'refs/heads/')
-      uses: actions/upload-artifact@v4
-      with:
-        name: debug-artifact
-        path: ${{ steps.package_debug.outputs.zip_name }}
 
-  # Job 3: 发布每夜版
+    - name: Build with CMake
+      run: cmake --build ${{github.workspace}}/build --config ${{ steps.build_type.outputs.type }}
+
+    - name: Install Artifacts
+      # CMake 会自动从正确的 Debug/Release 目录中找到文件并安装
+      run: cmake --install ${{github.workspace}}/build --config ${{ steps.build_type.outputs.type }} --prefix ${{github.workspace}}/output
+
+    - name: Package Artifact
+      id: package
+      shell: bash
+      run: |
+        # 根据事件类型和平台确定文件名
+        if [[ "${{ github.ref_type }}" == "tag" ]]; then
+          VERSION="${{ github.ref_name }}"
+        else
+          VERSION="nightly"
+        fi
+        
+        # 处理 Windows 的 .exe 后缀
+        EXT=""
+        if [[ "${{ runner.os }}" == "Windows" ]]; then
+          EXT=".exe"
+        fi
+
+        # 定义可执行文件的路径
+        EXE_PATH="output/bin/${{ env.PROJECT_NAME }}${EXT}"
+  
+        # 处理权限问题
+        if [[ "${{ runner.os }}" != "Windows" ]]; then
+        echo "Adding execute permissions to ${EXE_PATH}"
+        chmod +x "${EXE_PATH}"
+        fi
+        
+        # 准备打包目录
+        mkdir staging
+        cp "${EXE_PATH}" staging/
+        cp README.md staging/
+        cp LICENSE staging/
+
+        # 创建 zip 包
+        ZIP_NAME="${{ env.PROJECT_NAME }}-${VERSION}-${{ runner.os }}.zip"
+        if [[ "${{ runner.os }}" == "Windows" ]]; then
+          powershell "Compress-Archive -Path staging\* -DestinationPath ${ZIP_NAME}"
+        else
+          (cd staging && zip -r ../${ZIP_NAME} .)
+        fi
+        
+        echo "zip_name=${ZIP_NAME}" >> $GITHUB_OUTPUT
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        # 为每个平台的 artifact 使用唯一的名称
+        name: ${{ steps.package.outputs.zip_name }}
+        path: ${{ steps.package.outputs.zip_name }}
+
+  # Job 2: 发布每夜版
   publish-nightly:
-    needs: build-for-publish
+    needs: build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')
     permissions: write-all
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-    - name: Download Debug Build Artifact
+    - name: Download all build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: debug-artifact
+        path: .
+
+    - name: Get Short SHA
+      id: short_sha
+      run: echo "sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+      
     - name: Create or Update Nightly Release
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         automatic_release_tag: "nightly"
         prerelease: true
-        # 在标题中加入分支名，方便区分
-        title: "Nightly Build (Debug) - Branch [${{ github.ref_name }}] - ${{ github.sha }}"
-        files: ${{ needs.build-for-publish.outputs.debug_zip_name }}
+        title: "Nightly Build (Branch [${{ github.ref_name }}] - ${{ steps.short_sha.outputs.sha }})"
+        # 使用通配符上传所有平台的 zip 包
+        files: "**/*.zip"
 
-  # Job 4: 发布正式版
+  # Job 3: 发布正式版
   publish-release:
-    needs: build-for-publish
+    needs: build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     permissions: write-all
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-    - name: Download Release Build Artifact
+    - name: Download all build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: release-artifact
+        path: .
+
     - name: Create new GitHub Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}
         prerelease: false
-        files: ${{ needs.build-for-publish.outputs.release_zip_name }}
+        # 使用通配符上传所有平台的 zip 包
+        files: "**/*.zip"

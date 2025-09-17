@@ -1,8 +1,8 @@
 #include "ShopLayout.h"
 #include "../Game.h"
 #include "../../class/entity/Player.h"
-#include "ftxui/dom/elements.hpp"
-#include "ftxui/component/component.hpp"
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/component/component.hpp>
 
 using namespace ftxui;
 

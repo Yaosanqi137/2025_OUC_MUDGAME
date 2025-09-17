@@ -1,7 +1,7 @@
 #ifndef USERINFOLAYOUT_H
 #define USERINFOLAYOUT_H
 
-#include "ftxui/component/component.hpp"
+#include <ftxui/component/component.hpp>
 #include <memory>
 
 class Game;

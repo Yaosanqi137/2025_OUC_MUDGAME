@@ -1,8 +1,8 @@
 #ifndef SETTINGSLAYOUT_H
 #define SETTINGSLAYOUT_H
 
-#include "ftxui/component/component_base.hpp"
-#include "ftxui/component/component.hpp"
+#include <ftxui/component/component_base.hpp>
+#include <ftxui/component/component.hpp>
 #include <vector>
 #include <string>
 

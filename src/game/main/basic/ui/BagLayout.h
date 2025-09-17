@@ -1,7 +1,7 @@
 #ifndef BAGLAYOUT_H
 #define BAGLAYOUT_H
 
-#include "ftxui/component/component.hpp"
+#include <ftxui/component/component.hpp>
 #include <vector>
 #include <string>
 #include <array>
